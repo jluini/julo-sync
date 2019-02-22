@@ -40,7 +40,11 @@ namespace Julo.Network
         // Sent from server to clients when all sent SpawnOk
         public const short GameStarted = MsgTypeBase + 7;
 
-        public const short Highest = GameStarted;
+
+        public const short GameServerToClient = MsgTypeBase + 8;
+        public const short GameClientToServer = MsgTypeBase + 9;
+
+        public const short Highest = GameClientToServer;
     }
 
     /// <summary>
@@ -121,93 +125,6 @@ namespace Julo.Network
         }
     }
 
-    public class PrepareMessage : MessageWithExtra
-    {
-        public string map;
-
-        public PrepareMessage()
-        {
-        }
-
-        public PrepareMessage(string map, MessageBase extraMessage) : base(extraMessage)
-        {
-            this.map = map;
-        }
-
-        protected override void CustomSerialize(NetworkWriter writer)
-        {
-            writer.Write(map);
-        }
-
-        protected override void CustomDeserialize(NetworkReader reader)
-        {
-            map = reader.ReadString();
-        }
-    }
-
-    public abstract class MessageWithExtra : MessageBase
-    {
-        NetworkReader reader;
-        int msgSize;
-        byte[] msgData;
-
-        public MessageWithExtra()
-        {
-        }
-
-        public MessageWithExtra(MessageBase extraMessage)
-        {
-            if(extraMessage != null)
-            {
-                NetworkWriter w = new NetworkWriter();
-                extraMessage.Serialize(w);
-
-                msgData = w.ToArray();
-                msgSize = w.Position;
-            }
-        }
-
-        public NetworkReader ExtraReader()
-        {
-            return reader;
-        }
-
-        public TMsg ReadExtraMessage<TMsg>() where TMsg : MessageBase, new()
-        {
-            var msg = new TMsg();
-            msg.Deserialize(reader);
-            return msg;
-        }
-
-        public override void Deserialize(NetworkReader reader)
-        {
-            CustomDeserialize(reader);
-
-            msgData = reader.ReadBytesAndSize();
-            if(msgData == null)
-            {
-                msgSize = 0;
-            }
-            else
-            {
-                msgSize = msgData.Length;
-            }
-
-            reader = new NetworkReader(msgData);
-        }
-
-        public override void Serialize(NetworkWriter writer)
-        {
-            CustomSerialize(writer);
-
-            writer.WriteBytesAndSize(msgData, msgSize);
-        }
-
-        protected abstract void CustomSerialize(NetworkWriter writer);
-        protected abstract void CustomDeserialize(NetworkReader reader);
-
-    } // class MessageWithExtra
-
     public class StatusMessage : MessageBase
     {
         public string map;
@@ -280,5 +197,73 @@ namespace Julo.Network
             return System.String.Format("[map: {0}, state: {1}]", map, gameState.ToString());
         }
     } // class StatusMessage
+
+    public class WrappedMessage : MessageBase
+    {
+        public short messageType;
+
+        NetworkReader extraReader;
+        int msgSize;
+        byte[] msgData;
+
+
+        public WrappedMessage()
+        {
+        }
+
+        public WrappedMessage(short messageType, MessageBase extraMessage)
+        {
+            this.messageType = messageType;
+
+            if(extraMessage != null)
+            {
+                NetworkWriter w = new NetworkWriter();
+                extraMessage.Serialize(w);
+
+                msgData = w.ToArray();
+                msgSize = w.Position;
+
+                extraReader = new NetworkReader(msgData);
+            }
+        }
+
+        public NetworkReader ExtraReader()
+        {
+            return extraReader;
+        }
+
+        public TMsg ReadExtraMessage<TMsg>() where TMsg : MessageBase, new()
+        {
+            var msg = new TMsg();
+            msg.Deserialize(extraReader);
+            return msg;
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            messageType = reader.ReadInt16();
+
+            msgData = reader.ReadBytesAndSize();
+            if(msgData == null)
+            {
+                msgSize = 0;
+            }
+            else
+            {
+                msgSize = msgData.Length;
+            }
+
+            extraReader = new NetworkReader(msgData);
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(messageType);
+
+            writer.WriteBytesAndSize(msgData, msgSize);
+        }
+
+    } // class WrappedMessage
+
 
 } // namespace Julo.Network

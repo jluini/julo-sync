@@ -13,6 +13,8 @@ namespace Julo.TurnBased
         // TODO use singleton?
         public static TurnBasedClient instance = null;
 
+        public int FrameStep = 5;
+
         protected Mode mode;
         protected bool isHosted;
         protected int numRoles;
@@ -26,8 +28,6 @@ namespace Julo.TurnBased
             this.mode = mode;
             this.isHosted = isHosted;
             this.numRoles = numRoles;
-
-            Log.Debug("Starting TBClient ({0}, {1}, {2})", mode, isHosted, numRoles);
 
             OnStartClient();
         }
@@ -58,21 +58,33 @@ namespace Julo.TurnBased
             playingPlayer.SetPlaying(false);
             playingPlayer = null;
         }
+        
         // only in client that owns the current player
         IEnumerator PlayTurn()
         {
             OnStartTurn(playingPlayer);
 
+            int frameNumber = 0;
             do
             {
+                frameNumber++;
+                if(frameNumber % FrameStep == 0)
+                {
+                    SendToServer(Julo.TurnBased.MsgType.GameState, GetStateMessage());
+                }
 
                 yield return new WaitForEndOfFrame();
 
             } while(TurnIsOn());
 
-            // playingPlayer.GameStateCommand();
+            SendToServer(Julo.TurnBased.MsgType.GameState, GetStateMessage());
 
             playingPlayer.TurnIsOverCommand();
+        }
+
+        public override void OnMessage(WrappedMessage msg)
+        {
+            base.OnMessage(msg);
         }
 
         public abstract void OnStartClient();
@@ -83,4 +95,3 @@ namespace Julo.TurnBased
     } // class TurnBasedClient
 
 } // namespace Julo.TurnBased
-

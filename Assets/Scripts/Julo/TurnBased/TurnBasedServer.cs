@@ -74,22 +74,31 @@ namespace Julo.TurnBased
 
             //StartCoroutine(StartGameDelayed());
         }
-
+        /*
         void OnGameStateMessage(NetworkMessage reader)
         {
             Log.Debug("Recibido state");
             ApplyState(reader);
         }
-
+        */
         public override void StartGame()
         {
             SpawnInitialUnits();
 
+            //StartCoroutine(A());
             StartCoroutine(GameRoutine());
         }
 
         IEnumerator GameRoutine()
         {
+            yield return new WaitForSecondsRealtime(1f);
+
+            var stateMessage = GetStateMessage();
+
+            SendToAll(Julo.TurnBased.MsgType.InitialState, stateMessage);
+
+            // TODO wait for confirmation!
+
             do
             {
                 yield return new WaitForSecondsRealtime(2f);
@@ -181,11 +190,18 @@ namespace Julo.TurnBased
             aPlayerIsPlaying = false;
         }
 
+        public override void OnMessage(WrappedMessage message, int from)
+        {
+            base.OnMessage(message, from);
+
+            // TODO check!
+        }
+
         protected abstract void OnStartServer();
         protected abstract void SpawnInitialUnits();
 
         protected abstract bool RoleIsAlive(int numRole);
-        protected abstract void ApplyState(NetworkMessage stateMessage);
+        //protected abstract void ApplyState(NetworkMessage stateMessage);
 
     } // class TurnBasedServer
 

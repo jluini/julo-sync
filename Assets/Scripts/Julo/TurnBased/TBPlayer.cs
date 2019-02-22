@@ -10,7 +10,7 @@ namespace Julo.TurnBased
         void TurnIsStartedRpc();
 
         void TurnIsOverCommand();
-        void GameStateCommand();
+        //void GameStateCommand();
 
     } // interface TBPlayer
 

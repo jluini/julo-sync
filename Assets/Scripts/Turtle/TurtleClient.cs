@@ -12,18 +12,14 @@ namespace Turtle
 {
     public class TurtleClient : TurnBasedClient
     {
+        public static TurtleClient instance = null;
+
         public Turtle onlineTurtlePrefab;
 
-        public static TurtleClient instance = null;
         public static float torque = 5f;
 
         List<Turtle>[] turtlesPerRole;
         Dictionary<uint, Turtle> turtlesByNetId;
-        /*
-        Dictionary<uint, TurtleData> dataByNetId;
-        */
-        //bool thisClientIsPlaying = false;
-        //TBPlayer targetPlayer = null;
         Turtle targetTurtle = null;
 
         enum TurnType { None, Keyboard, Wait }
@@ -33,117 +29,11 @@ namespace Turtle
 
         public override void OnStartClient()
         {
-            Log.Debug("$$$$ TurtleClient::OnStartClient");
             instance = this;
             turtlesPerRole = new List<Turtle>[numRoles];
             turtlesByNetId = new Dictionary<uint, Turtle>();
-            /*
-
-            if(mode == Mode.OnlineMode)
-            {
-                var initialStateMessage = extraMessage.ReadMessage<TurtleStateMessage>();
-                
-                Debug.Log("$$$$ INIT");
-                Debug.Log(initialStateMessage);
-                turtlesByNetId = new Dictionary<uint, Turtle>();
-            }
-            */
         }
 
-        /*
-        GameObject SpawnTurtleInClient(Vector3 position, NetworkHash128 assetId)
-        {
-            Log.Debug("%%% SPAWN %%% ({0})");
-
-            var ret = Instantiate(onlineTurtlePrefab) as Turtle;
-
-            uint netId = ret.GetComponent<NetworkIdentity>().netId.Value;
-
-            Log.Debug("%%% netId={0}", netId);
-
-            // TODO probably netId it's not set :(
-
-            // TODO register turtle by net id....
-
-            if(!dataByNetId.ContainsKey(netId))
-            {
-                Log.Warn("Not in initial state");
-            }
-            else
-            {
-                TurtleData data = dataByNetId[netId];
-
-                ret.role = data.role;
-                ret.index = data.index;
-
-                ret.transform.position = data.position;
-                ret.transform.rotation = data.rotation;
-
-                dataByNetId.Remove(netId);
-
-                if(dataByNetId.Count == 0)
-                {
-                    Log.Debug("All are spawed!!!");
-
-                    DualNetworkManager.instance.SpawnOkCommand();
-
-                }
-            }
-
-            turtlesByNetId[netId] = ret;
-
-            return ret.gameObject;
-        }
-
-        void UnSpawnTurtleInClient(GameObject spawned)
-        {
-            Log.Debug("%%% UNSPAWN %%%");
-            Destroy(spawned);
-        }
-        */
-        Turtle GetNextTurtle(List<Turtle> turtles)
-        {
-            // TODO criteria to pick turtle
-            if(turtles.Count > 0)
-            {
-                return turtles[0];
-            }
-            Log.Error("No turtles");
-            return null;
-        }
-        
-        public void RegisterTurtle(Turtle turtle)
-        {
-            Log.Debug("Registering turtle {0}/{1}", turtle.role, turtle.index);
-            
-            // TODO do this in offline mode?
-            int role = turtle.role;
-
-            if(role < 1 || role > numRoles)
-            {
-                Log.Warn("Invalid client turtle role: {0}", role);
-                return;
-            }
-
-            if(turtlesPerRole[role - 1] == null)
-            {
-                turtlesPerRole[role - 1] = new List<Turtle>();
-            }
-
-            turtlesPerRole[role - 1].Add(turtle);
-
-            if(mode == Mode.OnlineMode)
-            {
-                uint netId = turtle.GetComponent<NetworkIdentity>().netId.Value;
-                if(turtlesByNetId.ContainsKey(netId))
-                {
-                    Log.Error("Turtle with netId {0} already registered!", netId);
-                    return;
-                }
-                //Debug.Log("$$$$ POPULATE");
-                turtlesByNetId.Add(netId, turtle);
-            }
-        }
         // TODO what if it's offline?
         public override void StartGame(NetworkReader messageReader)
         {
@@ -187,7 +77,7 @@ namespace Turtle
 
             tt = TurnType.Keyboard;
 
-            Log.Debug("It's my turn here, I have {0} turtles", turtles.Count);
+            // Log.Debug("It's my turn here, I have {0} turtles", turtles.Count);
 
             targetTurtle = GetNextTurtle(turtles);
 
@@ -253,13 +143,117 @@ namespace Turtle
 
             for(int i = 1; i <= numRoles; i++)
             {
-                foreach(Turtle t in turtlesPerRole[i])
+                foreach(Turtle t in turtlesPerRole[i - 1])
                 {
                     ret.Add(t);
                 }
             }
 
             return ret;
+        }
+
+        public override void OnMessage(WrappedMessage message)
+        {
+            short msgType = message.messageType;
+
+            if(msgType == Julo.TurnBased.MsgType.InitialState)
+            {
+                var msg = message.ReadExtraMessage<TurtleStateMessage>();
+
+                RegisterTurtles(msg.data);
+
+                if(!isHosted)
+                {
+                    msg.ApplyTo(turtlesByNetId);
+                }
+            }
+            else if(msgType == Julo.TurnBased.MsgType.GameState)
+            {
+                if(tt != TurnType.None)
+                {
+                    Log.Error("Recibí update pero estoy jugando yo!!");
+                    return;
+                }
+
+                var msg = message.ReadExtraMessage<TurtleStateMessage>();
+
+                msg.ApplyTo(turtlesByNetId);
+            }
+            else
+            {
+                base.OnMessage(message);
+            }
+        }
+
+        void RegisterTurtles(Dictionary<uint, TurtleData> data)
+        {
+            foreach(uint netId in data.Keys)
+            {
+                var turtleObj = ClientScene.FindLocalObject(new NetworkInstanceId(netId));
+                Turtle t = turtleObj.GetComponent<Turtle>();
+
+                int role = data[netId].role;
+                int index = data[netId].index;
+                t.SetBasicData(role, index);
+
+                // t.role = role;
+                // t.index = index;
+
+                RegisterInClient(t);
+            }
+        }
+
+        public void RegisterInClient(Turtle turtle)
+        {
+            uint netId = turtle.GetComponent<NetworkIdentity>().netId.Value;
+
+            // TODO do this in offline mode?
+            int role = turtle.role;
+
+            if(role < 1 || role > numRoles)
+            {
+                Log.Warn("Invalid client turtle role: {0}", role);
+                return;
+            }
+
+            if(turtlesPerRole[role - 1] == null)
+            {
+                turtlesPerRole[role - 1] = new List<Turtle>();
+            }
+
+            turtlesPerRole[role - 1].Add(turtle);
+
+            // TODO offline case
+            if(mode == Mode.OnlineMode)
+            {
+                if(netId > 0)
+                {
+                    if(turtlesByNetId.ContainsKey(netId))
+                    {
+                        Log.Error("Turtle with netId {0} already registered!", netId);
+                        return;
+                    }
+
+                    turtlesByNetId.Add(netId, turtle);
+                }
+                else
+                {
+                    Log.Warn("netId is still zero");
+                }
+            }
+        }
+
+        ///// Utils
+        
+        Turtle GetNextTurtle(List<Turtle> turtles)
+        {
+            // TODO criteria to pick turtle
+            if(turtles.Count > 0)
+            {
+                return turtles[0];
+            }
+            Log.Error("No turtles");
+            return null;
         }
 
     } // class TurtleClient

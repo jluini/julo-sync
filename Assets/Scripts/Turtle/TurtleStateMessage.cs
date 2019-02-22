@@ -21,7 +21,7 @@ namespace Turtle
             data = new Dictionary<uint, TurtleData>();
             foreach(Turtle t in turtles)
             {
-                var td = new TurtleData(t);
+                var td = t.GetState();
                 data.Add(td.netId, td);
             }
         }
@@ -37,6 +37,7 @@ namespace Turtle
                 writer.Write(datum.index);
                 writer.Write(datum.position);
                 writer.Write(datum.rotation);
+                writer.Write(datum.velocity);
             }
         }
 
@@ -47,46 +48,38 @@ namespace Turtle
 
             for(int i = 0; i < count; i++)
             {
-                var newDatum = new TurtleData();
-                newDatum.netId = reader.ReadUInt32();
-                newDatum.role = reader.ReadInt32();
-                newDatum.index = reader.ReadInt32();
-                newDatum.position = reader.ReadVector3();
-                newDatum.rotation = reader.ReadQuaternion();
+                var newDatum = new TurtleData(
+                    reader.ReadUInt32(),          // netId
+                    reader.ReadInt32(),           // role
+                    reader.ReadInt32(),           // index
+                    reader.ReadVector3(),         // position
+                    reader.ReadQuaternion(),      // rotation
+                    reader.ReadVector2()          // velocity
+                );
+
                 data.Add(newDatum.netId, newDatum);
             }
         }
 
         public void ApplyTo(Dictionary<uint, Turtle> turtlesByNetId)
         {
-            Debug.Log("Applying state");
-
             foreach(TurtleData d in data.Values)
             {
-                Log.Debug("{0}: {1}/{2}", d.netId, d.role, d.index);
-
-                //var go = ClientScene.FindLocalObject(new NetworkInstanceId(d.netId));
-                //Turtle t = go.GetComponent<Turtle>();
-
                 if(!turtlesByNetId.ContainsKey(d.netId))
                 {
                     Log.Error("###### netId {0} not found in dict with {1}", d.netId, turtlesByNetId.Count);
-                    Log.Debug("{0}", turtlesByNetId);
+                    //Log.Debug("{0}", turtlesByNetId);
                     continue;
                 }
+
                 Turtle t = turtlesByNetId[d.netId];
-
-                t.role = d.role;
-                t.index = d.index;
-
-                t.gameObject.transform.position = d.position;
-                t.gameObject.transform.rotation = d.rotation;
+                t.SetState(d);
             }
         }
 
         public override string ToString()
         {
-            var ret = "";
+            var ret = System.String.Format("{0} turtles:\n", data.Count);
 
             foreach(uint netId in data.Keys)
             {

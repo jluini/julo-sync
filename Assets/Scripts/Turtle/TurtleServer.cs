@@ -12,27 +12,32 @@ namespace Turtle
 {
     public class TurtleServer : TurnBasedServer
     {
+        public static TurtleServer instance = null;
+
         public Turtle onlineTurtlePrefab;
         public Turtle offlineTurtlePrefab;
 
         List<Turtle>[] turtlesPerRole;
-        //Dictionary<uint, Turtle> turtlesByNetId;
+        Dictionary<uint, Turtle> turtlesByNetId = null;
+
+        int expectedNumberOfTurtles = -1;
 
         protected override void OnStartServer()
         {
-            Log.Debug("%%% TurtleServer::OnStartServer({0})", numRoles);
+
+            instance = this;
+            //Log.Debug("%%% TurtleServer::OnStartServer({0})", numRoles);
 
             turtlesPerRole = new List<Turtle>[numRoles];
             for(int r = 0; r < numRoles; r++)
             {
                 turtlesPerRole[r] = new List<Turtle>();
             }
-            /*
+            
             if(mode == Mode.OnlineMode)
             {
                 turtlesByNetId = new Dictionary<uint, Turtle>();
             }
-            */
         }
 
         protected override void SpawnInitialUnits()
@@ -44,7 +49,7 @@ namespace Turtle
 
             SpawnPoint[] spawnPoints = FindObjectsOfType<SpawnPoint>();
 
-            Log.Debug("{0} spawn points found", spawnPoints.Length);
+            //Log.Debug("{0} spawn points found", spawnPoints.Length);
 
             //CheckSpawnPoints(spawnPoints);
 
@@ -74,11 +79,53 @@ namespace Turtle
 
                 //Log.Debug("Adding turtle");
                 turtlesPerRole[sp.role - 1].Add(newTurtle);
+            }
 
-                /*if(mode == Mode.OnlineMode)
+            // TODO do checks
+
+            var initialTurtles = GetAllTurtles();
+            expectedNumberOfTurtles = initialTurtles.Count;
+
+            if(mode == Mode.OnlineMode)
+            {
+                //SendToAll(Julo.TurnBased.MsgType.InitialState, GetStateMessage());
+
+                foreach(Turtle t in initialTurtles)
                 {
-                    NetworkServer.Spawn(newTurtle.gameObject);
-                }*/
+                    NetworkServer.Spawn(t.gameObject);
+                }
+            }
+            // TODO if it's only already can continue
+        }
+
+        public void RegisterInServer(Turtle t)
+        {
+            if(mode == Mode.OfflineMode)
+            {
+                return;
+            }
+            var ni = t.GetComponent<NetworkIdentity>();
+            uint netId = ni == null ? 10000 : ni.netId.Value;
+
+            if(netId > 0)
+            {
+                if(turtlesByNetId == null)
+                {
+                    Log.Error("Dict not initialized");
+                    return;
+                }
+                else if(turtlesByNetId.ContainsKey(netId))
+                {
+                    Log.Error("Turtle {0} already registered", netId);
+                    return;
+                }
+                turtlesByNetId[netId] = t;
+            }
+
+            if(turtlesByNetId.Count == expectedNumberOfTurtles)
+            {
+                // TODO can trigger next step here
+                // Log.Debug("Están todas!!!");
             }
         }
 
@@ -86,15 +133,13 @@ namespace Turtle
         {
             return true; // TODO
         }
-
+        /*
         protected override void ApplyState(NetworkMessage stateMessageReader)
         {
-
             var stateMessage = stateMessageReader.ReadMessage<TurtleStateMessage>();
-            //stateMessage.ApplyTo(turtlesByNetId);
-
+            stateMessage.ApplyTo(turtlesByNetId);
         }
-        
+        */
         // TODO this is duplicated in TurtleClient
         public override MessageBase GetStateMessage()
         {
@@ -110,11 +155,27 @@ namespace Turtle
             {
                 foreach(Turtle t in turtlesPerRole[i - 1])
                 {
+                    /*
+                    uint netId = t.GetComponent<NetworkIdentity>().netId.Value;
+
+                    // TODO corregir
+                    if(netId > 0)
+                    {
+                        if(turtlesByNetId == null)
+                        {
+                            turtlesByNetId = new Dictionary<uint, Turtle>();
+                        }
+                        if(!turtlesByNetId.ContainsKey(netId))
+                        {
+                            turtlesByNetId[netId] = t;
+                        }
+                    }
+                    */
                     ret.Add(t);
                 }
             }
 
-            Log.Debug("Total of {0} turtles in server", ret.Count);
+            //Log.Debug("Total of {0} turtles in server", ret.Count);
 
             return ret;
         }
@@ -122,6 +183,25 @@ namespace Turtle
         void CheckSpawnPoints(SpawnPoint[] spawnPoints)
         {
             // TODO
+        }
+
+        public override void OnMessage(WrappedMessage message, int from)
+        {
+            short msgType = message.messageType;
+
+            if(msgType == Julo.TurnBased.MsgType.GameState)
+            {
+                //msg.ApplyTo(turtlesByNetId);
+                // TODO could be more direct?
+
+                var msg = message.ReadExtraMessage<TurtleStateMessage>();
+
+                SendToAllBut(from, Julo.TurnBased.MsgType.GameState, msg);
+            }
+            else
+            {
+                base.OnMessage(message, from);
+            }
         }
 
     } // class TurtleServer
