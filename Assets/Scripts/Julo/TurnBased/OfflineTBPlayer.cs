@@ -41,6 +41,11 @@ namespace Julo.TurnBased
             throw new System.NotImplementedException();
         }
 
+        public void GameStateCommand()
+        {
+            throw new System.NotImplementedException();
+        }
+
         public string GetName()
         {
             if(player == null)

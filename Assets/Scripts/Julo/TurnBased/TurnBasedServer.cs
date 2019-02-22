@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.Networking;
 
 using Julo.Logging;
 using Julo.Network;
@@ -25,8 +26,10 @@ namespace Julo.TurnBased
         public override void StartServer(Mode mode, int numRoles, List<Player>[] playersPerRole)
         {
             instance = this;
-            Log.Debug("Starting turn based game");
-
+            /*if(mode == Mode.OnlineMode)
+            {
+                NetworkServer.RegisterHandler(MsgType.GameState, OnGameStateMessage);
+            }*/
             // TODO check players and params
 
             this.mode = mode;
@@ -67,18 +70,29 @@ namespace Julo.TurnBased
                 this.roleData[r] = new RoleData(tbPlayers);
             }
 
-            OnStartGame();
+            OnStartServer();
 
-            StartCoroutine(StartGameDelayed());
+            //StartCoroutine(StartGameDelayed());
         }
 
-        IEnumerator StartGameDelayed()
+        void OnGameStateMessage(NetworkMessage reader)
         {
-            yield return new WaitForSecondsRealtime(1f);
+            Log.Debug("Recibido state");
+            ApplyState(reader);
+        }
 
+        public override void StartGame()
+        {
+            SpawnInitialUnits();
+
+            StartCoroutine(GameRoutine());
+        }
+
+        IEnumerator GameRoutine()
+        {
             do
             {
-                yield return new WaitForSecondsRealtime(1f);
+                yield return new WaitForSecondsRealtime(2f);
 
                 // next turn
                 int someAliveRole = -1;
@@ -158,7 +172,6 @@ namespace Julo.TurnBased
             } while(true);
 
             // TODO
-
         }
 
         public void MyTurnIsOver()
@@ -168,8 +181,11 @@ namespace Julo.TurnBased
             aPlayerIsPlaying = false;
         }
 
-        public abstract void OnStartGame();
-        public abstract bool RoleIsAlive(int numRole);
+        protected abstract void OnStartServer();
+        protected abstract void SpawnInitialUnits();
+
+        protected abstract bool RoleIsAlive(int numRole);
+        protected abstract void ApplyState(NetworkMessage stateMessage);
 
     } // class TurnBasedServer
 

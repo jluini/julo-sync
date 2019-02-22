@@ -2362,7 +2362,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 8, y: 0}
+  m_AnchoredPosition: {x: 8, y: -0.000015258789}
   m_SizeDelta: {x: -16, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &413954375
@@ -3213,7 +3213,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Toggle+ToggleEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  m_IsOn: 1
+  m_IsOn: 0
 --- !u!1 &749072949
 GameObject:
   m_ObjectHideFlags: 0
@@ -5295,7 +5295,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Cambiar escena
+  m_Text: Duplicar player
 --- !u!222 &1377420751
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8047,13 +8047,13 @@ MonoBehaviour:
   m_ScriptCRCCheck: 1
   m_MaxDelay: 0.01
   m_LogLevel: 2
-  m_PlayerPrefab: {fileID: 19, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
+  m_PlayerPrefab: {fileID: 21, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
   m_AutoCreatePlayer: 1
   m_PlayerSpawnMethod: 0
   m_OfflineScene: 
   m_OnlineScene: 
   m_SpawnPrefabs:
-  - {fileID: 1000012623765632, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
+  - {fileID: 36, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
   m_CustomConfig: 0
   m_MaxConnections: 4
   m_ConnectionConfig:
@@ -8111,15 +8111,12 @@ MonoBehaviour:
   matchMaker: {fileID: 0}
   levelData:
     MaxPlayers: 2
-  offlinePlayerModel: {fileID: 114000012341932602, guid: c6045b627610dc448a7bbc89153c39ba,
-    type: 3}
-  onlinePlayerModel: {fileID: 0}
+  offlinePlayerModel: {fileID: 94, guid: c6045b627610dc448a7bbc89153c39ba, type: 3}
+  onlinePlayerModel: {fileID: 78, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
   playerContainer: {fileID: 648092877}
   sceneToggle: {fileID: 735660803}
-  gameServerPrefab: {fileID: 1007656537935443073, guid: 4be395baef54d9f43937bf0663f49293,
-    type: 3}
-  gameClientPrefab: {fileID: 2175629471158705706, guid: b151b6b2910285c4fb36aa6b4551d7b7,
-    type: 3}
+  gameServerPrefab: {fileID: 99, guid: 4be395baef54d9f43937bf0663f49293, type: 3}
+  gameClientPrefab: {fileID: 100, guid: b151b6b2910285c4fb36aa6b4551d7b7, type: 3}
 --- !u!1 &2106734798
 GameObject:
   m_ObjectHideFlags: 0

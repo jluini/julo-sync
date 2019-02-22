@@ -63,6 +63,14 @@ namespace Julo.TurnBased
             TurnBasedClient.instance.TurnIsOver();
         }
 
+        // only in client owning this player 
+        public void GameStateCommand()
+        {
+            // TODO singletons and references...
+            var stateMessage = TurnBasedClient.instance.GetStateMessage();
+            NetworkManager.singleton.client.Send(MsgType.GameState, stateMessage);
+        }
+
         public string GetName()
         {
             if(dnmPlayer == null)

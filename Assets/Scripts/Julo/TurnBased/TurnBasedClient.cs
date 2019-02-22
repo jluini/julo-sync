@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 
 using UnityEngine;
+using UnityEngine.Networking;
 
 using Julo.Logging;
 using Julo.Network;
@@ -57,15 +58,19 @@ namespace Julo.TurnBased
             playingPlayer.SetPlaying(false);
             playingPlayer = null;
         }
-
+        // only in client that owns the current player
         IEnumerator PlayTurn()
         {
             OnStartTurn(playingPlayer);
 
             do
             {
+
                 yield return new WaitForEndOfFrame();
+
             } while(TurnIsOn());
+
+            // playingPlayer.GameStateCommand();
 
             playingPlayer.TurnIsOverCommand();
         }
@@ -73,6 +78,7 @@ namespace Julo.TurnBased
         public abstract void OnStartClient();
         protected abstract void OnStartTurn(TBPlayer player);
         protected abstract bool TurnIsOn();
+        public abstract MessageBase GetStateMessage();
 
     } // class TurnBasedClient
 

@@ -43,7 +43,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1a9a0672d6113945958e3ddd3d9104e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onlineTurtlePrefab: {fileID: 114000010531449736, guid: 0504edf429139ef4eb80ce84985e32a1,
-    type: 3}
-  offlineTurtlePrefab: {fileID: 114000013337210136, guid: eca6176e60dcdfd47a04b48938f3ce19,
-    type: 3}
+  onlineTurtlePrefab: {fileID: 90, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
+  offlineTurtlePrefab: {fileID: 97, guid: eca6176e60dcdfd47a04b48938f3ce19, type: 3}

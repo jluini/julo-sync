@@ -8,23 +8,37 @@ namespace Julo.Network
 
     public class MsgType
     {
-        // Sent from clients to server to mark themselves as ready/not-ready
-        public const short ClientSetReady = UnityEngine.Networking.MsgType.Highest + 1;
+        const short MsgTypeBase = UnityEngine.Networking.MsgType.Highest;
 
-        // Sent from clients to server
-        public const short StatusRequest = UnityEngine.Networking.MsgType.Highest + 2;
+        // LOBBY
+
+        // Sent from clients to server to mark themselves as ready/not-ready
+        public const short ClientSetReady = MsgTypeBase + 1;
+
+        // JOINING
+
+        // Sent from clients to server to request initial state of the lobby/game
+        public const short StatusRequest = MsgTypeBase + 2;
 
         // Sent from server to clients to inform initial game state
-        public const short InitialStatus = UnityEngine.Networking.MsgType.Highest + 3;
+        public const short InitialStatus = MsgTypeBase + 3;
+
+        // STARTING GAME
 
         // Sent from server to clients
-        public const short GameWillStart = UnityEngine.Networking.MsgType.Highest + 4;
+        //public const short GameWillStart = MsgTypeBase + 4;
 
-        // Sent from server to clients
-        public const short ReadyToStart = UnityEngine.Networking.MsgType.Highest + 5;
+        // Sent from server to clients to deliver initial game state
+        public const short Prepare = MsgTypeBase + 4;
 
-        // Sent from server to clients
-        public const short GameStarted = UnityEngine.Networking.MsgType.Highest + 6;
+        // Sent from clients to server after Prepare
+        public const short ReadyToSpawn = MsgTypeBase + 5;
+        
+        // Sent from clients to server after receiving all initial unet ObjectSpawn's
+        public const short SpawnOk = MsgTypeBase + 6;
+
+        // Sent from server to clients when all sent SpawnOk
+        public const short GameStarted = MsgTypeBase + 7;
 
         public const short Highest = GameStarted;
     }
@@ -107,7 +121,92 @@ namespace Julo.Network
         }
     }
 
-    //public class MessageWithExtra : MessageBase
+    public class PrepareMessage : MessageWithExtra
+    {
+        public string map;
+
+        public PrepareMessage()
+        {
+        }
+
+        public PrepareMessage(string map, MessageBase extraMessage) : base(extraMessage)
+        {
+            this.map = map;
+        }
+
+        protected override void CustomSerialize(NetworkWriter writer)
+        {
+            writer.Write(map);
+        }
+
+        protected override void CustomDeserialize(NetworkReader reader)
+        {
+            map = reader.ReadString();
+        }
+    }
+
+    public abstract class MessageWithExtra : MessageBase
+    {
+        NetworkReader reader;
+        int msgSize;
+        byte[] msgData;
+
+        public MessageWithExtra()
+        {
+        }
+
+        public MessageWithExtra(MessageBase extraMessage)
+        {
+            if(extraMessage != null)
+            {
+                NetworkWriter w = new NetworkWriter();
+                extraMessage.Serialize(w);
+
+                msgData = w.ToArray();
+                msgSize = w.Position;
+            }
+        }
+
+        public NetworkReader ExtraReader()
+        {
+            return reader;
+        }
+
+        public TMsg ReadExtraMessage<TMsg>() where TMsg : MessageBase, new()
+        {
+            var msg = new TMsg();
+            msg.Deserialize(reader);
+            return msg;
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            CustomDeserialize(reader);
+
+            msgData = reader.ReadBytesAndSize();
+            if(msgData == null)
+            {
+                msgSize = 0;
+            }
+            else
+            {
+                msgSize = msgData.Length;
+            }
+
+            reader = new NetworkReader(msgData);
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            CustomSerialize(writer);
+
+            writer.WriteBytesAndSize(msgData, msgSize);
+        }
+
+        protected abstract void CustomSerialize(NetworkWriter writer);
+        protected abstract void CustomDeserialize(NetworkReader reader);
+
+    } // class MessageWithExtra
 
     public class StatusMessage : MessageBase
     {
@@ -181,14 +280,5 @@ namespace Julo.Network
             return System.String.Format("[map: {0}, state: {1}]", map, gameState.ToString());
         }
     } // class StatusMessage
-
-    /*
-    public class MessageWithExtra : MessageBase
-    {
-        public MessageBase extraMessage;
-
-
-    }
-    */
 
 } // namespace Julo.Network

@@ -7,7 +7,7 @@ namespace Julo.Network
 
         public void OnValueChanged(bool newValue)
         {
-            DualNetworkManager.instance.ClientSetReady(newValue);
+            DualNetworkManager.instance.ClientSetReadyCommand(newValue);
         }
 
     } // class ReadyToggle

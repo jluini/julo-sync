@@ -23,7 +23,7 @@ namespace Julo.Network
         bool ready = false;
         void OnReadyChangedHook(bool newReady)
         {
-            Log.Debug("OnReadyChangedHook({0} -> {1})", ready, newReady);
+            //Log.Debug("OnReadyChangedHook({0} -> {1})", ready, newReady);
 
             this.ready = newReady;
 

@@ -6,9 +6,12 @@ namespace Julo.TurnBased
     {
         void AddListener(TBPlayerListener listener);
         void SetPlaying(bool isPlaying);
+
         void TurnIsStartedRpc();
+
         void TurnIsOverCommand();
-        
+        void GameStateCommand();
+
     } // interface TBPlayer
 
 } // namespace Julo.TurnBased

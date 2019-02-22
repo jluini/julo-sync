@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 
 using Julo.Logging;
 
@@ -19,10 +20,18 @@ namespace Turtle
 
         void Start()
         {
-            Log.Debug("Registering turtle in client");
+            var ni = GetComponent<NetworkIdentity>();
+            Log.Debug("Turtle::Start({0}, {1})", TurtleClient.instance != null, ni != null ? ni.netId.Value.ToString() : "no netId");
+            Log.Debug("$$$$ Can register turtle in client {0}", TurtleClient.instance);
 
-            if(TurtleClient.instance != null)
+            /* if(TurtleClient.instance != null)
+            {
                 TurtleClient.instance.RegisterTurtle(this);
+            }
+            else
+            {
+                Log.Error("TurtleClient not found");
+            } */
 
             rb = GetComponent<Rigidbody2D>();
             renderer = GetComponent<SpriteRenderer>();

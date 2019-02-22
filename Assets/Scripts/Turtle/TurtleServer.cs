@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.Networking;
@@ -11,25 +12,41 @@ namespace Turtle
 {
     public class TurtleServer : TurnBasedServer
     {
-
         public Turtle onlineTurtlePrefab;
         public Turtle offlineTurtlePrefab;
 
         List<Turtle>[] turtlesPerRole;
+        //Dictionary<uint, Turtle> turtlesByNetId;
 
-        public override void OnStartGame()
+        protected override void OnStartServer()
         {
+            Log.Debug("%%% TurtleServer::OnStartServer({0})", numRoles);
 
             turtlesPerRole = new List<Turtle>[numRoles];
-
             for(int r = 0; r < numRoles; r++)
             {
                 turtlesPerRole[r] = new List<Turtle>();
             }
+            /*
+            if(mode == Mode.OnlineMode)
+            {
+                turtlesByNetId = new Dictionary<uint, Turtle>();
+            }
+            */
+        }
+
+        protected override void SpawnInitialUnits()
+        {
+            if(mode == Mode.OfflineMode)
+            {
+                throw new System.NotImplementedException();
+            }
 
             SpawnPoint[] spawnPoints = FindObjectsOfType<SpawnPoint>();
 
-            CheckSpawnPoints(spawnPoints);
+            Log.Debug("{0} spawn points found", spawnPoints.Length);
+
+            //CheckSpawnPoints(spawnPoints);
 
             foreach(var sp in spawnPoints)
             {
@@ -46,7 +63,7 @@ namespace Turtle
                 //}
                 //else
                 //{
-                    newTurtle = Object.Instantiate(onlineTurtlePrefab) as Turtle;
+                newTurtle = Object.Instantiate(onlineTurtlePrefab) as Turtle;
                 //}
 
                 newTurtle.transform.position = sp.transform.position;
@@ -55,20 +72,36 @@ namespace Turtle
                 newTurtle.role = sp.role;
                 newTurtle.index = sp.index;
 
+                //Log.Debug("Adding turtle");
                 turtlesPerRole[sp.role - 1].Add(newTurtle);
 
-                if(mode == Mode.OnlineMode)
+                /*if(mode == Mode.OnlineMode)
                 {
                     NetworkServer.Spawn(newTurtle.gameObject);
-                }
+                }*/
             }
         }
 
-        public override bool RoleIsAlive(int numRole)
+        protected override bool RoleIsAlive(int numRole)
         {
             return true; // TODO
         }
 
+        protected override void ApplyState(NetworkMessage stateMessageReader)
+        {
+
+            var stateMessage = stateMessageReader.ReadMessage<TurtleStateMessage>();
+            //stateMessage.ApplyTo(turtlesByNetId);
+
+        }
+        
+        // TODO this is duplicated in TurtleClient
+        public override MessageBase GetStateMessage()
+        {
+            //return TurtleClient.instance.GetStateMessage(); // TODO won't work in dedicated server mode
+            return new TurtleStateMessage(GetAllTurtles());
+        }
+        
         public List<Turtle> GetAllTurtles()
         {
             List<Turtle> ret = new List<Turtle>();
@@ -81,17 +114,11 @@ namespace Turtle
                 }
             }
 
+            Log.Debug("Total of {0} turtles in server", ret.Count);
+
             return ret;
         }
-        public override MessageBase GetStatusMessage()
-        {
-            return new TurtleStateMessage(GetAllTurtles());
-
-            //return new UnityEngine.Networking.NetworkSystem.StringMessage("La vida loca");
-        }
-
-
-
+        
         void CheckSpawnPoints(SpawnPoint[] spawnPoints)
         {
             // TODO
