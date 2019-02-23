@@ -34,53 +34,13 @@ namespace Julo.TurnBased
 
             for(int r = 0; r < numRoles; r++)
             {
-                /*
-                List<TBPlayer> tbPlayers = new List<TBPlayer>();
-                foreach(Player p in playersPerRole[r])
-                {
-                    TBPlayer tbPlayer;
-                    if(mode == Mode.OfflineMode)
-                    {
-                        OfflinePlayer pp = (OfflinePlayer)p;
-
-                        tbPlayer = pp.GetComponent<OfflineTBPlayer>();
-                    }
-                    else
-                    {
-                        OnlinePlayer pp = (OnlinePlayer)p;
-
-                        tbPlayer = pp.GetComponent<OnlineTBPlayer>();
-                    }
-
-                    if(tbPlayer != null)
-                    {
-                        tbPlayers.Add(tbPlayer);
-                    }
-                    else
-                    {
-                        Log.Error("Invalid player setup!!");
-                    }
-                }
-                this.roleData[r] = new RoleData(tbPlayers);
-                */
                 this.roleData[r] = new RoleData();
             }
+        }
 
-            //StartCoroutine(StartGameDelayed());
-        }
-        /*
-        void OnGameStateMessage(NetworkMessage reader)
-        {
-            Log.Debug("Recibido state");
-            ApplyState(reader);
-        }
-        */
         public override void StartGame()
         {
             SpawnInitialUnits();
-
-            //StartCoroutine(A());
-            //StartCoroutine(GameRoutine());
         }
 
         public void InitialUnitsWereSpawned()
@@ -90,7 +50,7 @@ namespace Julo.TurnBased
 
         IEnumerator GameRoutine()
         {
-            
+            // TODO try without this
             yield return new WaitForSecondsRealtime(.1f);
             
             var stateMessage = GetStateMessage();

@@ -11,6 +11,7 @@ namespace Turtle
 
         public int role = 0;
         public int index = 0;
+        public bool dead = false;
 
         public static Color[] playerColors =
         {
@@ -19,6 +20,7 @@ namespace Turtle
         };
 
         public static Color playingColor = Color.yellow;
+        public static Color deadColor = Color.gray;
 
         Rigidbody2D rb = null;
         SpriteRenderer renderer;
@@ -73,7 +75,8 @@ namespace Turtle
                 transform.position,
                 transform.rotation,
                 rb.velocity,
-                rb.angularVelocity
+                rb.angularVelocity,
+                dead
             );
         }
 
@@ -124,6 +127,8 @@ namespace Turtle
             transform.rotation = d.rotation;
             rb.velocity = d.velocity;
             rb.angularVelocity = d.angularVelocity;
+            //dead = d.dead;
+            SetDead(d.dead);
         }
         public void AddTorque(float value)
         {
@@ -145,6 +150,18 @@ namespace Turtle
         public void SetColor(Color color)
         {
             renderer.color = color;
+        }
+
+        public void SetDead(bool dead)
+        {
+            if(this.dead != dead)
+            {
+                this.dead = dead;
+                if(dead)
+                {
+                    SetColor(deadColor);
+                }
+            }
         }
 
         // ...

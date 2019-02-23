@@ -664,26 +664,13 @@ namespace Julo.Network
 
                 SetGameState(GameState.Playing);
                 StartCoroutine(StartGameDelayed());
-
-                //allClientsAreReadyToSpawn = true;
-                /*
-                if(sceneHasStarted)
-                {
-                    Log.Debug("Spawning because of all clients getting ready to spawn");
-                    Spawn();
-                }
-                */
-                /*
-                SetGameState(GameState.Spawning);
-                gameServer.SpawnInitialUnits();
-                //StartCoroutine(StartGameDelayed());
-                */
             }
         }
 
         IEnumerator StartGameDelayed()
         {
-            yield return new WaitForSecondsRealtime(1f);
+            // TODO try without this
+            yield return new WaitForSecondsRealtime(.1f);
             gameServer.StartGame();
 
             // TODO should do this after a spawning confirmation?

@@ -59,11 +59,6 @@ namespace Julo.TurnBased
                 l.SetPlaying(isPlaying);
             }
         }
-        
-        //void TurnIsStartedRpc();
-        //void TurnIsOverCommand();
-
-        //void GameStateCommand();
 
     } // class TBPlayer
 

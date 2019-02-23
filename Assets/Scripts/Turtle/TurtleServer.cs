@@ -79,7 +79,8 @@ namespace Turtle
                 newTurtle.index = sp.index;
 
                 //Log.Debug("Adding turtle");
-                turtlesPerRole[sp.role - 1].Add(newTurtle);
+                GetTurtlesForRole(sp.role).Add(newTurtle); ;
+                //turtlesPerRole[sp.role - 1].Add(newTurtle);
             }
 
             // TODO do checks
@@ -99,6 +100,11 @@ namespace Turtle
             // TODO if it's only already can continue
         }
 
+        List<Turtle> GetTurtlesForRole(int role)
+        {
+            // TODO checks!
+            return turtlesPerRole[role - 1];
+        }
         public void RegisterInServer(Turtle t)
         {
             if(mode == Mode.OfflineMode)
@@ -131,7 +137,7 @@ namespace Turtle
 
         protected override bool RoleIsAlive(int numRole)
         {
-            return true; // TODO
+            return GetTurtlesForRole(numRole).FindAll(t => !t.dead).Count > 0;
         }
         
         // TODO this is duplicated in TurtleClient
@@ -147,7 +153,7 @@ namespace Turtle
 
             for(int i = 1; i <= numRoles; i++)
             {
-                foreach(Turtle t in turtlesPerRole[i - 1])
+                foreach(Turtle t in GetTurtlesForRole(i))
                 {
                     /*
                     uint netId = t.GetComponent<NetworkIdentity>().netId.Value;

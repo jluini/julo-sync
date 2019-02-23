@@ -65,10 +65,11 @@ namespace Turtle
             int role = player.GetRole();
 
             var turtles = turtlesPerRole[role - 1];
+            var aliveTurtles = turtles.FindAll(t => !t.dead);
 
-            if(turtles == null || turtles.Count == 0)
+            if(/*turtles == null || */ aliveTurtles.Count == 0)
             {
-                Log.Warn("No turtles with role {0}", role);
+                Log.Warn("No alive turtles with role {0}", role);
                 tt = TurnType.Wait;
                 turnEnded = false;
                 StartCoroutine(EndTurnDelayed());
@@ -79,7 +80,7 @@ namespace Turtle
 
             // Log.Debug("It's my turn here, I have {0} turtles", turtles.Count);
 
-            targetTurtle = GetNextTurtle(turtles);
+            targetTurtle = GetNextTurtle(aliveTurtles);
 
             targetTurtle.SetPlaying(true);
         }
@@ -104,6 +105,12 @@ namespace Turtle
                 return false;
             }
 
+            if(targetTurtle.dead)
+            {
+                tt = TurnType.None;
+                return false;
+            }
+
             float hor = Input.GetAxis("Horizontal");
             float fire3 = Input.GetAxis("Fire3");
 
@@ -121,6 +128,11 @@ namespace Turtle
                 targetTurtle.SetPlaying(false);
                 tt = TurnType.None;
                 return false;
+            }
+
+            foreach(var t in GetAllTurtles())
+            {
+                t.SetDead(t.transform.position.y < -1.5f);
             }
 
             return true;

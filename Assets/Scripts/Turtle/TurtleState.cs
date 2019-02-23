@@ -12,13 +12,22 @@ namespace Turtle
         public Quaternion rotation;
         public Vector2 velocity;
         public float angularVelocity;
+        public bool dead;
 
         public TurtleState()
         {
         }
 
-        public TurtleState(uint netId, int role, int index, Vector2 position, Quaternion rotation, Vector2 velocity, float angularVelocity)
-        {
+        public TurtleState(
+            uint netId,
+            int role,
+            int index,
+            Vector2 position,
+            Quaternion rotation,
+            Vector2 velocity,
+            float angularVelocity,
+            bool dead
+        ) {
             this.netId = netId;
             this.role = role;
             this.index = index;
@@ -26,6 +35,7 @@ namespace Turtle
             this.rotation = rotation;
             this.velocity = velocity;
             this.angularVelocity = angularVelocity;
+            this.dead = dead;
         }
 
         public override void Serialize(NetworkWriter writer)
@@ -37,6 +47,7 @@ namespace Turtle
             writer.Write(rotation);
             writer.Write(velocity);
             writer.Write(angularVelocity);
+            writer.Write(dead);
         }
 
         public override void Deserialize(NetworkReader reader)
@@ -48,6 +59,7 @@ namespace Turtle
             rotation = reader.ReadQuaternion();
             velocity = reader.ReadVector2();
             angularVelocity = reader.ReadSingle();
+            dead = reader.ReadBoolean();
         }
 
     } // class TurtleState
