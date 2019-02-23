@@ -125,7 +125,8 @@ namespace Turtle
             if(turtlesByNetId.Count == expectedNumberOfTurtles)
             {
                 // TODO can trigger next step here
-                // Log.Debug("Están todas!!!");
+                Log.Debug("Están todas!!!");
+                InitialUnitsWereSpawned();
             }
         }
 
@@ -144,7 +145,7 @@ namespace Turtle
         public override MessageBase GetStateMessage()
         {
             //return TurtleClient.instance.GetStateMessage(); // TODO won't work in dedicated server mode
-            return new TurtleStateMessage(GetAllTurtles());
+            return new GameState(GetAllTurtles());
         }
         
         public List<Turtle> GetAllTurtles()
@@ -194,7 +195,7 @@ namespace Turtle
                 //msg.ApplyTo(turtlesByNetId);
                 // TODO could be more direct?
 
-                var msg = message.ReadExtraMessage<TurtleStateMessage>();
+                var msg = message.ReadExtraMessage<GameState>();
 
                 SendToAllBut(from, Julo.TurnBased.MsgType.GameState, msg);
             }

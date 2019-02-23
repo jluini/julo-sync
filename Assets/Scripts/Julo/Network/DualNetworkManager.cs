@@ -968,7 +968,13 @@ namespace Julo.Network
         }
 
         //// Messaging
-        
+
+        public void GameServerSendTo(int who, short msgType, MessageBase gameMessage)
+        {
+            // TODO checks
+            NetworkServer.SendToClient(who, MsgType.GameServerToClient, new WrappedMessage(msgType, gameMessage));
+        }
+
         public void GameServerSendToAll(short msgType, MessageBase gameMessage)
         {
             // TODO checks

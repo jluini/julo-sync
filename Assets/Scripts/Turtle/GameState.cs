@@ -1,55 +1,61 @@
 ﻿using System.Collections.Generic;
 
-using UnityEngine;
 using UnityEngine.Networking;
 
 using Julo.Logging;
 
 namespace Turtle
 {
-    /*
-    public class TurtleStateMessage : MessageBase
+    
+    public class GameState : MessageBase
     {
-        //public List<TurtleData> data;
-        public Dictionary<uint, TurtleData> data;
+        public Dictionary<uint, TurtleState> units;
 
-        public TurtleStateMessage()
+        public GameState()
         {
         }
-        public TurtleStateMessage(List<Turtle> turtles)
+
+        public GameState(List<Turtle> turtles)
         {
-            data = new Dictionary<uint, TurtleData>();
+            units = new Dictionary<uint, TurtleState>();
             foreach(Turtle t in turtles)
             {
                 var td = t.GetState();
-                data.Add(td.netId, td);
+                units.Add(td.netId, td);
             }
         }
 
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write(data.Count);
+            writer.Write(units.Count);
 
-            foreach(TurtleData datum in data.Values)
+            foreach(TurtleState unit in units.Values)
             {
-                writer.Write(datum.netId);
-                writer.Write(datum.role);
-                writer.Write(datum.index);
-                writer.Write(datum.position);
-                writer.Write(datum.rotation);
-                writer.Write(datum.velocity);
-                writer.Write(datum.angularVelocity);
+                unit.Serialize(writer);
+
+                /*
+                writer.Write(unit.netId);
+                writer.Write(unit.role);
+                writer.Write(unit.index);
+                writer.Write(unit.position);
+                writer.Write(unit.rotation);
+                writer.Write(unit.velocity);
+                writer.Write(unit.angularVelocity);
+                */
             }
         }
 
         public override void Deserialize(NetworkReader reader)
         {
             int count = reader.ReadInt32();
-            data = new Dictionary<uint, TurtleData>();
+            units = new Dictionary<uint, TurtleState>();
 
             for(int i = 0; i < count; i++)
             {
-                var newDatum = new TurtleData(
+                var newUnit = new TurtleState();
+                newUnit.Deserialize(reader);
+                /*
+                var newUnit = new TurtleState(
                     reader.ReadUInt32(),          // netId
                     reader.ReadInt32(),           // role
                     reader.ReadInt32(),           // index
@@ -58,14 +64,14 @@ namespace Turtle
                     reader.ReadVector2(),         // velocity
                     reader.ReadSingle()           // angularVelocity
                 );
-
-                data.Add(newDatum.netId, newDatum);
+                */
+                units.Add(newUnit.netId, newUnit);
             }
         }
 
         public void ApplyTo(Dictionary<uint, Turtle> turtlesByNetId)
         {
-            foreach(TurtleData d in data.Values)
+            foreach(TurtleState d in units.Values)
             {
                 if(!turtlesByNetId.ContainsKey(d.netId))
                 {
@@ -81,11 +87,11 @@ namespace Turtle
 
         public override string ToString()
         {
-            var ret = System.String.Format("{0} turtles:\n", data.Count);
+            var ret = System.String.Format("{0} turtles:\n", units.Count);
 
-            foreach(uint netId in data.Keys)
+            foreach(uint netId in units.Keys)
             {
-                var d = data[netId];
+                var d = units[netId];
                 ret += System.String.Format("\n{0}\t{1}\t{2}", netId, d.role, d.index);
                 /*
                 ret += "\n";
@@ -94,13 +100,13 @@ namespace Turtle
                 ret += role.ToString();
                 ret += "\t";
                 ret += index.ToString();
-                * /
+                */
             }
             ret += "\n";
 
             return ret;
         }
 
-    } // class TurtleStateMessage
-    */
+    } // class GameState
+
 } // namespace Turtle

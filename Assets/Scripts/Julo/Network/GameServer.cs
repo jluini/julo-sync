@@ -16,6 +16,11 @@ namespace Julo.Network
         public abstract void StartServer(Mode mode, int numRoles, List<Player>[] playersPerRole);
         public abstract void StartGame();
 
+        protected void SendTo(int who, short msgType, MessageBase msg)
+        {
+            DualNetworkManager.instance.GameServerSendTo(who, msgType, msg);
+        }
+
         protected void SendToAll(short msgType, MessageBase msg)
         {
             DualNetworkManager.instance.GameServerSendToAll(msgType, msg);

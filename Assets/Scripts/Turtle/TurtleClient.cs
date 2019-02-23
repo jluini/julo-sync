@@ -134,7 +134,7 @@ namespace Turtle
 
         public override MessageBase GetStateMessage()
         {
-            return new TurtleStateMessage(GetAllTurtles());
+            return new GameState(GetAllTurtles());
         }
         // TODO getting state is duplicated between TurtleClient and TurtleServer
         public List<Turtle> GetAllTurtles()
@@ -158,9 +158,9 @@ namespace Turtle
 
             if(msgType == Julo.TurnBased.MsgType.InitialState)
             {
-                var msg = message.ReadExtraMessage<TurtleStateMessage>();
+                var msg = message.ReadExtraMessage<GameState>();
 
-                RegisterTurtles(msg.data);
+                RegisterTurtles(msg.units);
 
                 if(!isHosted)
                 {
@@ -175,7 +175,7 @@ namespace Turtle
                     return;
                 }
 
-                var msg = message.ReadExtraMessage<TurtleStateMessage>();
+                var msg = message.ReadExtraMessage<GameState>();
 
                 msg.ApplyTo(turtlesByNetId);
             }
@@ -185,7 +185,7 @@ namespace Turtle
             }
         }
 
-        void RegisterTurtles(Dictionary<uint, TurtleData> data)
+        void RegisterTurtles(Dictionary<uint, TurtleState> data)
         {
             foreach(uint netId in data.Keys)
             {

@@ -33,6 +33,25 @@ namespace Julo.TurnBased
                 return _dnmPlayer;
             }
         }
+
+        /*
+        public int GetConnection()
+        {
+            if(NetworkServer.active)
+            {
+                return connectionToClient.connectionId;
+            }
+            throw new System.Exception("Invalid call of GetConnection");
+        }
+        public short GetControllerId()
+        {
+            if(NetworkServer.active)
+            {
+                return playerControllerId;
+            }
+            throw new System.Exception("Invalid call of GetControllerId");
+        }
+        */
         
         // only server
         public void TurnIsStartedRpc()
@@ -44,6 +63,7 @@ namespace Julo.TurnBased
         {
             TurnBasedClient.instance.IsMyTurn(this, isLocalPlayer);
         }
+        
 
         // only in client owning this player
         public void TurnIsOverCommand()

@@ -14,6 +14,8 @@ namespace Julo.TurnBased
         // TODO use singleton?
         public static TurnBasedServer instance;
 
+        public float preturnWaitTime = 1f;
+
         bool aPlayerIsPlaying = false;
 
         protected Mode mode;
@@ -86,12 +88,17 @@ namespace Julo.TurnBased
             SpawnInitialUnits();
 
             //StartCoroutine(A());
+            //StartCoroutine(GameRoutine());
+        }
+
+        public void InitialUnitsWereSpawned()
+        {
             StartCoroutine(GameRoutine());
         }
 
         IEnumerator GameRoutine()
         {
-            yield return new WaitForSecondsRealtime(1f);
+            yield return new WaitForSecondsRealtime(.1f);
 
             var stateMessage = GetStateMessage();
 
@@ -101,7 +108,7 @@ namespace Julo.TurnBased
 
             do
             {
-                yield return new WaitForSecondsRealtime(2f);
+                yield return new WaitForSecondsRealtime(preturnWaitTime);
 
                 // next turn
                 int someAliveRole = -1;
@@ -166,8 +173,12 @@ namespace Julo.TurnBased
                     lastRolePlayed = nextRoleToPlay;
 
                     // it's turn for nextRoleToPlay
+
                     // TODO it's picking always the first player of the role
-                    roleData[nextRoleToPlay].players[0].TurnIsStartedRpc();
+                    var nextPlayer = roleData[nextRoleToPlay].players[0];
+                    //nextPlayer.GetConnection();
+                    //SendTo(nextPlayer.GetConnection(), MsgType.ItsYourTurn, new 
+                    nextPlayer.TurnIsStartedRpc();
 
                     aPlayerIsPlaying = true;
 

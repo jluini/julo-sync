@@ -31,7 +31,7 @@ namespace Julo.TurnBased
 
             OnStartClient();
         }
-
+        
         public void IsMyTurn(TBPlayer player, bool localToHere)
         {
 
@@ -47,7 +47,7 @@ namespace Julo.TurnBased
             if(localToHere)
                 StartCoroutine(PlayTurn());
         }
-
+        
         public void TurnIsOver()
         {
             if(playingPlayer == null)

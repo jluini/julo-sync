@@ -12,8 +12,10 @@ namespace Julo.TurnBased
         public const short InitialState = MsgTypeBase + 1;
         public const short GameState = MsgTypeBase + 2;
 
+        public const short ItsYourTurn = MsgTypeBase + 3;
 
-        public const short Highest = GameState;
+
+        public const short Highest = ItsYourTurn;
     }
 
 

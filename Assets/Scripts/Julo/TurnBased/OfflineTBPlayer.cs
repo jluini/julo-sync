@@ -30,12 +30,12 @@ namespace Julo.TurnBased
                 return _player;
             }
         }
-
+        
         public void TurnIsStartedRpc()
         {
             throw new System.NotImplementedException();
         }
-
+        
         public void TurnIsOverCommand()
         {
             throw new System.NotImplementedException();

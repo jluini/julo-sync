@@ -35,18 +35,21 @@ namespace Turtle
                 Log.Error("TurtleClient not found");
             }*/
 
+            var ni = GetComponent<NetworkIdentity>();
+            uint netId = ni == null ? 10000 : ni.netId.Value;
+            Log.Debug(
+                "Turtle::Start({0}, {1}), srv:{2}, clt:{3}",
+                NetworkServer.active ? "hosted" : "non-hosted",
+                netId,
+                TurtleServer.instance == null ? "NO" : "si",
+                TurtleClient.instance == null ? "NO" : "si"
+            );
+
             if(TurtleServer.instance)
             {
-                var ni = GetComponent<NetworkIdentity>();
-                uint netId = ni == null ? 10000 : ni.netId.Value;
                 TurtleServer.instance.RegisterInServer(this);
             }
-            else
-            {
-                var ni = GetComponent<NetworkIdentity>();
-                uint netId = ni == null ? 10000 : ni.netId.Value;
-                Log.Debug("In remote host my netId on Start() is: {0}", netId);
-            }
+
 
             rb = GetComponent<Rigidbody2D>();
             renderer = GetComponent<SpriteRenderer>();
@@ -61,17 +64,17 @@ namespace Turtle
             }
         }
 
-        public TurtleData GetState()
+        public TurtleState GetState()
         {
-            return new TurtleData(
+            return new TurtleState(
                 GetComponent<NetworkIdentity>().netId.Value,
                 role,
                 index,
                 transform.position,
                 transform.rotation,
-                rb.velocity
+                rb.velocity,
+                rb.angularVelocity
             );
-
         }
 
         public void SetBasicData(int role, int index)
@@ -112,15 +115,15 @@ namespace Turtle
             SetColor(playerColors[role - 1]);
         }
 
-        public void SetState(TurtleData d)
+        public void SetState(TurtleState d)
         {
-            // TODO only needed first time in non-hosted clients
             //role = d.role;
             //index = d.index;
 
             transform.position = d.position;
             transform.rotation = d.rotation;
             rb.velocity = d.velocity;
+            rb.angularVelocity = d.angularVelocity;
         }
         public void AddTorque(float value)
         {
