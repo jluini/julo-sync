@@ -6,6 +6,8 @@ namespace Julo.Network
 {
     public interface Player
     {
+        uint GetId();
+
         //int GetConnection();
         //short GetControllerId();
 

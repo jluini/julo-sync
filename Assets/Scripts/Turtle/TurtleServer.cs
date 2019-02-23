@@ -24,9 +24,10 @@ namespace Turtle
 
         protected override void OnStartServer()
         {
+            base.OnStartServer();
 
             instance = this;
-            //Log.Debug("%%% TurtleServer::OnStartServer({0})", numRoles);
+            Log.Debug("%%% TurtleServer::OnStartServer({0})", numRoles);
 
             turtlesPerRole = new List<Turtle>[numRoles];
             for(int r = 0; r < numRoles; r++)
@@ -124,8 +125,6 @@ namespace Turtle
 
             if(turtlesByNetId.Count == expectedNumberOfTurtles)
             {
-                // TODO can trigger next step here
-                Log.Debug("Están todas!!!");
                 InitialUnitsWereSpawned();
             }
         }
@@ -134,13 +133,7 @@ namespace Turtle
         {
             return true; // TODO
         }
-        /*
-        protected override void ApplyState(NetworkMessage stateMessageReader)
-        {
-            var stateMessage = stateMessageReader.ReadMessage<TurtleStateMessage>();
-            stateMessage.ApplyTo(turtlesByNetId);
-        }
-        */
+        
         // TODO this is duplicated in TurtleClient
         public override MessageBase GetStateMessage()
         {

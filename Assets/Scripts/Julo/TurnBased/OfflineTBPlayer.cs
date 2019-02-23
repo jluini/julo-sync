@@ -31,19 +31,36 @@ namespace Julo.TurnBased
             }
         }
         
+        public bool IsLocal()
+        {
+            return true;
+        }
+
+        /*
         public void TurnIsStartedRpc()
         {
             throw new System.NotImplementedException();
         }
-        
         public void TurnIsOverCommand()
         {
             throw new System.NotImplementedException();
         }
+        */
 
         public void GameStateCommand()
         {
             throw new System.NotImplementedException();
+        }
+
+        public uint GetId()
+        {
+            if(player == null)
+            {
+                Log.Error("Invalid call of GetId");
+                return 10000;
+            }
+
+            return player.GetId();
         }
 
         public string GetName()

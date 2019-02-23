@@ -18,6 +18,11 @@ namespace Julo.Network
             this.user = user;
         }
 
+        public uint GetId()
+        {
+            throw new System.NotImplementedException();
+        }
+
         public string GetName()
         {
             if(user != null)

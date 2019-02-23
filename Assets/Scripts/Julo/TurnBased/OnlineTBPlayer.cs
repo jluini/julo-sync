@@ -52,7 +52,7 @@ namespace Julo.TurnBased
             throw new System.Exception("Invalid call of GetControllerId");
         }
         */
-        
+        /*
         // only server
         public void TurnIsStartedRpc()
         {
@@ -63,8 +63,12 @@ namespace Julo.TurnBased
         {
             TurnBasedClient.instance.IsMyTurn(this, isLocalPlayer);
         }
-        
-
+        */
+        public bool IsLocal()
+        {
+            return isLocalPlayer;
+        }
+        /*
         // only in client owning this player
         public void TurnIsOverCommand()
         {
@@ -77,11 +81,14 @@ namespace Julo.TurnBased
 
             RpcMyTurnIsOver();
         }
+        */
+        /*
         [ClientRpc]
         void RpcMyTurnIsOver()
         {
             TurnBasedClient.instance.TurnIsOver();
         }
+        */
 
         // only in client owning this player 
         /*public void GameStateCommand()
@@ -90,6 +97,17 @@ namespace Julo.TurnBased
             var stateMessage = TurnBasedClient.instance.GetStateMessage();
             NetworkManager.singleton.client.Send(MsgType.GameState, stateMessage);
         }*/
+
+        public uint GetId()
+        {
+            if(dnmPlayer == null)
+            {
+                Log.Error("Invalid call of GetId");
+                return 10000;
+            }
+
+            return dnmPlayer.GetId();
+        }
 
         public string GetName()
         {

@@ -84,6 +84,11 @@ namespace Julo.Network
             this.username = user.GetName();
         }
 
+        public uint GetId()
+        {
+            return netId.Value;
+        }
+
         public string GetName()
         {
             return username;

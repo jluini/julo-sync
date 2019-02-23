@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
 using Julo.Network;
@@ -18,31 +19,23 @@ namespace Julo.TurnBased
 
         bool aPlayerIsPlaying = false;
 
-        protected Mode mode;
-        protected int numRoles;
+        //protected Mode mode;
+        //protected int numRoles;
 
         RoleData[] roleData;
 
-        int lastRolePlayed = -1;
+        int lastRolePlayed = 0;
 
-        public override void StartServer(Mode mode, int numRoles, List<Player>[] playersPerRole)
+        protected override void OnStartServer()
         {
             instance = this;
-            /*if(mode == Mode.OnlineMode)
-            {
-                NetworkServer.RegisterHandler(MsgType.GameState, OnGameStateMessage);
-            }*/
-            // TODO check players and params
-
-            this.mode = mode;
-            this.numRoles = numRoles;
 
             this.roleData = new RoleData[numRoles];
 
             for(int r = 0; r < numRoles; r++)
             {
+                /*
                 List<TBPlayer> tbPlayers = new List<TBPlayer>();
-
                 foreach(Player p in playersPerRole[r])
                 {
                     TBPlayer tbPlayer;
@@ -68,11 +61,10 @@ namespace Julo.TurnBased
                         Log.Error("Invalid player setup!!");
                     }
                 }
-
                 this.roleData[r] = new RoleData(tbPlayers);
+                */
+                this.roleData[r] = new RoleData();
             }
-
-            OnStartServer();
 
             //StartCoroutine(StartGameDelayed());
         }
@@ -98,10 +90,11 @@ namespace Julo.TurnBased
 
         IEnumerator GameRoutine()
         {
+            
             yield return new WaitForSecondsRealtime(.1f);
-
+            
             var stateMessage = GetStateMessage();
-
+            
             SendToAll(Julo.TurnBased.MsgType.InitialState, stateMessage);
 
             // TODO wait for confirmation!
@@ -114,9 +107,9 @@ namespace Julo.TurnBased
                 int someAliveRole = -1;
                 int aliveRoles = 0;
 
-                for(int r = 0; r < numRoles; r++)
+                for(int r = 1; r <= numRoles; r++)
                 {
-                    bool roleWasAlive = roleData[r].isAlive;
+                    bool roleWasAlive = roleData[r - 1].isAlive;
                     bool roleIsAlive = RoleIsAlive(r);
 
                     if(roleIsAlive)
@@ -131,7 +124,7 @@ namespace Julo.TurnBased
 
                     if(roleWasAlive != roleIsAlive)
                     {
-                        roleData[r].isAlive = roleIsAlive;
+                        roleData[r - 1].isAlive = roleIsAlive;
                     }
                 }
 
@@ -159,12 +152,12 @@ namespace Julo.TurnBased
                     while(true)
                     {
                         nextRoleToPlay++;
-                        if(nextRoleToPlay >= numRoles)
+                        if(nextRoleToPlay > numRoles)
                         {
-                            nextRoleToPlay = 0;
+                            nextRoleToPlay = 1;
                         }
 
-                        if(roleData[nextRoleToPlay].isAlive)
+                        if(roleData[nextRoleToPlay - 1].isAlive)
                         {
                             break;
                         }
@@ -174,11 +167,21 @@ namespace Julo.TurnBased
 
                     // it's turn for nextRoleToPlay
 
+                    var players = GetPlayersForRole(nextRoleToPlay);
+
                     // TODO it's picking always the first player of the role
-                    var nextPlayer = roleData[nextRoleToPlay].players[0];
-                    //nextPlayer.GetConnection();
+                    var nextPlayer = players[0];
+                    var nextPlayerId = nextPlayer.GetId();
+
                     //SendTo(nextPlayer.GetConnection(), MsgType.ItsYourTurn, new 
-                    nextPlayer.TurnIsStartedRpc();
+                    //nextPlayer.TurnIsStartedRpc();
+
+                    //Log.Debug("It's turn of {0} ({1})", nextRoleToPlay, nextPlayerId);
+
+                    if(mode == Mode.OnlineMode)
+                    {
+                        SendToAll(MsgType.StartTurn, new TurnMessage(nextPlayerId));
+                    }
 
                     aPlayerIsPlaying = true;
 
@@ -203,12 +206,20 @@ namespace Julo.TurnBased
 
         public override void OnMessage(WrappedMessage message, int from)
         {
-            base.OnMessage(message, from);
-
-            // TODO check!
+            short msgType = message.messageType;
+            if(msgType == MsgType.EndTurn)
+            {
+                // TODO check everytring!
+                MyTurnIsOver();
+                SendToAll(MsgType.EndTurn, new EmptyMessage());
+            }
+            else
+            {
+                base.OnMessage(message, from);
+            }
         }
 
-        protected abstract void OnStartServer();
+        //protected abstract void OnStartServer();
         protected abstract void SpawnInitialUnits();
 
         protected abstract bool RoleIsAlive(int numRole);

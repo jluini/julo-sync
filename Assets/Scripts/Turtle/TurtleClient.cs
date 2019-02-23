@@ -136,6 +136,7 @@ namespace Turtle
         {
             return new GameState(GetAllTurtles());
         }
+
         // TODO getting state is duplicated between TurtleClient and TurtleServer
         public List<Turtle> GetAllTurtles()
         {

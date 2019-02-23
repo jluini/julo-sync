@@ -4,16 +4,17 @@ using Julo.Network;
 
 namespace Julo.TurnBased
 {
+    // only in server
     public class RoleData
     {
 
         public bool isAlive;
 
-        public List<TBPlayer> players;
+        //public List<TBPlayer> players;
 
-        public RoleData(List<TBPlayer> players)
+        public RoleData(/*List<TBPlayer> players*/)
         {
-            this.players = players;
+            //this.players = players;
             this.isAlive = true;
         }
 

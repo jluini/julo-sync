@@ -13,7 +13,26 @@ namespace Julo.Network
     
     public abstract class GameServer : MonoBehaviour
     {
-        public abstract void StartServer(Mode mode, int numRoles, List<Player>[] playersPerRole);
+        protected Mode mode;
+        protected int numRoles;
+        protected List<Player>[] playersPerRole;
+
+        public void StartServer(Mode mode, int numRoles, List<Player>[] playersPerRole)
+        {
+            this.mode = mode;
+            this.numRoles = numRoles;
+            this.playersPerRole = playersPerRole;
+
+            OnStartServer();
+        }
+
+        protected abstract void OnStartServer();
+
+        protected List<Player> GetPlayersForRole(int role)
+        {
+            return playersPerRole[role - 1];
+        }
+
         public abstract void StartGame();
 
         protected void SendTo(int who, short msgType, MessageBase msg)
