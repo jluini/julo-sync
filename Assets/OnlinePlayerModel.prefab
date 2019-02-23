@@ -144,7 +144,6 @@ GameObject:
   - component: {fileID: 85}
   - component: {fileID: 78}
   - component: {fileID: 87}
-  - component: {fileID: 89}
   - component: {fileID: 101}
   m_Layer: 5
   m_Name: OnlinePlayerModel
@@ -286,22 +285,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 21}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 942ab945e9dc0fb498b81ce5be39f371, type: 3}
+  m_Script: {fileID: 11500000, guid: 65277dd3ac71d494c9305873808f5673, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &89
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33f83d74bd6f6c64bb314159d98b56dd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dropdown: {fileID: 0}
 --- !u!114 &101
 MonoBehaviour:
   m_ObjectHideFlags: 0

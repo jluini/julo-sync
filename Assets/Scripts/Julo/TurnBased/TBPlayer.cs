@@ -1,20 +1,71 @@
-﻿using Julo.Network;
+﻿using System.Collections.Generic;
+
+using UnityEngine;
+
+using Julo.Network;
+using Julo.Logging;
 
 namespace Julo.TurnBased
 {
-    public interface TBPlayer : Player
+    public class TBPlayer : MonoBehaviour, Player
     {
-        bool IsLocal();
+        List<TBPlayerListener> listeners = new List<TBPlayerListener>();
 
-        void AddListener(TBPlayerListener listener);
-        void SetPlaying(bool isPlaying);
+        DNMPlayer _dnmPlayer;
+        DNMPlayer dnmPlayer
+        {
+            get
+            {
+                if(_dnmPlayer == null)
+                {
+                    _dnmPlayer = GetComponent<DNMPlayer>();
+
+                    if(_dnmPlayer == null)
+                    {
+                        Log.Error("Component DNMPlayer not found!");
+                    }
+                }
+
+                return _dnmPlayer;
+            }
+        }
+
+        public uint GetId()
+        {
+            return dnmPlayer.GetId();
+        }
+        public string GetName()
+        {
+            return dnmPlayer.GetName();
+        }
+        public int GetRole()
+        {
+            return dnmPlayer.GetRole();
+        }
+        public bool IsLocal()
+        {
+            return dnmPlayer.IsLocal();
+        }
+
+        public void AddListener(TBPlayerListener listener)
+        {
+            listeners.Add(listener);
+        }
+
+        public void SetPlaying(bool isPlaying)
+        {
+            foreach(var l in listeners)
+            {
+                l.SetPlaying(isPlaying);
+            }
+        }
         
         //void TurnIsStartedRpc();
         //void TurnIsOverCommand();
 
         //void GameStateCommand();
 
-    } // interface TBPlayer
+    } // class TBPlayer
 
 } // namespace Julo.TurnBased
 

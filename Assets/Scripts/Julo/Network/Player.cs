@@ -13,6 +13,7 @@ namespace Julo.Network
 
         string GetName();
         int GetRole();
+        bool IsLocal();
 
     } // interface Player
 

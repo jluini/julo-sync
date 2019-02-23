@@ -67,7 +67,6 @@ namespace Julo.Network
             DualNetworkManager.instance.ChangeRole(this);
         }
 
-
         public void Start()
         {
             StartCalled = true;

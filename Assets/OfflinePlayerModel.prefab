@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 93}
   - component: {fileID: 95}
   - component: {fileID: 94}
-  - component: {fileID: 91}
+  - component: {fileID: 1198333275666102376}
   m_Layer: 5
   m_Name: OfflinePlayerModel
   m_TagString: Untagged
@@ -111,7 +111,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a8908459e6a3e49a3146b979156b9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &91
+--- !u!114 &1198333275666102376
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -120,7 +120,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 30}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e9987f0b3198a6040b3389c5d1279877, type: 3}
+  m_Script: {fileID: 11500000, guid: 65277dd3ac71d494c9305873808f5673, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &31
