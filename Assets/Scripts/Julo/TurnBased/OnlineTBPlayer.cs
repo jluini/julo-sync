@@ -64,10 +64,18 @@ namespace Julo.TurnBased
             TurnBasedClient.instance.IsMyTurn(this, isLocalPlayer);
         }
         */
+        
         public bool IsLocal()
         {
-            return isLocalPlayer;
+            if(dnmPlayer == null)
+            {
+                Log.Error("Invalid call of IsLocal");
+                return false;
+            }
+
+            return dnmPlayer.IsLocal();
         }
+        
         /*
         // only in client owning this player
         public void TurnIsOverCommand()

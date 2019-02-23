@@ -56,7 +56,6 @@ namespace Julo.Network
                 }
             }
         }
-
         public void OnClickChangeRole()
         {
             if(!NetworkServer.active)
@@ -68,31 +67,6 @@ namespace Julo.Network
             DualNetworkManager.instance.ChangeRole(this);
         }
 
-        public void SetRole(int role)
-        {
-            // this change won't have immediate effect because it's a SyncVar (will trigger OnRoleChangedHook() instead)    
-            this.role = role;
-        }
-
-        public int GetRole()
-        {
-            return role;
-        }
-
-        public void SetUser(UserProfile user)
-        {
-            this.username = user.GetName();
-        }
-
-        public uint GetId()
-        {
-            return netId.Value;
-        }
-
-        public string GetName()
-        {
-            return username;
-        }
 
         public void Start()
         {
@@ -116,6 +90,40 @@ namespace Julo.Network
             }
         }
 
+
+        public uint GetId()
+        {
+            return netId.Value;
+        }
+
+        public string GetName()
+        {
+            return username;
+        }
+
+        public int GetRole()
+        {
+            return role;
+        }
+        public void SetRole(int role)
+        {
+            // this change won't have immediate effect because it's a SyncVar (will trigger OnRoleChangedHook() instead)    
+            this.role = role;
+        }
+
+        public bool IsLocal()
+        {
+            return isLocalPlayer;
+        }
+
+
+
+
+        public void SetUser(UserProfile user)
+        {
+            this.username = user.GetName();
+        }
+
         public bool IsReady()
         {
             return ready;
@@ -125,6 +133,7 @@ namespace Julo.Network
         {
             return role < DNM.FirstPlayerRole;
         }
+
         public void SetReady(bool readyState)
         {
             // this change won't have immediate effect because it's a SyncVar (will trigger OnReadyChangedHook() instead)    

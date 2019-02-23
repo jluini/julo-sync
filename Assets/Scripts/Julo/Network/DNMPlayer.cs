@@ -5,6 +5,8 @@ namespace Julo.Network
 
     public interface DNMPlayer : Player
     {
+        bool IsLocal();
+
         void AddListener(DNMPlayerListener listener);
 
         void SetUser(UserProfile user);
@@ -12,6 +14,7 @@ namespace Julo.Network
         bool IsReady();
 
         bool IsSpectator();
+
     }
 
 } // namespace Julo.Network

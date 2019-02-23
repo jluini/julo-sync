@@ -13,10 +13,6 @@ namespace Julo.Network
         List<DNMPlayerListener> listeners = new List<DNMPlayerListener>();
         UserProfile user;
 
-        public void SetUser(UserProfile user)
-        {
-            this.user = user;
-        }
 
         public uint GetId()
         {
@@ -35,6 +31,22 @@ namespace Julo.Network
             }
         }
 
+        public int GetRole()
+        {
+            Log.Error("To be implemented");
+            return 0;
+        }
+
+        public bool IsLocal()
+        {
+            return true;
+        }
+
+        public void SetUser(UserProfile user)
+        {
+            this.user = user;
+        }
+
         public bool IsReady()
         {
             return true;
@@ -43,12 +55,6 @@ namespace Julo.Network
         public bool IsSpectator()
         {
             return false;
-        }
-
-        public int GetRole()
-        {
-            Log.Error("To be implemented");
-            return 0;
         }
 
         /////////////// Listening ///////////////
