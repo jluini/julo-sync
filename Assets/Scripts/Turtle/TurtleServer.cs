@@ -53,8 +53,24 @@ namespace Turtle
             //Log.Debug("{0} spawn points found", spawnPoints.Length);
 
             //CheckSpawnPoints(spawnPoints);
+            var sortedSpawnPoints = new List<SpawnPoint>(spawnPoints);
 
-            foreach(var sp in spawnPoints)
+            sortedSpawnPoints.Sort((x, y) =>
+            {
+                var ret = x.role - y.role;
+                if(ret == 0)
+                {
+                    ret = x.index - y.index;
+                }
+                return ret;
+            });
+            sortedSpawnPoints.Sort((x, y) => x.role  - y.role );
+            foreach(var sp in sortedSpawnPoints)
+            {
+                Log.Debug("{0}, {1}", sp.role, sp.index);
+            }
+
+            foreach(var sp in sortedSpawnPoints)
             {
                 if(sp.role > numRoles)
                 {
@@ -63,14 +79,7 @@ namespace Turtle
                 }
 
                 Turtle newTurtle;
-                //if(mode == Mode.OfflineMode)
-                //{
-                //    newTurtle = Object.Instantiate(offlineTurtlePrefab) as Turtle;
-                //}
-                //else
-                //{
                 newTurtle = Object.Instantiate(onlineTurtlePrefab) as Turtle;
-                //}
 
                 newTurtle.transform.position = sp.transform.position;
                 newTurtle.transform.rotation = sp.transform.rotation;
@@ -78,9 +87,7 @@ namespace Turtle
                 newTurtle.role = sp.role;
                 newTurtle.index = sp.index;
 
-                //Log.Debug("Adding turtle");
                 GetTurtlesForRole(sp.role).Add(newTurtle); ;
-                //turtlesPerRole[sp.role - 1].Add(newTurtle);
             }
 
             // TODO do checks
@@ -90,14 +97,11 @@ namespace Turtle
 
             if(mode == Mode.OnlineMode)
             {
-                //SendToAll(Julo.TurnBased.MsgType.InitialState, GetStateMessage());
-
                 foreach(Turtle t in initialTurtles)
                 {
                     NetworkServer.Spawn(t.gameObject);
                 }
             }
-            // TODO if it's only already can continue
         }
 
         List<Turtle> GetTurtlesForRole(int role)
@@ -143,7 +147,6 @@ namespace Turtle
         // TODO this is duplicated in TurtleClient
         public override MessageBase GetStateMessage()
         {
-            //return TurtleClient.instance.GetStateMessage(); // TODO won't work in dedicated server mode
             return new GameState(GetAllTurtles());
         }
         
@@ -155,27 +158,9 @@ namespace Turtle
             {
                 foreach(Turtle t in GetTurtlesForRole(i))
                 {
-                    /*
-                    uint netId = t.GetComponent<NetworkIdentity>().netId.Value;
-
-                    // TODO corregir
-                    if(netId > 0)
-                    {
-                        if(turtlesByNetId == null)
-                        {
-                            turtlesByNetId = new Dictionary<uint, Turtle>();
-                        }
-                        if(!turtlesByNetId.ContainsKey(netId))
-                        {
-                            turtlesByNetId[netId] = t;
-                        }
-                    }
-                    */
                     ret.Add(t);
                 }
             }
-
-            //Log.Debug("Total of {0} turtles in server", ret.Count);
 
             return ret;
         }
@@ -191,7 +176,6 @@ namespace Turtle
 
             if(msgType == Julo.TurnBased.MsgType.GameState)
             {
-                //msg.ApplyTo(turtlesByNetId);
                 // TODO could be more direct?
 
                 var msg = message.ReadExtraMessage<GameState>();

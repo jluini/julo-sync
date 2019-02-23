@@ -9,7 +9,7 @@ namespace Turtle
     
     public class GameState : MessageBase
     {
-        public Dictionary<uint, TurtleState> units;
+        public List<TurtleState> units;
 
         public GameState()
         {
@@ -17,11 +17,12 @@ namespace Turtle
 
         public GameState(List<Turtle> turtles)
         {
-            units = new Dictionary<uint, TurtleState>();
+            units = new List<TurtleState>();
+
             foreach(Turtle t in turtles)
             {
                 var td = t.GetState();
-                units.Add(td.netId, td);
+                units.Add(td);
             }
         }
 
@@ -29,49 +30,28 @@ namespace Turtle
         {
             writer.Write(units.Count);
 
-            foreach(TurtleState unit in units.Values)
+            foreach(TurtleState unit in units)
             {
                 unit.Serialize(writer);
-
-                /*
-                writer.Write(unit.netId);
-                writer.Write(unit.role);
-                writer.Write(unit.index);
-                writer.Write(unit.position);
-                writer.Write(unit.rotation);
-                writer.Write(unit.velocity);
-                writer.Write(unit.angularVelocity);
-                */
             }
         }
 
         public override void Deserialize(NetworkReader reader)
         {
             int count = reader.ReadInt32();
-            units = new Dictionary<uint, TurtleState>();
+            units = new List<TurtleState>();
 
             for(int i = 0; i < count; i++)
             {
                 var newUnit = new TurtleState();
                 newUnit.Deserialize(reader);
-                /*
-                var newUnit = new TurtleState(
-                    reader.ReadUInt32(),          // netId
-                    reader.ReadInt32(),           // role
-                    reader.ReadInt32(),           // index
-                    reader.ReadVector2(),         // position
-                    reader.ReadQuaternion(),      // rotation
-                    reader.ReadVector2(),         // velocity
-                    reader.ReadSingle()           // angularVelocity
-                );
-                */
-                units.Add(newUnit.netId, newUnit);
+                units.Add(newUnit);
             }
         }
 
         public void ApplyTo(Dictionary<uint, Turtle> turtlesByNetId)
         {
-            foreach(TurtleState d in units.Values)
+            foreach(TurtleState d in units)
             {
                 if(!turtlesByNetId.ContainsKey(d.netId))
                 {
@@ -89,18 +69,10 @@ namespace Turtle
         {
             var ret = System.String.Format("{0} turtles:\n", units.Count);
 
-            foreach(uint netId in units.Keys)
+            foreach(var unit in units)
             {
-                var d = units[netId];
-                ret += System.String.Format("\n{0}\t{1}\t{2}", netId, d.role, d.index);
-                /*
-                ret += "\n";
-                ret += netId.ToString();
-                ret += "\t";
-                ret += role.ToString();
-                ret += "\t";
-                ret += index.ToString();
-                */
+                uint netId = unit.netId;
+                ret += System.String.Format("\n{0}\t{1}\t{2}", netId, unit.role, unit.index);
             }
             ret += "\n";
 

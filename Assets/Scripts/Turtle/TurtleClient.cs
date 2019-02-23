@@ -198,15 +198,16 @@ namespace Turtle
             }
         }
 
-        void RegisterTurtles(Dictionary<uint, TurtleState> data)
+        void RegisterTurtles(List<TurtleState> data)
         {
-            foreach(uint netId in data.Keys)
+            foreach(var turtleState in data)
             {
+                var netId = turtleState.netId;
                 var turtleObj = ClientScene.FindLocalObject(new NetworkInstanceId(netId));
                 Turtle t = turtleObj.GetComponent<Turtle>();
 
-                int role = data[netId].role;
-                int index = data[netId].index;
+                int role = turtleState.role;
+                int index = turtleState.index;
                 t.SetBasicData(role, index);
 
                 // t.role = role;
@@ -263,7 +264,17 @@ namespace Turtle
             // TODO criteria to pick turtle
             if(turtles.Count > 0)
             {
-                return turtles[0];
+                var t = turtles[0];
+                for(int i = 1; i < turtles.Count; i++)
+                {
+                    var t2 = turtles[i];
+                    if(t2.lastUse < t.lastUse)
+                    {
+                        t = t2;
+                    }
+                }
+
+                return t;
             }
             Log.Error("No turtles");
             return null;

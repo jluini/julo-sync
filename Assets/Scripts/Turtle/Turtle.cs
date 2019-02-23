@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+
+using UnityEngine;
 using UnityEngine.Networking;
 
 using Julo.Logging;
@@ -12,6 +14,8 @@ namespace Turtle
         public int role = 0;
         public int index = 0;
         public bool dead = false;
+
+        public DateTime lastUse;
 
         public static Color[] playerColors =
         {
@@ -145,6 +149,7 @@ namespace Turtle
             {
                 SetMyColor();
             }
+            lastUse = DateTime.Now;
         }
 
         public void SetColor(Color color)
