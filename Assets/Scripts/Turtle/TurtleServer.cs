@@ -50,8 +50,6 @@ namespace Turtle
 
             SpawnPoint[] spawnPoints = FindObjectsOfType<SpawnPoint>();
 
-            //Log.Debug("{0} spawn points found", spawnPoints.Length);
-
             //CheckSpawnPoints(spawnPoints);
             var sortedSpawnPoints = new List<SpawnPoint>(spawnPoints);
 
@@ -64,11 +62,6 @@ namespace Turtle
                 }
                 return ret;
             });
-            sortedSpawnPoints.Sort((x, y) => x.role  - y.role );
-            foreach(var sp in sortedSpawnPoints)
-            {
-                Log.Debug("{0}, {1}", sp.role, sp.index);
-            }
 
             foreach(var sp in sortedSpawnPoints)
             {
