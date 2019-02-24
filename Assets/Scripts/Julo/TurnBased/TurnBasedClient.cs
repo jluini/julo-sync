@@ -24,7 +24,25 @@ namespace Julo.TurnBased
         {
             instance = this;
 
-            clientPlayers = new CacheClientPlayers<TBPlayer>();
+            Log.Debug("Initating TBClient({0})", mode);
+            if(mode == Mode.OfflineMode)
+            {
+                var players = new Dictionary<uint, TBPlayer>();
+                
+                // TODO!!!
+                foreach(var p in DualNetworkManager.instance.OfflinePlayers())
+                {
+                    var pp = (OfflinePlayer)p;
+                    var tbp = pp.GetComponent<TBPlayer>();
+                    players.Add(p.GetId(), tbp);
+                }
+
+                clientPlayers = new FixedClientPlayers<TBPlayer>(players);
+            }
+            else
+            {
+                clientPlayers = new CacheClientPlayers<TBPlayer>();
+            }
         }
         
         // TODO call this!!
@@ -87,6 +105,8 @@ namespace Julo.TurnBased
             {
                 var turnMsg = message.ReadExtraMessage<TurnMessage>();
                 var netId = turnMsg.playerNetId;
+                Log.Debug("Recibí StartTurn({0})", netId);
+
                 var player = clientPlayers.GetPlayerByNetId(netId);
 
                 IsMyTurn(player);
@@ -102,29 +122,7 @@ namespace Julo.TurnBased
                 base.OnMessage(message);
             }
         }
-        /*
-        TBPlayer GetPlayerByNetId(uint netId)
-        {
-            if(!clientPlayers.ContainsKey(netId))
-            {
-                var p = ClientScene.FindLocalObject(new NetworkInstanceId(netId));
-                if(p == null)
-                {
-                    Log.Error("No object");
-                    return null;
-                }
-                var tbPlayer = p.GetComponent<TBPlayer>();
-                if(tbPlayer == null)
-                {
-                    Log.Error("No TBPlayer");
-                    return null;
-                }
-                clientPlayers.Add(netId, tbPlayer);
-            }
-
-            return clientPlayers[netId];
-        }
-        */
+        
         protected abstract void OnStartTurn(TBPlayer player);
         protected abstract bool TurnIsOn();
         public abstract MessageBase GetStateMessage();

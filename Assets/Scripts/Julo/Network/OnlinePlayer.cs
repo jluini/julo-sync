@@ -145,31 +145,6 @@ namespace Julo.Network
         {
             listeners.Add(listener);
         }
-        /*
-        public void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isLocal = true)
-        {
-            foreach (DNMPlayerListener l in listeners)
-            {
-                l.Init(username, role, gameState, mode, isLocal);
-            }
-        }
-
-        public void OnReadyChanged(bool isReady)
-        {
-            foreach(DNMPlayerListener l in listeners)
-            {
-                l.OnReadyChanged(isReady);
-            }
-        }
-
-        public void OnRoleChanged(int newRole)
-        {
-            foreach (DNMPlayerListener l in listeners)
-            {
-                l.OnRoleChanged(newRole);
-            }
-        }
-        */
 
     } // class NetworkPlayer
 

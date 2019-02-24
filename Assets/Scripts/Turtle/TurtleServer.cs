@@ -21,6 +21,7 @@ namespace Turtle
         Dictionary<uint, Turtle> turtlesByNetId = null;
 
         int expectedNumberOfTurtles = -1;
+        int offlineTurtles = -1;
 
         protected override void OnStartServer()
         {
@@ -43,12 +44,9 @@ namespace Turtle
 
         protected override void SpawnInitialUnits()
         {
-            if(mode == Mode.OfflineMode)
-            {
-                throw new System.NotImplementedException();
-            }
-
             SpawnPoint[] spawnPoints = FindObjectsOfType<SpawnPoint>();
+
+            // Log.Debug("{0} spawn points found", spawnPoints.Length);
 
             //CheckSpawnPoints(spawnPoints);
             var sortedSpawnPoints = new List<SpawnPoint>(spawnPoints);
@@ -80,7 +78,7 @@ namespace Turtle
                 newTurtle.role = sp.role;
                 newTurtle.index = sp.index;
 
-                GetTurtlesForRole(sp.role).Add(newTurtle); ;
+                GetTurtlesForRole(sp.role).Add(newTurtle);
             }
 
             // TODO do checks
@@ -88,7 +86,11 @@ namespace Turtle
             var initialTurtles = GetAllTurtles();
             expectedNumberOfTurtles = initialTurtles.Count;
 
-            if(mode == Mode.OnlineMode)
+            if(mode == Mode.OfflineMode)
+            {
+                offlineTurtles = 0;
+            }
+            else
             {
                 foreach(Turtle t in initialTurtles)
                 {
@@ -102,31 +104,40 @@ namespace Turtle
             // TODO checks!
             return turtlesPerRole[role - 1];
         }
+
         public void RegisterInServer(Turtle t)
         {
+            bool allSpawned;
+
             if(mode == Mode.OfflineMode)
             {
-                return;
+                offlineTurtles++;
+                allSpawned = offlineTurtles == expectedNumberOfTurtles;
             }
-            var ni = t.GetComponent<NetworkIdentity>();
-            uint netId = ni == null ? 10000 : ni.netId.Value;
-
-            if(netId > 0)
+            else
             {
-                if(turtlesByNetId == null)
+                var ni = t.GetComponent<NetworkIdentity>();
+                uint netId = ni == null ? 10000 : ni.netId.Value;
+
+                if(netId > 0)
                 {
-                    Log.Error("Dict not initialized");
-                    return;
+                    if(turtlesByNetId == null)
+                    {
+                        Log.Error("Dict not initialized");
+                        return;
+                    }
+                    else if(turtlesByNetId.ContainsKey(netId))
+                    {
+                        Log.Error("Turtle {0} already registered", netId);
+                        return;
+                    }
+                    turtlesByNetId[netId] = t;
                 }
-                else if(turtlesByNetId.ContainsKey(netId))
-                {
-                    Log.Error("Turtle {0} already registered", netId);
-                    return;
-                }
-                turtlesByNetId[netId] = t;
+
+                allSpawned = turtlesByNetId.Count == expectedNumberOfTurtles;
             }
 
-            if(turtlesByNetId.Count == expectedNumberOfTurtles)
+            if(allSpawned)
             {
                 InitialUnitsWereSpawned();
             }

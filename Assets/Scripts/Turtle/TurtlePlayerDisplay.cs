@@ -58,7 +58,8 @@ namespace Turtle
         {
             nameDisplay.text = username;
             roleDisplay.text = GetRoleText(role);
-            readyToggle.isOn = false;
+            // TODO do this here
+            readyToggle.isOn = mode == Mode.OfflineMode;
 
             this.isLocal = isLocal;
         }

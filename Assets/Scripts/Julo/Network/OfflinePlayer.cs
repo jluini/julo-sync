@@ -13,10 +13,27 @@ namespace Julo.Network
         List<DNMPlayerListener> listeners = new List<DNMPlayerListener>();
         UserProfile user;
 
+        int role;
+        uint id;
+
+        public void Init(UserProfile user, uint id, int role)
+        {
+            SetUser(user);
+            this.id = id;
+            SetRole(role);
+        }
+
+        void Start()
+        {
+            foreach(DNMPlayerListener l in listeners)
+            {
+                l.Init(user.GetName(), role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OfflineMode);
+            }
+        }
 
         public uint GetId()
         {
-            throw new System.NotImplementedException();
+            return id;
         }
 
         public string GetName()
@@ -33,8 +50,16 @@ namespace Julo.Network
 
         public int GetRole()
         {
-            Log.Error("To be implemented");
-            return 0;
+            return role;
+        }
+
+        public void SetRole(int newRole)
+        {
+            this.role = newRole;
+            foreach(DNMPlayerListener l in listeners)
+            {
+                l.OnRoleChanged(newRole);
+            }
         }
 
         public bool IsLocal()
@@ -63,31 +88,6 @@ namespace Julo.Network
         {
             listeners.Add(listener);
         }
-        /*
-        public void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isLocal = true)
-        {
-            foreach (DNMPlayerListener l in listeners)
-            {
-                l.Init(username, role, gameState, mode, isLocal);
-            }
-        }
-
-        public void OnReadyChanged(bool isReady)
-        {
-            foreach (DNMPlayerListener l in listeners)
-            {
-                l.OnReadyChanged(isReady);
-            }
-        }
-
-        public void OnRoleChanged(int newRole)
-        {
-            foreach (DNMPlayerListener l in listeners)
-            {
-                l.OnRoleChanged(newRole);
-            }
-        }
-        */
 
     } // class OfflinePlayer
 

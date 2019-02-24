@@ -8,11 +8,10 @@ namespace Julo.Network
     {
         uint GetId();
 
-        //int GetConnection();
-        //short GetControllerId();
+        int GetRole();
 
         string GetName();
-        int GetRole();
+
         bool IsLocal();
 
     } // interface Player

@@ -213,9 +213,6 @@ namespace Turtle
                 int index = turtleState.index;
                 t.SetBasicData(role, index);
 
-                // t.role = role;
-                // t.index = index;
-
                 RegisterInClient(t);
             }
         }

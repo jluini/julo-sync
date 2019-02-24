@@ -8,7 +8,7 @@ namespace Julo.Network
     
     public abstract class GameClient : MonoBehaviour
     {
-        //public static GameClient instance = null;
+        public static GameClient instance = null;
 
         protected Mode mode;
         protected bool isHosted;
@@ -19,7 +19,7 @@ namespace Julo.Network
 
         public void StartClient(Mode mode, bool isHosted, int numRoles)
         {
-            //instance = this;
+            instance = this;
 
             this.mode = mode;
             this.isHosted = isHosted;
@@ -40,6 +40,7 @@ namespace Julo.Network
             DualNetworkManager.instance.GameClientSendToServer(msgType, msg);
         }
 
+        // TODO tratar de no recibirlo wrapped
         public virtual void OnMessage(WrappedMessage message)
         {
             throw new System.Exception("Unhandled message");

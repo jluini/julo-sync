@@ -42,7 +42,16 @@ namespace Julo.Network
 
         protected void SendToAll(short msgType, MessageBase msg)
         {
-            DualNetworkManager.instance.GameServerSendToAll(msgType, msg);
+            // TODO tratar de no recibirlo wrapped
+
+            if(mode == Mode.OfflineMode)
+            {
+                GameClient.instance.OnMessage(new WrappedMessage(msgType, msg));
+            }
+            else
+            {
+                DualNetworkManager.instance.GameServerSendToAll(msgType, msg);
+            }
         }
 
         protected void SendToAllBut(int who, short msgType, MessageBase msg)

@@ -45,6 +45,7 @@ namespace Julo.TurnBased
 
         public void InitialUnitsWereSpawned()
         {
+            Log.Debug("Will start game!");
             StartCoroutine(GameRoutine());
         }
 
@@ -54,11 +55,11 @@ namespace Julo.TurnBased
             yield return new WaitForSecondsRealtime(.1f);
             
             var stateMessage = GetStateMessage();
-            
+
+            // TODO send if offline mode?
             SendToAll(Julo.TurnBased.MsgType.InitialState, stateMessage);
 
             // TODO wait for confirmation!
-
             do
             {
                 yield return new WaitForSecondsRealtime(preturnWaitTime);
@@ -126,6 +127,7 @@ namespace Julo.TurnBased
                     lastRolePlayed = nextRoleToPlay;
 
                     // it's turn for nextRoleToPlay
+                    Log.Debug("It's turn for role {0}", nextRoleToPlay);
 
                     var players = GetPlayersForRole(nextRoleToPlay);
 
@@ -133,15 +135,12 @@ namespace Julo.TurnBased
                     var nextPlayer = players[0];
                     var nextPlayerId = nextPlayer.GetId();
 
-                    //SendTo(nextPlayer.GetConnection(), MsgType.ItsYourTurn, new 
-                    //nextPlayer.TurnIsStartedRpc();
+                    Log.Debug("It's turn for player with id {0}", nextPlayerId);
 
-                    //Log.Debug("It's turn of {0} ({1})", nextRoleToPlay, nextPlayerId);
-
-                    if(mode == Mode.OnlineMode)
-                    {
+                    //if(mode == Mode.OnlineMode)
+                    //{
                         SendToAll(MsgType.StartTurn, new TurnMessage(nextPlayerId));
-                    }
+                    //}
 
                     aPlayerIsPlaying = true;
 

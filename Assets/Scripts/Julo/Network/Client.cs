@@ -12,10 +12,8 @@ namespace Julo.Network
 
     public class Client
     {
-
         public NetworkConnection connection;
         public List<DNMPlayer> players;
-        //public bool readyToStart;
 
         public DualNetworkManager.GameState stateInServer;
 
@@ -23,7 +21,6 @@ namespace Julo.Network
         {
             connection = conn;
             players = new List<DNMPlayer>();
-            //readyToStart = false;
             stateInServer = DualNetworkManager.GameState.NoGame;
         }
 
@@ -36,17 +33,6 @@ namespace Julo.Network
         {
             return connection.isReady;
         }
-        /*
-        public bool IsReadyToStart()
-        {
-            return readyToStart;
-        }
-
-        public void SetReadyToStart(bool ready)
-        {
-            readyToStart = ready;
-        }
-        */
 
     } // class Client
 

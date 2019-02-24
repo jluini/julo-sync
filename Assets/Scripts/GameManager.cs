@@ -27,24 +27,47 @@ public class GameManager : MonoBehaviour, DNMListener
         dnm.Init(userManager);
     }
 
-    public void StartOffline()
+    // Button handlers
+
+    public void OnClickStartOffline()
     {
         dnm.StartOffline();
     }
 
-    public void StartOnline()
+    public void OnClickStartOnline()
     {
-        // panels.OpenPanel(onlinePanel);
+        // TODO
     }
 
-    public void StartLANHost()
+    public void OnClickLanHost()
     {
         dnm.StartAsHost();
     }
 
-    public void StartLANJoin()
+    public void OnClickLanJoin()
     {
         dnm.StartAsClient();
+    }
+
+    public void OnClickStartGame()
+    {
+        dnm.TryToStartGame();
+    }
+
+    public void OnClickBack()
+    {
+        dnm.Stop();
+    }
+
+    public void OnClickCancelConnect()
+    {
+        if(dnm.GetState() != DNMState.StartingAsClient)
+        {
+            Log.Warn("GameManager: unexpected call of OnClickCancelConnect");
+            return;
+        }
+
+        dnm.StopClient();
     }
 
     // DNMListener methods
@@ -54,6 +77,11 @@ public class GameManager : MonoBehaviour, DNMListener
         if(state == DNMState.Off)
         {
             panels.OpenPanel(mainMenuPanel);
+        }
+        else if(state == DNMState.Offline)
+        {
+            lobbyPanel.SetMode(Mode.OfflineMode);
+            panels.OpenPanel(lobbyPanel);
         }
         else if(state == DNMState.Host)
         {
@@ -84,40 +112,6 @@ public class GameManager : MonoBehaviour, DNMListener
     {
         lobbyPanel.SetPlaying(true);
     }
-
-    // Button handlers
-
-    public void OnClickStartGame()
-    {
-        dnm.TryToStartGame();
-    }
-
-    public void OnClickBack()
-    {
-        if(dnm.GetState() == DNMState.Host)
-        {
-            dnm.StopHost();
-        }
-        else if(dnm.GetState() == DNMState.Client)
-        {
-            dnm.StopClient();
-        }
-        else
-        {
-            Log.Warn("GameManager: unexpected call of OnClickBack");
-        }
-    }
-
-    public void OnClickCancelConnect()
-    {
-        if(dnm.GetState() != DNMState.StartingAsClient)
-        {
-            Log.Warn("GameManager: unexpected call of OnClickCancelConnect");
-            return;
-        }
-
-        dnm.StopClient();
-    }
-
+    
 }
 

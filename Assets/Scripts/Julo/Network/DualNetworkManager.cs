@@ -33,7 +33,6 @@ namespace Julo.Network
 
     public class DualNetworkManager : NetworkManager, DNMListener
     {
-        
         static DualNetworkManager _instance = null;
         public static DualNetworkManager instance
         {
@@ -42,7 +41,7 @@ namespace Julo.Network
                 return _instance;
             }
         }
-
+        
         public LevelData levelData;
 
         public enum GameState
@@ -102,6 +101,12 @@ namespace Julo.Network
 
         ////////////////////////////////////////////////////////////
 
+        // only offline mode
+
+        uint lastOfflineIdUsed = 0;
+        
+        ////////////////////////////////////////////////////////////
+
         List<DNMListener> listeners = new List<DNMListener>();
 
         ////////////////////////////////////////////////////////////
@@ -124,8 +129,6 @@ namespace Julo.Network
             SetState(DNMState.Off);
             SetGameState(GameState.NoGame);
             this.userManager = userManager;
-
-            //RegisterServerHandlers();
         }
         
         public void StartOffline()
@@ -138,15 +141,18 @@ namespace Julo.Network
 
             Log.Debug("START OFFLINE: " + userManager.GetActiveUser().GetName());
 
-            SetState(DNMState.Offline);
-
-            // TODO create dict here?
             clients = new Dictionary<int, Client>();
+
+            SetState(DNMState.Offline);
 
             var singleClient = new Client(null);
             clients.Add(LocalConnectionId, singleClient);
 
             AddOfflinePlayer(userManager.GetActiveUser());
+
+            // TODO delete this!!!
+            if(sceneToggle.isOn)
+                AddOfflinePlayer(userManager.GetActiveUser());
         }
 
         public void StartAsHost()
@@ -157,9 +163,6 @@ namespace Julo.Network
                 return;
             }
 
-            // Log.Debug(System.String.Format("DNM: starting host for '{0}'", userManager.GetActiveUser().GetName()));
-
-            // TODO start dict here?
             clients = new Dictionary<int, Client>();
 
             SetState(DNMState.CreatingHost);
@@ -190,14 +193,69 @@ namespace Julo.Network
                 Log.Error("DNM: could not start client");
             }
         }
-
+        
+        public void Stop()
+        {
+            if(state == DNMState.Offline)
+            {
+                SetState(DNMState.Off);
+                foreach(var p in GetClient(LocalConnectionId).players)
+                {
+                    OfflinePlayer op = (OfflinePlayer)p;
+                    Destroy(op.gameObject);
+                }
+                clients = null;
+            }
+            else if(state == DNMState.Host)
+            {
+                // TODO destroy and clear things
+                // TODO should clear clients ???????????????
+                StopHost();
+                clients = null;
+            }
+            else if(state == DNMState.Client)
+            {
+                // TODO destroy and clear things
+                StopClient();
+            }
+            else
+            {
+                Log.Warn("DNM: unexpected call of Stop");
+            }
+        }
+        
         ////////////////////////////////////////////////////////////
 
-        bool AddOfflinePlayer(UserProfile user)
+        //////////////////// Offline mode //////////////////////////
+
+        void AddOfflinePlayer(UserProfile user)
         {
-            Log.Warn("DualNetworkManager::AddOfflinePlayer to be implemented");
-            throw new System.NotImplementedException();
-            // return true;
+            var player = GameObject.Instantiate(offlinePlayerModel, playerContainer) as OfflinePlayer;
+            int newRole;
+
+            if(gameState == GameState.NoGame)
+            {
+                newRole = GetNextRole();
+            }
+            else if(gameState == GameState.WillStart || gameState == GameState.Playing || gameState == GameState.GameOver)
+            {
+                newRole = DNM.SpecRole;
+            }
+            else
+            {
+                Log.Warn("Unexpected gameState {0}", gameState);
+                newRole = DNM.SpecRole;
+            }
+
+            player.Init(user, ++lastOfflineIdUsed, newRole);
+
+            GetClient(LocalConnectionId).AddPlayer(player);
+        }
+
+        // TODO !!!
+        public List<DNMPlayer> OfflinePlayers()
+        {
+            return GetClient(LocalConnectionId).players;
         }
 
         ////////////////////////////////////////////////////////////
@@ -208,7 +266,7 @@ namespace Julo.Network
 
         public void TryToStartGame()
         {
-            if(state != DNMState.Host)
+            if(state != DNMState.Host && state != DNMState.Offline)
             {
                 Log.Error("Invalid call of StartGame: {0}", state);
                 return;
@@ -243,10 +301,8 @@ namespace Julo.Network
 
             SetGameState(GameState.Preparing);
 
-            // TODO variable number of players?
             playersPerRole = new List<Player>[levelData.MaxPlayers];
 
-            // TODO ignore non-playing clients!!!
             foreach(Client client in clients.Values)
             {
                 if(client.stateInServer != GameState.NoGame)
@@ -276,8 +332,12 @@ namespace Julo.Network
 
             if(state == DNMState.Offline)
             {
-                // should send a "mock message" to create offline local client?
-                throw new System.NotImplementedException();
+                InstantiateClient();
+
+                SetGameState(GameState.Playing);
+                OnClientGameStarted(); // this is to hide game panel
+
+                StartCoroutine(StartGameDelayed());
             }
             else
             {
@@ -419,7 +479,6 @@ namespace Julo.Network
 
             if(gameState == GameState.NoGame)
             {
-                // TODO check way of deciding initial role
                 int nextRole = GetNextRole();
                 role = nextRole;
             }
@@ -435,7 +494,7 @@ namespace Julo.Network
             player.SetUser(user);
             player.SetRole(role);
 
-            GetConnection(conn).AddPlayer(player);
+            GetClient(conn).AddPlayer(player);
 
             NetworkServer.AddPlayerForConnection(conn, player.gameObject, playerControllerId);
         }
@@ -489,7 +548,6 @@ namespace Julo.Network
                 Log.Error("Invalid call of ClientSetReady: {0}", state);
                 return;
             }
-            // TODO during WillStart should be able to set ready to false and abort
 
             if(gameState != GameState.NoGame)
             {
@@ -513,7 +571,7 @@ namespace Julo.Network
             if(state == DNMState.Off)
             {
                 // it was host and was stopped
-                // TODO do something? will be stopped OnStopHost
+                // it will be stopped OnStopHost
             }
             else if(state == DNMState.StartingAsClient)
             {
@@ -532,9 +590,7 @@ namespace Julo.Network
         }
 
         public override void OnClientSceneChanged(NetworkConnection conn) {
-            // TODO is this called?
-
-            Log.Debug("### OnClientSceneChanged ### gameState={0}", gameState);
+            Log.Warn("######## OnClientSceneChanged called ### gameState={0}", gameState);
         }
 
         public override void OnClientConnect(NetworkConnection conn)
@@ -552,9 +608,7 @@ namespace Julo.Network
             else if(state == DNMState.StartingAsClient && !NetworkServer.active)
             {
                 conn.RegisterHandler(MsgType.InitialStatus, OnClientInitialStatusMessage);
-                
-                //SetState(DNMState.Client);
-                //RegisterClientHandlers(conn);
+                // wait for InitialStatus message
             }
             else 
             {
@@ -570,7 +624,7 @@ namespace Julo.Network
         }
         
         public override void OnClientDisconnect(NetworkConnection conn) {
-            // Log.Debug("### OnClientDisconnect({0})", conn.connectionId);
+            // Log.Debug("### OnClientDisconnect({0})", conn);
 
             StopClient();
 
@@ -579,9 +633,6 @@ namespace Julo.Network
                 Log.Error("ClientDisconnected due to error: " + conn.lastError);
                 //if (LogFilter.logError) { Debug.LogError("ClientDisconnected due to error: " + conn.lastError); }
             }
-
-            // Log.Debug("Client disconnected from server: " + conn);
-
         }
 
         public override void OnClientError(NetworkConnection conn, int errorCode) {
@@ -735,7 +786,7 @@ namespace Julo.Network
                 return;
             }
 
-            Client c = GetConnection(messageReader.conn);
+            Client c = GetClient(messageReader.conn);
             if(c.stateInServer != GameState.NoGame)
             {
                 Log.Warn("Unexpected client state in server B: {0}", c.stateInServer);
@@ -766,8 +817,10 @@ namespace Julo.Network
             // TODO should do this after a GameStarted confirmation?
             //gameServer.StartGame();
         }
+        
         // Client message handlers
 
+        // only in non-hosted clients
         void OnClientInitialStatusMessage(NetworkMessage messageReader)
         {
             if(NetworkServer.active)
@@ -813,11 +866,10 @@ namespace Julo.Network
                 }
             }
 
-            //OnClientInitialStatus(msg.map, msg.gameState);
-
-            // TODO do this always?
             CreatePlayer(localClient.connection); // create remote initial player
         }
+
+        // create first local/remote client
         void CreatePlayer(NetworkConnection conn)
         {
             ClientScene.Ready(conn);
@@ -833,9 +885,10 @@ namespace Julo.Network
         
         void OnClientPrepareMessage(NetworkMessage messageReader)
         {
-            if(state == DNMState.Offline)
+            if(state != DNMState.Host && state != DNMState.Client)
             {
-                throw new System.NotImplementedException();
+                Log.Error("DNM: unexpected call of OnClientPrepareMessage: {0}", state);
+                return;
             }
 
             bool hosted = state == DNMState.Host;
@@ -856,11 +909,8 @@ namespace Julo.Network
                 SetGameState(GameState.Preparing);
             }
 
-            //PrepareMessage msg = messageReader.ReadMessage<PrepareMessage>();
             var msg = messageReader.ReadMessage<StringMessage>();
-
             string clientMap = msg.value;
-            //NetworkReader clientInitialStateReader = msg.ExtraReader();
 
             if(!hosted)
             {
@@ -869,8 +919,7 @@ namespace Julo.Network
 
             InstantiateClient();
 
-            // this is to hide game panel
-            OnClientGameStarted(); // TODO do this delayed?
+            OnClientGameStarted(); // this is to hide game panel
 
             client.Send(MsgType.ReadyToSpawn, new EmptyMessage());
         }
@@ -988,10 +1037,13 @@ namespace Julo.Network
             return ret;
         }
 
-        Client GetConnection(NetworkConnection conn)
+        Client GetClient(NetworkConnection conn)
         {
-            int id = conn.connectionId;
+            return GetClient(conn.connectionId);
+        }
 
+        Client GetClient(int id)
+        {
             if(!clients.ContainsKey(id))
             {
                 Log.Error("Connection with id {0} not found", id);
@@ -1005,7 +1057,8 @@ namespace Julo.Network
         {
             for(int i = 1; i <= levelData.MaxPlayers; i++)
             {
-                if(NumberOfPlayersForRole(i) == 0)
+                var playerCount = NumberOfPlayersForRole(i);
+                if(playerCount == 0)
                 {
                     return i;
                 }
@@ -1037,7 +1090,6 @@ namespace Julo.Network
 
             return ret;
         }
-
 
         bool PlayersAreReady()
         {
@@ -1090,8 +1142,6 @@ namespace Julo.Network
         public void GameServerSendToAllBut(int who, short msgType, MessageBase gameMessage)
         {
             // TODO checks
-            //NetworkServer.SendToAll(MsgType.GameServerSendToAll, new WrappedMessage(msgType, message));
-            
             foreach(int id in clients.Keys)
             {
                 if(id != who)
@@ -1107,7 +1157,6 @@ namespace Julo.Network
             // TODO checks
             client.Send(MsgType.GameClientToServer, new WrappedMessage(msgType, message));
         }
-
 
     } // class DualNetworkManager
 

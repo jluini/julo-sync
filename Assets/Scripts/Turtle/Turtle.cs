@@ -26,8 +26,30 @@ namespace Turtle
         public static Color playingColor = Color.yellow;
         public static Color deadColor = Color.gray;
 
-        Rigidbody2D rb = null;
-        SpriteRenderer renderer;
+        Rigidbody2D _rb = null;
+        Rigidbody2D rb {
+            get
+            {
+                if(_rb == null)
+                {
+                    _rb = GetComponent<Rigidbody2D>();
+                }
+                return _rb;
+            }
+        }
+
+        SpriteRenderer _renderer = null;
+        SpriteRenderer renderer
+        {
+            get
+            {
+                if(_renderer == null)
+                {
+                    _renderer = GetComponent<SpriteRenderer>();
+                }
+                return _renderer;
+            }
+        }
 
         void Start()
         {
@@ -56,9 +78,8 @@ namespace Turtle
                 TurtleServer.instance.RegisterInServer(this);
             }
 
-
-            rb = GetComponent<Rigidbody2D>();
-            renderer = GetComponent<SpriteRenderer>();
+            //rb = GetComponent<Rigidbody2D>();
+            //renderer = GetComponent<SpriteRenderer>();
 
             if(role > 0)
             {
@@ -100,7 +121,7 @@ namespace Turtle
                 }
                 else
                 {
-                    // Log.Debug("Already know that");
+                    Log.Debug("Already know that");
                 }
                 return;
             }
@@ -154,7 +175,10 @@ namespace Turtle
 
         public void SetColor(Color color)
         {
-            renderer.color = color;
+            if(renderer)
+                renderer.color = color;
+            else
+                Log.Warn("No renderer");
         }
 
         public void SetDead(bool dead)

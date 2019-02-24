@@ -5,10 +5,13 @@ using Julo.Network;
 
 namespace Menu
 {
+    public class LobbyPanel : Panel, ModeDisplay {
 
-    public class LobbyPanel : Panel {
-
+        [Header("Hooks")]
         public Transform gamePanel;
+
+        public ReadyToggle readyToggle;
+        public StartButton startButton;
 
         Mode mode;
         bool isHost;
@@ -17,6 +20,9 @@ namespace Menu
         {
             this.mode = mode;
             this.isHost = isHost;
+
+            readyToggle.SetMode(mode, isHost);
+            startButton.SetMode(mode, isHost);
         }
 
         public void SetPlaying(bool isPlaying)
