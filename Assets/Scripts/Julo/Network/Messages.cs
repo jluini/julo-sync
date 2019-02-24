@@ -17,16 +17,13 @@ namespace Julo.Network
 
         // JOINING
 
-        // Sent from clients to server to request initial state of the lobby/game
-        public const short StatusRequest = MsgTypeBase + 2;
-
         // Sent from server to clients to inform initial game state
-        public const short InitialStatus = MsgTypeBase + 3;
+        public const short InitialStatus = MsgTypeBase + 2;
 
         // STARTING GAME
 
         // Sent from server to clients
-        //public const short GameWillStart = MsgTypeBase + 4;
+        //public const short GameWillStart = MsgTypeBase + 3;
 
         // Sent from server to clients to deliver initial game state
         public const short Prepare = MsgTypeBase + 4;
@@ -127,10 +124,11 @@ namespace Julo.Network
 
     public class StatusMessage : MessageBase
     {
+        public bool accepted;
         public string map;
         public DualNetworkManager.GameState gameState;
 
-        NetworkReader reader;
+        NetworkReader extraReader;
         int msgSize;
         byte[] msgData;
 
@@ -139,8 +137,9 @@ namespace Julo.Network
         {
         }
 
-        public StatusMessage(string map, DualNetworkManager.GameState gameState, MessageBase extraMessage)
+        public StatusMessage(bool accepted, string map, DualNetworkManager.GameState gameState, MessageBase extraMessage)
         {
+            this.accepted = accepted;
             this.map = map;
             this.gameState = gameState;
 
@@ -151,23 +150,23 @@ namespace Julo.Network
 
                 msgData = w.ToArray();
                 msgSize = w.Position;
+
+                extraReader = new NetworkReader(msgData);
             }
         }
-        
-        public NetworkReader ExtraReader()
-        {
-            return reader;
-        }
 
-        public TMsg ReadExtraMessage<TMsg>() where TMsg : MessageBase, new()
+        public override void Serialize(NetworkWriter writer)
         {
-            var msg = new TMsg();
-            msg.Deserialize(reader);
-            return msg;
+            writer.Write(accepted);
+            writer.Write(map);
+            writer.Write((int)gameState);
+
+            writer.WriteBytesAndSize(msgData, msgSize);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
+            accepted = reader.ReadBoolean();
             map = reader.ReadString();
             gameState = (DualNetworkManager.GameState)reader.ReadInt32();
 
@@ -181,15 +180,19 @@ namespace Julo.Network
                 msgSize = msgData.Length;
             }
 
-            reader = new NetworkReader(msgData);
+            extraReader = new NetworkReader(msgData);
+        }
+        
+        public NetworkReader ExtraReader()
+        {
+            return extraReader;
         }
 
-        public override void Serialize(NetworkWriter writer)
+        public TMsg ReadExtraMessage<TMsg>() where TMsg : MessageBase, new()
         {
-            writer.Write(map);
-            writer.Write((int)gameState);
-
-            writer.WriteBytesAndSize(msgData, msgSize);
+            var msg = new TMsg();
+            msg.Deserialize(extraReader);
+            return msg;
         }
 
         public override string ToString()

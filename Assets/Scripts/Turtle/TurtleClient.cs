@@ -29,7 +29,10 @@ namespace Turtle
 
         public override void OnStartClient()
         {
+            base.OnStartClient();
+
             instance = this;
+
             turtlesPerRole = new List<Turtle>[numRoles];
             turtlesByNetId = new Dictionary<uint, Turtle>();
         }

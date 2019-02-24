@@ -85,7 +85,7 @@ namespace Julo.Network
 
             foreach(DNMPlayerListener l in listeners)
             {
-                l.Init(username, role, DualNetworkManager.GameState.Lobby /* TODO */, Mode.OnlineMode, isLocalPlayer);
+                l.Init(username, role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OnlineMode, isLocalPlayer);
             }
         }
 

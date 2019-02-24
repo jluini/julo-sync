@@ -16,132 +16,108 @@ public class GameManager : MonoBehaviour, DNMListener
 
     public PanelManager panels;
     public Panel mainMenuPanel;
+    public Panel connectingPanel;
     public LobbyPanel lobbyPanel;
     public Panel onlinePanel;
 
     void Start()
     {
         userManager.Init();
-
-        dnm.Init(userManager);
         dnm.AddListener(this);
-
-        panels.OpenPanel(mainMenuPanel);
+        dnm.Init(userManager);
     }
 
     public void StartOffline()
     {
         dnm.StartOffline();
-
-        lobbyPanel.SetMode(Mode.OfflineMode);
-        panels.OpenPanel(lobbyPanel);
     }
 
     public void StartOnline()
     {
-        //panels.OpenPanel(onlinePanel);
+        // panels.OpenPanel(onlinePanel);
     }
 
     public void StartLANHost()
     {
-        if(dnm.StartAsHost())
-        {
-            //lobbyPanel.SetMode(Mode.OnlineMode, true);
-            //panels.OpenPanel(lobbyPanel);
-        }
+        dnm.StartAsHost();
     }
 
     public void StartLANJoin()
     {
-        if(dnm.StartAsClient())
-        {
-            // lobbyPanel.SetMode(Mode.OnlineMode, false);
-            // panels.OpenPanel(lobbyPanel);
-        }
-        else
-        {
-            Log.Warn("Can't join localhost game");
-        }
+        dnm.StartAsClient();
     }
 
     // DNMListener methods
 
-    public void OnStateChanged(DualNetworkManager.DNMState newState)
+    public void OnStateChanged(DNMState state)
     {
-        
-    }
-    /*
-    public void OnServerGameStateChanged(DualNetworkManager.GameState newState)
-    {
-        // ...
-    }
-
-    public void OnClientGameStateChanged(DualNetworkManager.GameState newState)
-    {
-        Log.Debug("### {0} ###", newState);
-
-        if(newState == DualNetworkManager.GameState.NoGame)
+        if(state == DNMState.Off)
         {
-            // TODO implement
-            throw new System.NotImplementedException();
+            panels.OpenPanel(mainMenuPanel);
         }
-        else if(newState == DualNetworkManager.GameState.Lobby)
+        else if(state == DNMState.Host)
         {
+            lobbyPanel.SetMode(Mode.OnlineMode, true);
             panels.OpenPanel(lobbyPanel);
-            lobbyPanel.SetPlaying(false);
         }
-        else if(newState == DualNetworkManager.GameState.Playing)
+        else if(state == DNMState.CreatingHost)
         {
+            // do nothing
+        }
+        else if(state == DNMState.StartingAsClient)
+        {
+            panels.OpenPanel(connectingPanel);
+        }
+        else if(state == DNMState.Client)
+        {
+            lobbyPanel.SetMode(Mode.OnlineMode, false);
             panels.OpenPanel(lobbyPanel);
-            lobbyPanel.SetPlaying(true);
         }
         else
         {
-            Log.Debug("----");
-        }
-    }
-    */
-    public void OnClientStarted()
-    {
-        // lobbyPanel.SetMode(Mode.OnlineMode, NetworkServer.active);
-        // panels.OpenPanel(lobbyPanel);
-    }
-    public void OnClientInitialStatus(string map, DualNetworkManager.GameState state)
-    {
-        // TODO use map
-        if(state == DualNetworkManager.GameState.NoGame)
-        {
-            Log.Error("Unexpected state NoGame");
-        }
-        else if(state == DualNetworkManager.GameState.Lobby)
-        {
-            panels.OpenPanel(lobbyPanel);
-            lobbyPanel.SetPlaying(false);
-        }
-        else if(state == DualNetworkManager.GameState.Playing)
-        {
-            panels.OpenPanel(lobbyPanel);
-            lobbyPanel.SetPlaying(true);
-        }
-        // TODO check this case...
-        else if(state == DualNetworkManager.GameState.WillStart)
-        {
-            panels.OpenPanel(lobbyPanel);
-            lobbyPanel.SetPlaying(true);
-        }
-        else
-        {
-            Log.Debug("----");
+            Log.Warn("Unknown new state: {0}", state);
         }
     }
 
-    public void OnClientGameWillStart(string map)
-    {
-        
-    }
+
     public void OnClientGameStarted()
     {
         lobbyPanel.SetPlaying(true);
     }
+
+    // Button handlers
+
+    public void OnClickStartGame()
+    {
+        dnm.TryToStartGame();
+    }
+
+    public void OnClickBack()
+    {
+        if(dnm.GetState() == DNMState.Host)
+        {
+            dnm.StopHost();
+        }
+        else if(dnm.GetState() == DNMState.Client)
+        {
+            dnm.StopClient();
+        }
+        else
+        {
+            Log.Warn("GameManager: unexpected call of OnClickBack");
+        }
+    }
+
+    public void OnClickCancelConnect()
+    {
+        if(dnm.GetState() != DNMState.StartingAsClient)
+        {
+            Log.Warn("GameManager: unexpected call of OnClickCancelConnect");
+            return;
+        }
+
+        dnm.StopClient();
+    }
+
 }
 

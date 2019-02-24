@@ -8,8 +8,30 @@ namespace Julo.Network
     
     public abstract class GameClient : MonoBehaviour
     {
+        //public static GameClient instance = null;
 
-        public abstract void StartClient(Mode mode, bool isHosted, int numRoles);
+        protected Mode mode;
+        protected bool isHosted;
+        protected int numRoles;
+
+        //protected Dictionary<uint, Player> clientPlayers;
+        ClientPlayers<DNMPlayer> clientPlayers;
+
+        public void StartClient(Mode mode, bool isHosted, int numRoles)
+        {
+            //instance = this;
+
+            this.mode = mode;
+            this.isHosted = isHosted;
+            this.numRoles = numRoles;
+
+            clientPlayers = new CacheClientPlayers<DNMPlayer>();
+
+            OnStartClient();
+        }
+
+        public abstract void OnStartClient();
+
         public abstract void StartGame(NetworkReader messageReader);
         public abstract void LateJoinGame(NetworkReader messageReader);
 

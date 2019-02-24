@@ -24,7 +24,7 @@ namespace Julo.Network
             connection = conn;
             players = new List<DNMPlayer>();
             //readyToStart = false;
-            stateInServer = DualNetworkManager.GameState.Lobby;
+            stateInServer = DualNetworkManager.GameState.NoGame;
         }
 
         public void AddPlayer(DNMPlayer player)

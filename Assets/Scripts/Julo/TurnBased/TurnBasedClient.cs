@@ -12,35 +12,24 @@ namespace Julo.TurnBased
 {
     public abstract class TurnBasedClient : GameClient
     {
-        // TODO use singleton?
         public static TurnBasedClient instance = null;
 
         public int FrameStep = 5;
 
-        protected Mode mode;
-        protected bool isHosted;
-        protected int numRoles;
+        ClientPlayers<TBPlayer> clientPlayers;
 
         TBPlayer playingPlayer = null;
 
-        Dictionary<uint, TBPlayer> clientPlayers;
-
-        public override void StartClient(Mode mode, bool isHosted, int numRoles)
+        public override void OnStartClient()
         {
             instance = this;
 
-            this.mode = mode;
-            this.isHosted = isHosted;
-            this.numRoles = numRoles;
-
-            clientPlayers = new Dictionary<uint, TBPlayer>();
-
-            OnStartClient();
+            clientPlayers = new CacheClientPlayers<TBPlayer>();
         }
         
         // TODO call this!!
 
-        public void IsMyTurn(TBPlayer player)
+        void IsMyTurn(TBPlayer player)
         {
             if(playingPlayer != null)
             {
@@ -98,7 +87,7 @@ namespace Julo.TurnBased
             {
                 var turnMsg = message.ReadExtraMessage<TurnMessage>();
                 var netId = turnMsg.playerNetId;
-                var player = GetPlayerByNetId(netId);
+                var player = clientPlayers.GetPlayerByNetId(netId);
 
                 IsMyTurn(player);
             }
@@ -113,7 +102,7 @@ namespace Julo.TurnBased
                 base.OnMessage(message);
             }
         }
-
+        /*
         TBPlayer GetPlayerByNetId(uint netId)
         {
             if(!clientPlayers.ContainsKey(netId))
@@ -135,8 +124,7 @@ namespace Julo.TurnBased
 
             return clientPlayers[netId];
         }
-
-        public abstract void OnStartClient();
+        */
         protected abstract void OnStartTurn(TBPlayer player);
         protected abstract bool TurnIsOn();
         public abstract MessageBase GetStateMessage();
