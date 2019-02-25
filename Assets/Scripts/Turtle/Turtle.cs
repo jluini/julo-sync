@@ -53,16 +53,6 @@ namespace Turtle
 
         void Start()
         {
-            /*/ if it client-only registering here won't work (no data yet)
-            if(TurtleClient.instance != null)
-            {
-                TurtleClient.instance.RegisterTurtle(this);
-            }
-            else
-            {
-                Log.Error("TurtleClient not found");
-            }*/
-
             var ni = GetComponent<NetworkIdentity>();
             uint netId = ni == null ? 10000 : ni.netId.Value;
             Log.Debug(
@@ -77,9 +67,6 @@ namespace Turtle
             {
                 TurtleServer.instance.RegisterInServer(this);
             }
-
-            //rb = GetComponent<Rigidbody2D>();
-            //renderer = GetComponent<SpriteRenderer>();
 
             if(role > 0)
             {
@@ -145,14 +132,11 @@ namespace Turtle
 
         public void SetState(TurtleState d)
         {
-            //role = d.role;
-            //index = d.index;
-
             transform.position = d.position;
             transform.rotation = d.rotation;
             rb.velocity = d.velocity;
             rb.angularVelocity = d.angularVelocity;
-            //dead = d.dead;
+            
             SetDead(d.dead);
         }
         public void AddTorque(float value)
@@ -192,8 +176,6 @@ namespace Turtle
                 }
             }
         }
-
-        // ...
 
     } // class Turtle
 
