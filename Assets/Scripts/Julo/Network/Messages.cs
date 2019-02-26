@@ -1,4 +1,6 @@
-﻿using UnityEngine.Networking;
+﻿using System.Collections.Generic;
+
+using UnityEngine.Networking;
 
 using Julo.Logging;
 using Julo.Users;
@@ -26,20 +28,13 @@ namespace Julo.Network
         //public const short GameWillStart = MsgTypeBase + 3;
 
         // Sent from server to clients to deliver initial game state
-        public const short Prepare = MsgTypeBase + 4;
+        public const short StartGame = MsgTypeBase + 4;
 
         // Sent from clients to server after Prepare
-        public const short ReadyToSpawn = MsgTypeBase + 5;
-        
-        // Sent from clients to server after receiving all initial unet ObjectSpawn's
-        public const short SpawnOk = MsgTypeBase + 6;
+        public const short ReadyToStart = MsgTypeBase + 5;
 
-        // Sent from server to clients when all sent SpawnOk
-        public const short GameStarted = MsgTypeBase + 7;
-
-
-        public const short GameServerToClient = MsgTypeBase + 8;
-        public const short GameClientToServer = MsgTypeBase + 9;
+        public const short GameServerToClient = MsgTypeBase + 6;
+        public const short GameClientToServer = MsgTypeBase + 7;
 
         public const short Highest = GameClientToServer;
     }
@@ -121,6 +116,54 @@ namespace Julo.Network
             writer.Write((int)newState);
         }
     }
+
+    public class StartGameMessage : MessageBase
+    {
+        public string scene;
+        public List<MessageBase> initialData;
+
+        public NetworkReader initialDataReader;
+
+        public StartGameMessage()
+        {
+        }
+
+        public StartGameMessage(string scene, List<MessageBase> initialData)
+        {
+            this.scene = scene;
+            this.initialData = initialData;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(scene);
+
+            writer.Write(initialData.Count);
+
+            foreach(var m in initialData)
+            {
+                writer.Write(m);
+            }
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            scene = reader.ReadString();
+
+            int count = reader.ReadInt32();
+
+            this.initialDataReader = reader;
+        }
+
+        public TMsg ReadInitialMessage<TMsg>() where TMsg : MessageBase, new()
+        {
+            var msg = new TMsg();
+            msg.Deserialize(initialDataReader);
+            return msg;
+        }
+
+    } // class StartGameMessage
+
 
     public class StatusMessage : MessageBase
     {

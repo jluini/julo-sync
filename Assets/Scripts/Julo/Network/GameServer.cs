@@ -1,24 +1,23 @@
-﻿
-
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.Networking;
-
-using Julo.Logging;
 
 namespace Julo.Network
 {
     
     public abstract class GameServer : MonoBehaviour
     {
+        public static GameServer instance = null;
+
         protected Mode mode;
         protected int numRoles;
         protected List<Player>[] playersPerRole;
 
         public void StartServer(Mode mode, int numRoles, List<Player>[] playersPerRole)
         {
+            instance = this;
+
             this.mode = mode;
             this.numRoles = numRoles;
             this.playersPerRole = playersPerRole;
@@ -26,14 +25,18 @@ namespace Julo.Network
             OnStartServer();
         }
 
-        protected abstract void OnStartServer();
+        protected virtual void OnStartServer() { }
 
-        protected List<Player> GetPlayersForRole(int role)
+        // only online mode
+        public virtual void WriteInitialData(List<MessageBase> messages)
         {
-            return playersPerRole[role - 1];
+            messages.Add(new UnityEngine.Networking.NetworkSystem.IntegerMessage(numRoles));
         }
 
         public abstract void StartGame();
+
+        ///////// Messaging
+        
 
         protected void SendTo(int who, short msgType, MessageBase msg)
         {
@@ -59,12 +62,18 @@ namespace Julo.Network
             DualNetworkManager.instance.GameServerSendToAllBut(who, msgType, msg);
         }
 
+        // only online mode
         public virtual void OnMessage(WrappedMessage message, int from)
         {
             throw new System.Exception("Unhandled message");
         }
 
-        public abstract MessageBase GetStateMessage();
+        ///////// Utils
+        
+        protected List<Player> GetPlayersForRole(int role)
+        {
+            return playersPerRole[role - 1];
+        }
 
     } // class GameServer
 

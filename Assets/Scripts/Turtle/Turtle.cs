@@ -1,16 +1,13 @@
 ﻿using System;
 
 using UnityEngine;
-using UnityEngine.Networking;
 
 using Julo.Logging;
 
 namespace Turtle
 {
-
     public class Turtle : MonoBehaviour
     {
-
         public int role = 0;
         public int index = 0;
         public bool dead = false;
@@ -53,35 +50,12 @@ namespace Turtle
 
         void Start()
         {
-            var ni = GetComponent<NetworkIdentity>();
-            uint netId = ni == null ? 10000 : ni.netId.Value;
-            Log.Debug(
-                "Turtle::Start({0}, {1}), srv:{2}, clt:{3}",
-                NetworkServer.active ? "hosted" : "non-hosted",
-                netId,
-                TurtleServer.instance == null ? "NO" : "si",
-                TurtleClient.instance == null ? "NO" : "si"
-            );
-
-            if(TurtleServer.instance)
-            {
-                TurtleServer.instance.RegisterInServer(this);
-            }
-
-            if(role > 0)
-            {
-                SetMyColor();
-            }
-            else
-            {
-                SetColor(Color.grey);
-            }
+            SetMyColor();
         }
 
         public TurtleState GetState()
         {
             return new TurtleState(
-                GetComponent<NetworkIdentity>().netId.Value,
                 role,
                 index,
                 transform.position,
@@ -90,44 +64,6 @@ namespace Turtle
                 rb.angularVelocity,
                 dead
             );
-        }
-
-        public void SetBasicData(int role, int index)
-        {
-            if(role < 1 || index < 1)
-            {
-                Log.Error("Invalid basic data: {0}, {1}", role, index);
-                return;
-            }
-
-            if(this.role != 0)
-            {
-                if(this.role != role)
-                {
-                    Log.Error("I had another role!!");
-                }
-                else
-                {
-                    Log.Debug("Already know that");
-                }
-                return;
-            }
-
-            this.role = role;
-            this.index = index;
-
-            SetMyColor();
-        }
-
-        void SetMyColor()
-        {
-            if(playerColors.Length < role)
-            {
-                Log.Warn("No color for role {0}", this.role);
-                return;
-            }
-
-            SetColor(playerColors[role - 1]);
         }
 
         public void SetState(TurtleState d)
@@ -139,6 +75,7 @@ namespace Turtle
             
             SetDead(d.dead);
         }
+
         public void AddTorque(float value)
         {
             rb.AddTorque(value);
@@ -175,6 +112,17 @@ namespace Turtle
                     SetColor(deadColor);
                 }
             }
+        }
+
+        void SetMyColor()
+        {
+            if(playerColors.Length < role)
+            {
+                Log.Warn("No color for role {0}", this.role);
+                return;
+            }
+
+            SetColor(playerColors[role - 1]);
         }
 
     } // class Turtle

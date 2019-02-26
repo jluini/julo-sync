@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-using UnityEngine;
 using UnityEngine.Networking;
 
 using Julo.Logging;
@@ -12,179 +11,71 @@ namespace Turtle
 {
     public class TurtleServer : TurnBasedServer
     {
-        public static TurtleServer instance = null;
+        public static new TurtleServer instance = null;
 
         public Turtle onlineTurtlePrefab;
         public Turtle offlineTurtlePrefab;
 
-        List<Turtle>[] turtlesPerRole;
-        Dictionary<uint, Turtle> turtlesByNetId = null;
-
-        int expectedNumberOfTurtles = -1;
-        int offlineTurtles = -1;
+        TurtleMatch match;
 
         protected override void OnStartServer()
         {
             base.OnStartServer();
 
             instance = this;
-            Log.Debug("%%% TurtleServer::OnStartServer({0})", numRoles);
 
-            turtlesPerRole = new List<Turtle>[numRoles];
-            for(int r = 0; r < numRoles; r++)
-            {
-                turtlesPerRole[r] = new List<Turtle>();
-            }
-            
-            if(mode == Mode.OnlineMode)
-            {
-                turtlesByNetId = new Dictionary<uint, Turtle>();
-            }
+            match = new TurtleMatch();
+            match.CreateFromSpawnPoints(
+                numRoles,
+                mode == Mode.OfflineMode ? offlineTurtlePrefab : onlineTurtlePrefab,
+                FindObjectsOfType<SpawnPoint>()
+            );
         }
 
-        protected override void SpawnInitialUnits()
+        // only online mode
+        public override void WriteInitialData(List<MessageBase> messages)
         {
-            SpawnPoint[] spawnPoints = FindObjectsOfType<SpawnPoint>();
+            base.WriteInitialData(messages);
 
-            // Log.Debug("{0} spawn points found", spawnPoints.Length);
-
-            //CheckSpawnPoints(spawnPoints);
-            var sortedSpawnPoints = new List<SpawnPoint>(spawnPoints);
-
-            sortedSpawnPoints.Sort((x, y) =>
-            {
-                var ret = x.role - y.role;
-                if(ret == 0)
-                {
-                    ret = x.index - y.index;
-                }
-                return ret;
-            });
-
-            foreach(var sp in sortedSpawnPoints)
-            {
-                if(sp.role > numRoles)
-                {
-                    Log.Warn("Spawn point role too high ({0} > {1})", sp.role, numRoles);
-                    continue;
-                }
-
-                Turtle newTurtle;
-                newTurtle = Object.Instantiate(onlineTurtlePrefab) as Turtle;
-
-                newTurtle.transform.position = sp.transform.position;
-                newTurtle.transform.rotation = sp.transform.rotation;
-
-                newTurtle.role = sp.role;
-                newTurtle.index = sp.index;
-
-                GetTurtlesForRole(sp.role).Add(newTurtle);
-            }
-
-            // TODO do checks
-
-            var initialTurtles = GetAllTurtles();
-            expectedNumberOfTurtles = initialTurtles.Count;
-
-            if(mode == Mode.OfflineMode)
-            {
-                offlineTurtles = 0;
-            }
-            else
-            {
-                foreach(Turtle t in initialTurtles)
-                {
-                    NetworkServer.Spawn(t.gameObject);
-                }
-            }
+            var initialState = match.GetState();
+            messages.Add(initialState);
         }
 
-        List<Turtle> GetTurtlesForRole(int role)
+        protected override void OnStartGame()
         {
-            // TODO checks!
-            return turtlesPerRole[role - 1];
+            // noop
         }
 
-        public void RegisterInServer(Turtle t)
+        protected override void OnStartTurn(int role)
         {
-            bool allSpawned;
+            // TODO send  only to remote?
+            SendToAll(MsgType.ServerUpdate, match.GetState());
+        }
 
-            if(mode == Mode.OfflineMode)
-            {
-                offlineTurtles++;
-                allSpawned = offlineTurtles == expectedNumberOfTurtles;
-            }
-            else
-            {
-                var ni = t.GetComponent<NetworkIdentity>();
-                uint netId = ni == null ? 10000 : ni.netId.Value;
-
-                if(netId > 0)
-                {
-                    if(turtlesByNetId == null)
-                    {
-                        Log.Error("Dict not initialized");
-                        return;
-                    }
-                    else if(turtlesByNetId.ContainsKey(netId))
-                    {
-                        Log.Error("Turtle {0} already registered", netId);
-                        return;
-                    }
-                    turtlesByNetId[netId] = t;
-                }
-
-                allSpawned = turtlesByNetId.Count == expectedNumberOfTurtles;
-            }
-
-            if(allSpawned)
-            {
-                InitialUnitsWereSpawned();
-            }
+        public TurtleMatch GetMatch()
+        {
+            return match;
         }
 
         protected override bool RoleIsAlive(int numRole)
         {
-            return GetTurtlesForRole(numRole).FindAll(t => !t.dead).Count > 0;
+            return match.GetTurtlesForRole(numRole).FindAll(t => !t.dead).Count > 0;
         }
         
-        // TODO this is duplicated in TurtleClient
-        public override MessageBase GetStateMessage()
-        {
-            return new GameState(GetAllTurtles());
-        }
-        
-        public List<Turtle> GetAllTurtles()
-        {
-            List<Turtle> ret = new List<Turtle>();
-
-            for(int i = 1; i <= numRoles; i++)
-            {
-                foreach(Turtle t in GetTurtlesForRole(i))
-                {
-                    ret.Add(t);
-                }
-            }
-
-            return ret;
-        }
-        
-        void CheckSpawnPoints(SpawnPoint[] spawnPoints)
-        {
-            // TODO
-        }
-
         public override void OnMessage(WrappedMessage message, int from)
         {
             short msgType = message.messageType;
 
-            if(msgType == Julo.TurnBased.MsgType.GameState)
+            if(msgType == MsgType.ClientUpdate)
             {
-                // TODO could be more direct?
+                // TODO check that is playing player?
 
                 var msg = message.ReadExtraMessage<GameState>();
 
-                SendToAllBut(from, Julo.TurnBased.MsgType.GameState, msg);
+                match.UpdateState(msg);
+
+                // TODO SendToAllRemoteBut ?
+                SendToAllBut(from, MsgType.ServerUpdate, msg);
             }
             else
             {

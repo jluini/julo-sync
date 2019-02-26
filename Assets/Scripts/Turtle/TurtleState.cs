@@ -5,11 +5,10 @@ namespace Turtle
 {
     public class TurtleState : MessageBase
     {
-        public uint netId;
         public int role;
         public int index;
         public Vector2 position;
-        public Quaternion rotation;
+        public Quaternion rotation; // TODO change to float ??
         public Vector2 velocity;
         public float angularVelocity;
         public bool dead;
@@ -19,7 +18,6 @@ namespace Turtle
         }
 
         public TurtleState(
-            uint netId,
             int role,
             int index,
             Vector2 position,
@@ -28,7 +26,6 @@ namespace Turtle
             float angularVelocity,
             bool dead
         ) {
-            this.netId = netId;
             this.role = role;
             this.index = index;
             this.position = position;
@@ -40,7 +37,6 @@ namespace Turtle
 
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write(netId);
             writer.Write(role);
             writer.Write(index);
             writer.Write(position);
@@ -52,7 +48,6 @@ namespace Turtle
 
         public override void Deserialize(NetworkReader reader)
         {
-            netId = reader.ReadUInt32();
             role = reader.ReadInt32();
             index = reader.ReadInt32();
             position = reader.ReadVector2();

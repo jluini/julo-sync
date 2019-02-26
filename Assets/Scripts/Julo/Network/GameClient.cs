@@ -3,6 +3,8 @@
 using UnityEngine;
 using UnityEngine.Networking;
 
+using Julo.Logging;
+
 namespace Julo.Network
 {
     
@@ -14,30 +16,53 @@ namespace Julo.Network
         protected bool isHosted;
         protected int numRoles;
 
-        //protected Dictionary<uint, Player> clientPlayers;
         ClientPlayers<DNMPlayer> clientPlayers;
 
-        public void StartClient(Mode mode, bool isHosted, int numRoles)
+        // only local
+        GameServer gameServer;
+
+        // local client
+        public void StartClient(GameServer server, Mode mode, int numRoles)
         {
             instance = this;
 
             this.mode = mode;
-            this.isHosted = isHosted;
+            this.isHosted = true;
             this.numRoles = numRoles;
 
-            clientPlayers = new CacheClientPlayers<DNMPlayer>();
+            this.gameServer = server; // TODO needed?
 
-            OnStartClient();
+            OnStartLocalClient(server);
+        }
+        
+        // remote client
+        public void StartClient(StartGameMessage initialMessages)
+        {
+            instance = this;
+
+            this.mode = Mode.OnlineMode;
+            this.isHosted = false;
+
+            var intMsg = initialMessages.ReadInitialMessage<UnityEngine.Networking.NetworkSystem.IntegerMessage>();
+
+            this.numRoles = intMsg.value;
+
+            OnStartRemoteClient(initialMessages);
         }
 
-        public abstract void OnStartClient();
-
-        public abstract void StartGame(NetworkReader messageReader);
-        public abstract void LateJoinGame(NetworkReader messageReader);
+        public virtual void OnStartLocalClient(GameServer gameServer) { }
+        public virtual void OnStartRemoteClient(StartGameMessage initialMessages) { }
 
         protected void SendToServer(short msgType, MessageBase msg)
         {
-            DualNetworkManager.instance.GameClientSendToServer(msgType, msg);
+            if(mode == Mode.OfflineMode)
+            {
+                GameServer.instance.OnMessage(new WrappedMessage(msgType, msg), 0);
+            }
+            else
+            {
+                DualNetworkManager.instance.GameClientSendToServer(msgType, msg);
+            }
         }
 
         // TODO tratar de no recibirlo wrapped

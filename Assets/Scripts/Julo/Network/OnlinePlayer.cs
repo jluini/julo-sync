@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 
-using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
 using Julo.Users;
 using Julo.Logging;
@@ -12,7 +10,6 @@ namespace Julo.Network
     public class OnlinePlayer : NetworkBehaviour, DNMPlayer
     {
         bool ClientStarted = false;
-        bool StartCalled = false;
 
         List<DNMPlayerListener> listeners = new List<DNMPlayerListener>();
 
@@ -34,10 +31,6 @@ namespace Julo.Network
                 {
                     l.OnReadyChanged(newReady);
                 }
-            }
-            else if(StartCalled)
-            {
-                Log.Warn("Start was called but ClientStarted=false");
             }
         }
 
@@ -69,9 +62,6 @@ namespace Julo.Network
 
         public void Start()
         {
-            StartCalled = true;
-            Log.Debug("Start: {0} in {1}", isLocalPlayer ? "LOCAL" : "REMOTE", NetworkServer.active ? "host" : "remote client");
-
             if(transform.parent != DualNetworkManager.instance.playerContainer)
             {
                 transform.SetParent(DualNetworkManager.instance.playerContainer);
@@ -114,9 +104,6 @@ namespace Julo.Network
         {
             return isLocalPlayer;
         }
-
-
-
 
         public void SetUser(UserProfile user)
         {

@@ -48,31 +48,14 @@ namespace Turtle
                 units.Add(newUnit);
             }
         }
-
-        public void ApplyTo(Dictionary<uint, Turtle> turtlesByNetId)
-        {
-            foreach(TurtleState d in units)
-            {
-                if(!turtlesByNetId.ContainsKey(d.netId))
-                {
-                    Log.Error("###### netId {0} not found in dict with {1}", d.netId, turtlesByNetId.Count);
-                    //Log.Debug("{0}", turtlesByNetId);
-                    continue;
-                }
-
-                Turtle t = turtlesByNetId[d.netId];
-                t.SetState(d);
-            }
-        }
-
+        
         public override string ToString()
         {
             var ret = System.String.Format("{0} turtles:\n", units.Count);
 
             foreach(var unit in units)
             {
-                uint netId = unit.netId;
-                ret += System.String.Format("\n{0}\t{1}\t{2}", netId, unit.role, unit.index);
+                ret += System.String.Format("\n{0}\t{1}", unit.role, unit.index);
             }
             ret += "\n";
 
