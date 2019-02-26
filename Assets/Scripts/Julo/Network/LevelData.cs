@@ -9,6 +9,7 @@ public class LevelData
 {
 
     public int MaxPlayers = 2;
+    public string SceneName = "beach";
 
 }
 

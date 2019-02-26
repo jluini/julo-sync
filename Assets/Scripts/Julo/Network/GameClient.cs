@@ -46,6 +46,7 @@ namespace Julo.Network
             var intMsg = initialMessages.ReadInitialMessage<UnityEngine.Networking.NetworkSystem.IntegerMessage>();
 
             this.numRoles = intMsg.value;
+            Log.Debug("Starting with {0} roles", this.numRoles);
 
             OnStartRemoteClient(initialMessages);
         }

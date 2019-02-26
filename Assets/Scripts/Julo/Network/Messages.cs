@@ -168,7 +168,7 @@ namespace Julo.Network
     public class StatusMessage : MessageBase
     {
         public bool accepted;
-        public string map;
+        public string scene;
         public DualNetworkManager.GameState gameState;
 
         NetworkReader extraReader;
@@ -180,10 +180,10 @@ namespace Julo.Network
         {
         }
 
-        public StatusMessage(bool accepted, string map, DualNetworkManager.GameState gameState, MessageBase extraMessage)
+        public StatusMessage(bool accepted, string scene, DualNetworkManager.GameState gameState, MessageBase extraMessage)
         {
             this.accepted = accepted;
-            this.map = map;
+            this.scene = scene;
             this.gameState = gameState;
 
             if (extraMessage != null)
@@ -201,7 +201,7 @@ namespace Julo.Network
         public override void Serialize(NetworkWriter writer)
         {
             writer.Write(accepted);
-            writer.Write(map);
+            writer.Write(scene);
             writer.Write((int)gameState);
 
             writer.WriteBytesAndSize(msgData, msgSize);
@@ -210,7 +210,7 @@ namespace Julo.Network
         public override void Deserialize(NetworkReader reader)
         {
             accepted = reader.ReadBoolean();
-            map = reader.ReadString();
+            scene = reader.ReadString();
             gameState = (DualNetworkManager.GameState)reader.ReadInt32();
 
             msgData = reader.ReadBytesAndSize();
@@ -240,7 +240,7 @@ namespace Julo.Network
 
         public override string ToString()
         {
-            return System.String.Format("[map: {0}, state: {1}]", map, gameState.ToString());
+            return System.String.Format("[scene: {0}, state: {1}]", scene, gameState.ToString());
         }
     } // class StatusMessage
 

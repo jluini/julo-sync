@@ -105,6 +105,7 @@ namespace Julo.TurnBased
             if(playingPlayer == null)
             {
                 Log.Warn("Already cleaned up");
+                return;
             }
 
             playingPlayer.SetPlaying(false);

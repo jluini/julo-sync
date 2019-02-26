@@ -25,7 +25,7 @@ namespace Julo.Network
 
         StartingAsClient,
         Client,
-        ClientPlaying
+        //ClientPlaying
             
         // TODO add dedicated server mode
     }
@@ -298,7 +298,7 @@ namespace Julo.Network
                 Log.Warn("playersPerRole already initialized");
             }
 
-            var sceneName = "beach"; // TODO hardcoded scene name
+            var sceneName = GetSceneName();
 
             SetGameState(GameState.Preparing);
             numRoles = levelData.MaxPlayers;
@@ -390,6 +390,7 @@ namespace Julo.Network
 
             if(state == DNMState.CreatingHost)
             {
+                // this is just the local connection when starting as host
                 if(id == 0)
                 {
                     accepted = true;
@@ -675,7 +676,23 @@ namespace Julo.Network
             gameServer.StartServer(mode, levelData.MaxPlayers, playersPerRole);
         }
 
+        delegate void OnClientInstantiated();
+
         // instantiates local client
+        void InstantiateClientAsync(StartGameMessage message, OnClientInstantiated onFinishDelegate = null)
+        {
+            SetGameState(GameState.Preparing);
+            LoadSceneAsync(message.scene, () =>
+            {
+                InstantiateClient(message);
+                SetGameState(GameState.Playing);
+                OnClientGameStarted(); // this is to hide game panel
+
+                if(onFinishDelegate != null)
+                    onFinishDelegate();
+            });
+        }
+
         void InstantiateClient(GameServer gameServer, Mode mode, int numRoles)
         {
             InstantiateClientObject();
@@ -710,7 +727,7 @@ namespace Julo.Network
         // only server to remotes
         void SendStatusToClient(bool accepted, NetworkConnection conn)
         {
-            string map = "";
+            string sceneName = GetSceneName();
             var state = GameState.NoGame;
             MessageBase extraMessage = null;
 
@@ -720,20 +737,19 @@ namespace Julo.Network
 
                 if(gameState == GameState.NoGame || gameState == GameState.WillStart)
                 {
-                    map = "beach"; // TODO
+                    // noop
                 }
                 else if(gameState == GameState.Playing || gameState == GameState.GameOver)
                 {
-                    map = "beach"; // TODO
-
                     if(gameServer == null)
                     {
                         Log.Error("No tengo server :(");
                     }
                     else
                     {
-                        // TODO this is for late join
-                        // extraMessage = gameServer.GetStateMessage();
+                        var initialMessages = new List<MessageBase>();
+                        gameServer.WriteInitialData(initialMessages);
+                        extraMessage = new StartGameMessage(sceneName, initialMessages);
                     }
                 }
                 else
@@ -742,7 +758,7 @@ namespace Julo.Network
                 }
             }
 
-            conn.Send(MsgType.InitialStatus, new StatusMessage(accepted, map, state, extraMessage));
+            conn.Send(MsgType.InitialStatus, new StatusMessage(accepted, sceneName, state, extraMessage));
         }
 
         // Server message handlers
@@ -825,27 +841,23 @@ namespace Julo.Network
             {
                 SetState(DNMState.Client);
                 RegisterClientHandlers(messageReader.conn);
+                CreatePlayer(localClient.connection); // create remote initial player
             }
             // TODO check this cases...
             else if(gameState == GameState.WillStart || gameState == GameState.Preparing || gameState == GameState.Playing || gameState == GameState.GameOver)
             {
-                // TODO late join case
-
-                SetState(DNMState.ClientPlaying);
-
                 // client is joining a started game
 
-                SceneManager.LoadScene(msg.map);
+                SetState(DNMState.Client);
+                RegisterClientHandlers(messageReader.conn);
 
-                if(gameState != GameState.WillStart)
+                var startGameMessage = msg.ReadExtraMessage<StartGameMessage>();
+
+                InstantiateClientAsync(startGameMessage, () =>
                 {
-                    // read extra message
-                    //var extraMsg = msg.ReadExtraMessage<UnityEngine.Networking.NetworkSystem.StringMessage>();
-                    //gameClient.LateJoinGame(msg.ExtraReader());
-                }
+                    CreatePlayer(localClient.connection); // create remote initial player
+                });
             }
-
-            CreatePlayer(localClient.connection); // create remote initial player
         }
 
         // create first local/remote client
@@ -877,6 +889,12 @@ namespace Julo.Network
             {
                 var startGameMessage = messageReader.ReadMessage<StartGameMessage>();
 
+                InstantiateClientAsync(startGameMessage, () =>
+                {
+                    client.Send(MsgType.ReadyToStart, new EmptyMessage());
+                });
+
+                /*
                 SetGameState(GameState.Preparing);
                 LoadSceneAsync(startGameMessage.scene, () =>
                 {
@@ -888,6 +906,7 @@ namespace Julo.Network
 
                     client.Send(MsgType.ReadyToStart, new EmptyMessage());
                 });
+                */
             }
             else
             {
@@ -901,7 +920,8 @@ namespace Julo.Network
 
             if(!gameClient)
             {
-                Log.Warn("OnGameClientMessage: no game client");
+                Log.Warn("OnGameClientMessage: no game client {0}", msg.messageType - MsgType.Highest);
+
                 return;
             }
 
@@ -1154,9 +1174,12 @@ namespace Julo.Network
         {
             CheckState(new DNMState[] { DNMState.Offline, DNMState.Host });
             
-            foreach(int id in clients.Keys)
+            //foreach(int id in clients.Keys)
+            foreach(var client in clients.Values)
             {
-                if(id != who)
+                int id = client.connection.connectionId;
+
+                if(id != who && client.connection.isReady)
                 {
                     NetworkServer.SendToClient(id, MsgType.GameServerToClient, new WrappedMessage(msgType, gameMessage));
                 }
@@ -1218,6 +1241,12 @@ namespace Julo.Network
             onFinishDelegate();
         }
 
+        // ///////////////
+
+        string GetSceneName()
+        {
+            return levelData.SceneName;
+        }
 
     } // class DualNetworkManager
 
