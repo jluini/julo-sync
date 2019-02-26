@@ -302,7 +302,7 @@ namespace Julo.Network
 
             SetGameState(GameState.Preparing);
             numRoles = levelData.MaxPlayers;
-            CollectPlayersPerRole();
+            CollectPlayers();
 
             LoadSceneAsync(sceneName, () =>
             {
@@ -661,8 +661,6 @@ namespace Julo.Network
 
             gameServer = Object.Instantiate(gameServerPrefab) as GameServer;
             
-            //DontDestroyOnLoad(gameServer.gameObject);
-
             Mode mode = Mode.OfflineMode;
             if(state == DNMState.Host)
             {
@@ -688,8 +686,7 @@ namespace Julo.Network
                 SetGameState(GameState.Playing);
                 OnClientGameStarted(); // this is to hide game panel
 
-                if(onFinishDelegate != null)
-                    onFinishDelegate();
+                onFinishDelegate?.Invoke();
             });
         }
 
@@ -715,8 +712,6 @@ namespace Julo.Network
             }
 
             gameClient = Object.Instantiate(gameClientPrefab) as GameClient;
-
-            // DontDestroyOnLoad(gameClient.gameObject);
 
             CheckState(new DNMState[] { DNMState.Offline, DNMState.Host, DNMState.Client });
 
@@ -806,14 +801,6 @@ namespace Julo.Network
                 StartGame();
             }
         }
-        /*
-        IEnumerator StartGameDelayed()
-        {
-            yield return new WaitForSecondsRealtime(.1f); // TODO try without this
-            gameServer.StartGame();
-            yield return null;
-        }
-        */
 
         // Client message handlers
 
@@ -893,20 +880,6 @@ namespace Julo.Network
                 {
                     client.Send(MsgType.ReadyToStart, new EmptyMessage());
                 });
-
-                /*
-                SetGameState(GameState.Preparing);
-                LoadSceneAsync(startGameMessage.scene, () =>
-                {
-                    InstantiateClient(startGameMessage);
-
-                    SetGameState(GameState.Playing);
-
-                    OnClientGameStarted(); // this is to hide game panel
-
-                    client.Send(MsgType.ReadyToStart, new EmptyMessage());
-                });
-                */
             }
             else
             {
@@ -949,8 +922,6 @@ namespace Julo.Network
 
         void SetState(DNMState newState)
         {
-            // Log.Debug("{0} -> {1}", state, newState);
-
             if(state == newState)
             {
                 Log.Warn("Repeated state");
@@ -968,10 +939,9 @@ namespace Julo.Network
         {
             // client to mark itself as ready/non-ready to start playing
             NetworkServer.RegisterHandler(MsgType.ClientSetReady, OnServerClientSetReadyMessage);
-
             // client to mark itself as ready/non-ready to start playing
             NetworkServer.RegisterHandler(MsgType.ReadyToStart, OnServerReadyToStartMessage);
-
+            // game-level message sent from client to server
             NetworkServer.RegisterHandler(MsgType.GameClientToServer, OnGameClientToServerMessage);
         }
 
@@ -1014,18 +984,8 @@ namespace Julo.Network
 
         bool AllClientsInState(GameState state)
         {
-            bool ret = true;
-
-            foreach(Client client in clients.Values)
-            {
-                if(client.stateInServer != state)
-                {
-                    ret = false;
-                    break;
-                }
-            }
-
-            return ret;
+            var clientList = new List<Client>(clients.Values);
+            return clientList.TrueForAll(client => client.stateInServer == state);
         }
 
         Client GetClient(NetworkConnection conn)
@@ -1116,7 +1076,7 @@ namespace Julo.Network
             return enoughPlayers;
         }
 
-        void CollectPlayersPerRole()
+        void CollectPlayers()
         {
             playersPerRole = new List<Player>[numRoles];
 
@@ -1172,9 +1132,8 @@ namespace Julo.Network
 
         public void GameServerSendToAllBut(int who, short msgType, MessageBase gameMessage)
         {
-            CheckState(new DNMState[] { DNMState.Offline, DNMState.Host });
+            CheckState(DNMState.Host);
             
-            //foreach(int id in clients.Keys)
             foreach(var client in clients.Values)
             {
                 int id = client.connection.connectionId;
@@ -1228,6 +1187,7 @@ namespace Julo.Network
 
 
         }
+
         IEnumerator LoadSceneCoroutine(string sceneName, OnFinishLoadingScene onFinishDelegate)
         {
 

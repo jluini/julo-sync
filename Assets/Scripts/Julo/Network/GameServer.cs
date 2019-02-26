@@ -3,6 +3,8 @@
 using UnityEngine;
 using UnityEngine.Networking;
 
+using Julo.Logging;
+
 namespace Julo.Network
 {
     
@@ -46,7 +48,7 @@ namespace Julo.Network
         protected void SendToAll(short msgType, MessageBase msg)
         {
             // TODO tratar de no recibirlo wrapped
-
+            // TODO usar polimorfismo en vez de if...
             if(mode == Mode.OfflineMode)
             {
                 GameClient.instance.OnMessage(new WrappedMessage(msgType, msg));
@@ -59,7 +61,17 @@ namespace Julo.Network
 
         protected void SendToAllBut(int who, short msgType, MessageBase msg)
         {
-            DualNetworkManager.instance.GameServerSendToAllBut(who, msgType, msg);
+            if(mode == Mode.OfflineMode)
+            {
+                if(who != 0)
+                {
+                    Log.Warn("Unexpected 'but' id {0} in offline mode", who);
+                }
+            }
+            else
+            {
+                DualNetworkManager.instance.GameServerSendToAllBut(who, msgType, msg);
+            }
         }
 
         // only online mode
