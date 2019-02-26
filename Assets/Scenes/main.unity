@@ -2441,7 +2441,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 8, y: -0.000015258789}
+  m_AnchoredPosition: {x: 8, y: 0}
   m_SizeDelta: {x: -16, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &413954375
@@ -3244,7 +3244,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000061035156, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &735660803
@@ -8663,6 +8663,7 @@ MonoBehaviour:
   matchMaker: {fileID: 0}
   levelData:
     MaxPlayers: 2
+    SceneName: beach
   offlinePlayerModel: {fileID: 4276115359200518376, guid: c6045b627610dc448a7bbc89153c39ba,
     type: 3}
   onlinePlayerModel: {fileID: 78, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
@@ -8952,7 +8953,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 749309339}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999997
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
