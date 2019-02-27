@@ -969,7 +969,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 150474609}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
@@ -2406,7 +2406,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 8, y: -0.0000076293945}
+  m_AnchoredPosition: {x: 8, y: 0.0000076293945}
   m_SizeDelta: {x: -16, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &413954375
@@ -6357,7 +6357,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1709616371}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
@@ -8564,7 +8564,7 @@ MonoBehaviour:
   m_ScriptCRCCheck: 1
   m_MaxDelay: 0.01
   m_LogLevel: 2
-  m_PlayerPrefab: {fileID: 21, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
+  m_PlayerPrefab: {fileID: 19, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
   m_AutoCreatePlayer: 1
   m_PlayerSpawnMethod: 0
   m_OfflineScene: 
@@ -8629,9 +8629,8 @@ MonoBehaviour:
   levelData:
     MaxPlayers: 2
     SceneName: beach
-  offlinePlayerModel: {fileID: 4276115359200518376, guid: c6045b627610dc448a7bbc89153c39ba,
-    type: 3}
-  onlinePlayerModel: {fileID: 78, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
+  offlinePlayerModel: {fileID: 111, guid: c6045b627610dc448a7bbc89153c39ba, type: 3}
+  onlinePlayerModel: {fileID: 84, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
   playerContainer: {fileID: 648092877}
   sceneToggle: {fileID: 735660803}
   gameServerPrefab: {fileID: 99, guid: 4be395baef54d9f43937bf0663f49293, type: 3}
@@ -8918,7 +8917,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 749309339}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999997
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
