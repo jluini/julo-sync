@@ -62,6 +62,11 @@ namespace Julo.Network
             }
         }
 
+        public void OnClickChangeRole()
+        {
+            DualNetworkManager.instance.ChangeRole(this);
+        }
+
         public bool IsLocal()
         {
             return true;

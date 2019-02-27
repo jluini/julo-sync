@@ -51,12 +51,6 @@ namespace Julo.Network
         }
         public void OnClickChangeRole()
         {
-            if(!NetworkServer.active)
-            {
-                Log.Debug("Only server can change role");
-                return;
-            }
-
             DualNetworkManager.instance.ChangeRole(this);
         }
 

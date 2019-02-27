@@ -344,8 +344,11 @@ namespace Julo.Network
             gameServer.StartGame();
         }
 
-        public void ChangeRole(OnlinePlayer player)
+        public void ChangeRole(DNMPlayer player)
         {
+            CheckState(new DNMState[] { DNMState.Offline, DNMState.Host });
+            CheckGameState(GameState.NoGame);
+            
             int currentRole = player.GetRole();
 
             int newRole;
@@ -357,10 +360,11 @@ namespace Julo.Network
             {
                 newRole = currentRole + 1;
                 if(newRole > levelData.MaxPlayers)
-                    newRole = DNM.SpecRole;
+                {
+                    // no spec role in offline mode
+                    newRole = state == DNMState.Offline ? DNM.FirstPlayerRole : DNM.SpecRole;
+                }
             }
-
-            //Log.Info(System.String.Format("{0} -> {1}", currentRole, newRole));
 
             if(newRole != currentRole)
             {
@@ -1159,7 +1163,7 @@ namespace Julo.Network
         {
             if(state != expectedState)
             {
-                WrongState();
+                WrongState(state.ToString());
             }
         }
 
@@ -1167,13 +1171,31 @@ namespace Julo.Network
         {
             if(!System.Array.Exists<DNMState>(expectedStates, s => s == state))
             {
-                WrongState();
+                WrongState(state.ToString());
             }
         }
 
-        void WrongState()
+        void CheckGameState(GameState expectedState)
         {
-            throw new System.Exception(System.String.Format("Unexpected state '{0}'", state));
+            if(gameState != expectedState)
+            {
+                WrongState(gameState.ToString());
+            }
+        }
+
+        void CheckGameState(GameState[] expectedStates)
+        {
+            if(!System.Array.Exists<GameState>(expectedStates, s => s == gameState))
+            {
+                WrongState(gameState.ToString());
+            }
+        }
+
+        void WrongState(string stateString)
+        {
+            var errorMessage = System.String.Format("Unexpected state '{0}'", stateString);
+            Log.Warn(errorMessage);
+            throw new System.Exception(errorMessage);
         }
 
         // Scene loading
