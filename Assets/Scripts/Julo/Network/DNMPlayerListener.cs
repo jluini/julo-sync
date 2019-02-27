@@ -5,7 +5,7 @@ namespace Julo.Network
     public interface DNMPlayerListener
     {
 
-        void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isLocal = true);
+        void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isHosted = true, bool isLocal = true);
 
         void OnReadyChanged(bool isReady);
 

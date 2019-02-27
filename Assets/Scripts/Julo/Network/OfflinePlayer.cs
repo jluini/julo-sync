@@ -27,7 +27,7 @@ namespace Julo.Network
         {
             foreach(DNMPlayerListener l in listeners)
             {
-                l.Init(user.GetName(), role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OfflineMode);
+                l.Init(user.GetName(), role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OfflineMode, true, true);
             }
         }
 

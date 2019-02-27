@@ -266,10 +266,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be5c91b186d08844181a6894f05304e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  playingColor: {r: 0, g: 1, b: 0, a: 1}
+  localColor: {r: 0, g: 0, b: 0, a: 1}
+  remoteColor: {r: 0, g: 0, b: 0, a: 1}
+  localPlayingColor: {r: 0, g: 1, b: 0, a: 1}
+  remotePlayingColor: {r: 0, g: 1, b: 0, a: 1}
   nameDisplay: {fileID: 4147149258996856100}
   roleDisplay: {fileID: 4147149258996856098}
+  roleButton: {fileID: 4147149258996856103}
   readyToggle: {fileID: 4147149258996856108}
 --- !u!1 &4147149258996856162
 GameObject:

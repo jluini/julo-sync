@@ -11,14 +11,22 @@ namespace Turtle
     public class TurtlePlayerDisplay : MonoBehaviour, DNMPlayerListener, TBPlayerListener
     {
         [Header("Colors")]
-        public Color defaultColor = Color.gray;
-        public Color playingColor = Color.green;
+        public Color localColor = Color.black;
+        public Color remoteColor = Color.black;
+
+        public Color localPlayingColor = Color.green;
+        public Color remotePlayingColor = Color.green;
 
         [Header("Hooks")]
         public Text nameDisplay;
+
         public Text roleDisplay;
+        public Button roleButton;
+
+
         public Toggle readyToggle;
 
+        bool isHosted = false;
         bool isLocal = false;
 
         void Awake()
@@ -48,20 +56,43 @@ namespace Turtle
         public void SetPlaying(bool isPlaying)
         {
             // TODO implement
-            nameDisplay.color = isPlaying ? playingColor : defaultColor;
+            SetColor(GetColor(isPlaying));
         }
 
         // DNMPlayerListener
         //////////////////////////////////////////
 
-        public void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isLocal = true)
+        public void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isHosted = true, bool isLocal = true)
         {
-            nameDisplay.text = username;
-            roleDisplay.text = GetRoleText(role);
-            // TODO do this here
-            readyToggle.isOn = mode == Mode.OfflineMode;
-
+            this.isHosted = isHosted;
             this.isLocal = isLocal;
+
+            nameDisplay.text = username;
+
+            SetColor(GetColor(false));
+
+            roleDisplay.text = GetRoleText(role);
+            roleButton.interactable = isHosted;
+
+            // TODO do this here?
+            readyToggle.isOn = mode == Mode.OfflineMode;
+        }
+
+        void SetColor(Color newColor)
+        {
+            nameDisplay.color = newColor;
+        }
+
+        Color GetColor(bool isPlaying)
+        {
+            if(isLocal)
+            {
+                return isPlaying ? localPlayingColor : localColor;
+            }
+            else
+            {
+                return isPlaying ? remotePlayingColor : remoteColor;
+            }
         }
 
         public void OnReadyChanged(bool isReady)

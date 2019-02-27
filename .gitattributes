@@ -59,4 +59,6 @@
 *.csproj eol=crlf
 *.asset eol=lf
 *.cs text
+
 *.unity -merge -crlf
+*.prefab -merge -crlf
