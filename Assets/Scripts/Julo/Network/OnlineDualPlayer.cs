@@ -7,12 +7,14 @@ using Julo.Logging;
 
 namespace Julo.Network
 {
-    public class OnlinePlayer : NetworkBehaviour, DNMPlayer
+    public class OnlineDualPlayer : NetworkBehaviour, IDualPlayer
     {
         bool ClientStarted = false;
 
-        List<DNMPlayerListener> listeners = new List<DNMPlayerListener>();
+        List<IDualPlayerListener> listeners = new List<IDualPlayerListener>();
 
+        /* this is game level
+        
         [SyncVar]
         string username = "";
 
@@ -27,7 +29,7 @@ namespace Julo.Network
             // no need to redraw when role is initially set, cause it will be redrawn on Start()
             if(this.ClientStarted)
             {
-                foreach(DNMPlayerListener l in listeners)
+                foreach(IDualPlayerListener l in listeners)
                 {
                     l.OnReadyChanged(newReady);
                 }
@@ -43,7 +45,7 @@ namespace Julo.Network
             // no need to redraw when role is initially set, cause it will be redrawn on Start()
             if (this.ClientStarted)
             {
-                foreach(DNMPlayerListener l in listeners)
+                foreach(IDualPlayerListener l in listeners)
                 {
                     l.OnRoleChanged(newRole);
                 }
@@ -53,7 +55,7 @@ namespace Julo.Network
         {
             DualNetworkManager.instance.ChangeRole(this);
         }
-
+        */
         public void Start()
         {
             if(transform.parent != DualNetworkManager.instance.playerContainer)
@@ -67,9 +69,10 @@ namespace Julo.Network
 
             ClientStarted = true;
 
-            foreach(DNMPlayerListener l in listeners)
+            foreach(IDualPlayerListener l in listeners)
             {
-                l.Init(username, role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OnlineMode, NetworkServer.active, isLocalPlayer);
+                // TODO
+                //l.Init(username, role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OnlineMode, NetworkServer.active, isLocalPlayer);
             }
         }
 
@@ -78,7 +81,12 @@ namespace Julo.Network
         {
             return netId.Value;
         }
+        public bool IsLocal()
+        {
+            return isLocalPlayer;
+        }
 
+        /*
         public string GetName()
         {
             return username;
@@ -93,12 +101,8 @@ namespace Julo.Network
             // this change won't have immediate effect because it's a SyncVar (will trigger OnRoleChangedHook() instead)    
             this.role = role;
         }
-
-        public bool IsLocal()
-        {
-            return isLocalPlayer;
-        }
-
+        */
+        /*
         public void SetUser(UserProfile user)
         {
             this.username = user.GetName();
@@ -119,14 +123,14 @@ namespace Julo.Network
             // this change won't have immediate effect because it's a SyncVar (will trigger OnReadyChangedHook() instead)    
             this.ready = readyState;
         }
-
+        */
         /////////////// Listening ///////////////
 
-        public void AddListener(DNMPlayerListener listener)
+        public void AddListener(IDualPlayerListener listener)
         {
             listeners.Add(listener);
         }
 
-    } // class NetworkPlayer
+    } // class OnlineDualPlayer
 
 } // namespace Julo.Network

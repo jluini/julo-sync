@@ -7,21 +7,44 @@ using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
 using Julo.Network;
+using Julo.Game;
 
 namespace Julo.TurnBased
 {
     public abstract class TurnBasedServer : GameServer
     {
+
         public static TurnBasedServer instance;
 
+        /*
         public float preturnWaitTime = 1f;
-
         bool aPlayerIsPlaying = false;
-
         RoleData[] roleData;
-
         int lastRolePlayed = 0;
+        */
 
+        public TurnBasedServer(Mode mode, CreateHostedClientDelegate clientDelegate = null) : base(mode, clientDelegate)
+        {
+            instance = this;
+            Log.Debug("Creating TBServer");
+        }
+
+        // only online mode
+        public override void WriteRemoteClientData(List<MessageBase> messages)
+        {
+            base.WriteRemoteClientData(messages);
+
+            // TODO pass data to TurnBasedClient
+
+            messages.Add(new UnityEngine.Networking.NetworkSystem.StringMessage("Nivel TB!!"));
+        }
+
+        protected override void OnMessage(WrappedMessage message, int from)
+        {
+            base.OnMessage(message, from);
+        }
+
+        /*
         protected override void OnStartServer()
         {
             base.OnStartServer();
@@ -46,7 +69,8 @@ namespace Julo.TurnBased
         {
             StartCoroutine(GameRoutine());
         }
-
+        */
+        /*
         IEnumerator GameRoutine()
         {
             OnStartGame();
@@ -163,7 +187,7 @@ namespace Julo.TurnBased
         protected abstract void OnStartTurn(int role);
 
         protected abstract bool RoleIsAlive(int numRole);
-
+        */
     } // class TurnBasedServer
 
 } // namespace Julo.TurnBased

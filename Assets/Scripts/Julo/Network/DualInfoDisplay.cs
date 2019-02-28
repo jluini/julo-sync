@@ -8,7 +8,7 @@ using Julo.Logging;
 namespace Julo.Network
 {
     
-    public class DNMInfoDisplay : MonoBehaviour, InfoDisplay
+    public class DualInfoDisplay : MonoBehaviour, InfoDisplay
     {
         public Text dnmStateDisplay;
         public Text gameStateDisplay;
@@ -35,6 +35,6 @@ namespace Julo.Network
             }
         }
 
-    } // class DNMInfoDisplay
+    } // class DualInfoDisplay
 
 } // namespace Julo.Network

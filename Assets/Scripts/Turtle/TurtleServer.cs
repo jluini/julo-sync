@@ -11,6 +11,30 @@ namespace Turtle
 {
     public class TurtleServer : TurnBasedServer
     {
+
+        public TurtleServer(Mode mode, CreateHostedClientDelegate clientDelegate = null) : base(mode, clientDelegate)
+        {
+            //instance = this;
+            Log.Debug("Creating TurtleServer");
+        }
+
+        // only online mode
+        public override void WriteRemoteClientData(List<MessageBase> messages)
+        {
+            base.WriteRemoteClientData(messages);
+
+            // TODO pass data to TurtleClient
+
+            messages.Add(new UnityEngine.Networking.NetworkSystem.StringMessage("Estamos a nivel Turtle"));
+        }
+
+        protected override void OnMessage(WrappedMessage message, int from)
+        {
+            base.OnMessage(message, from);
+        }
+
+
+        /*
         public static new TurtleServer instance = null;
 
         public Turtle onlineTurtlePrefab;
@@ -82,7 +106,7 @@ namespace Turtle
                 base.OnMessage(message, from);
             }
         }
-
+        */
     } // class TurtleServer
 
 } // namespace Turtle

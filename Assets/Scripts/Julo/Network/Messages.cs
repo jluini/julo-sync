@@ -2,7 +2,6 @@
 
 using UnityEngine.Networking;
 
-using Julo.Logging;
 using Julo.Users;
 
 namespace Julo.Network
@@ -28,10 +27,10 @@ namespace Julo.Network
         //public const short GameWillStart = MsgTypeBase + 3;
 
         // Sent from server to clients to deliver initial game state
-        public const short StartGame = MsgTypeBase + 4;
+        //public const short StartGame = MsgTypeBase + 4;
 
         // Sent from clients to server after Prepare
-        public const short ReadyToStart = MsgTypeBase + 5;
+        //public const short ReadyToStart = MsgTypeBase + 5;
 
         public const short GameServerToClient = MsgTypeBase + 6;
         public const short GameClientToServer = MsgTypeBase + 7;
@@ -92,7 +91,7 @@ namespace Julo.Network
         }
     
     } // class CustomAddPlayerMessage
-
+    /*
     public class GameStateMessage : MessageBase
     {
         public DualNetworkManager.GameState newState;
@@ -116,7 +115,8 @@ namespace Julo.Network
             writer.Write((int)newState);
         }
     }
-
+    */
+    /*
     public class StartGameMessage : MessageBase
     {
         public string scene;
@@ -163,8 +163,56 @@ namespace Julo.Network
         }
 
     } // class StartGameMessage
+    */
+    public class StartRemoteClientMessage : MessageBase
+    {
+        public bool accepted; // TODO can assume it is true?
+        //public string sceneName; // TOTO necessary?
+        public List<MessageBase> data;
+        public int count;
 
+        public NetworkReader dataReader;
 
+        public StartRemoteClientMessage()
+        {
+        }
+
+        public StartRemoteClientMessage(bool accepted, /*string sceneName, */List<MessageBase> data)
+        {
+            this.accepted = accepted;
+            // this.sceneName = sceneName;
+            this.data = data;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(accepted);
+            //writer.Write(sceneName);
+            writer.Write(data.Count);
+
+            foreach(var m in data)
+            {
+                writer.Write(m);
+            }
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            accepted = reader.ReadBoolean();
+            //sceneName = reader.ReadString();
+            count = reader.ReadInt32();
+            dataReader = reader;
+        }
+
+        public TMsg ReadInitialMessage<TMsg>() where TMsg : MessageBase, new()
+        {
+            var msg = new TMsg();
+            msg.Deserialize(dataReader);
+            return msg;
+        }
+
+    } // class StartRemoteClientMessage
+    /*
     public class StatusMessage : MessageBase
     {
         public bool accepted;
@@ -243,7 +291,7 @@ namespace Julo.Network
             return System.String.Format("[scene: {0}, state: {1}]", scene, gameState.ToString());
         }
     } // class StatusMessage
-
+    */
     public class WrappedMessage : MessageBase
     {
         public short messageType;

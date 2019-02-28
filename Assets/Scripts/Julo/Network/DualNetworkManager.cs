@@ -9,6 +9,7 @@ using UnityEngine.SceneManagement;
 
 using Julo.Logging;
 using Julo.Users;
+using Julo.Game; // try not to use Game here
 
 namespace Julo.Network
 {
@@ -25,12 +26,11 @@ namespace Julo.Network
 
         StartingAsClient,
         Client,
-        //ClientPlaying
             
         // TODO add dedicated server mode
     }
 
-    public class DualNetworkManager : NetworkManager, DNMListener
+    public class DualNetworkManager : NetworkManager
     {
         static DualNetworkManager _instance = null;
         public static DualNetworkManager instance
@@ -64,18 +64,22 @@ namespace Julo.Network
         }
 
         [Header("Players")]
-
-        public OfflinePlayer offlinePlayerModel;
-        public OnlinePlayer onlinePlayerModel;
+        public OfflineDualPlayer offlinePlayerModel;
+        public OnlineDualPlayer onlinePlayerModel;
 
         [Header("Hooks")]
         public Transform playerContainer;
         public Toggle sceneToggle; // TODO remove 
 
 
-        [Header("Configuration")]
-        public GameServer gameServerPrefab;
-        public GameClient gameClientPrefab;
+        //[Header("Configuration")]
+        //public GameServer gameServerPrefab;
+        //public GameClient gameClientPrefab;
+
+        ////////////////////////////////////////////////////////////
+
+        public GameServer dualServer = null;
+        GameClient dualClient = null;
 
         ////////////////////////////////////////////////////////////
 
@@ -86,19 +90,19 @@ namespace Julo.Network
         UserManager userManager = null;
         DNMState state = DNMState.NotInitialized;
 
-        GameState gameState = GameState.NoGame;
-        GameServer gameServer = null;
-        GameClient gameClient = null;
+        //GameState gameState = GameState.NoGame;
+        //GameServer gameServer = null;
+        //GameClient gameClient = null;
 
         NetworkClient localClient = null;
 
-        int numRoles;
+        //int numRoles;
 
         ////////////////////////////////////////////////////////////
 
         // only server
-        Dictionary<int, Client> clients;
-        List<Player>[] playersPerRole = null;
+        //Dictionary<int, Client> clients;
+        //List<Player>[] playersPerRole = null;
 
         ////////////////////////////////////////////////////////////
 
@@ -108,9 +112,26 @@ namespace Julo.Network
 
         ////////////////////////////////////////////////////////////
 
-        List<DNMListener> listeners = new List<DNMListener>();
+        List<IDualListener> listeners = new List<IDualListener>();
 
         ////////////////////////////////////////////////////////////
+
+        CreateServerDelegate serverDelegate;
+        CreateHostedClientDelegate hostedClientDelegate;
+        CreateRemoteClientDelegate remoteClientDelegate;
+
+        public void Init(
+            UserManager userManager,
+            CreateServerDelegate serverDelegate,
+            CreateHostedClientDelegate hostedClientDelegate,
+            CreateRemoteClientDelegate remoteClientDelegate
+        ) {
+            Init(userManager);
+
+            this.serverDelegate = serverDelegate;
+            this.hostedClientDelegate = hostedClientDelegate;
+            this.remoteClientDelegate = remoteClientDelegate;
+        }
 
         public void Init(UserManager userManager)
         {
@@ -128,7 +149,7 @@ namespace Julo.Network
             }
 
             SetState(DNMState.Off);
-            SetGameState(GameState.NoGame);
+            //SetGameState(GameState.NoGame);
             this.userManager = userManager;
         }
 
@@ -140,18 +161,24 @@ namespace Julo.Network
                 return;
             }
 
-            clients = new Dictionary<int, Client>();
 
             SetState(DNMState.Offline);
-
+            /*
+            clients = new Dictionary<int, Client>();
             var singleClient = new Client(null);
             clients.Add(LocalConnectionId, singleClient);
-
-            AddOfflinePlayer(userManager.GetActiveUser());
+            */
+            // TODO AddOfflinePlayer(userManager.GetActiveUser());
 
             // TODO delete this!!!
-            if(sceneToggle.isOn)
-                AddOfflinePlayer(userManager.GetActiveUser());
+            //if(sceneToggle.isOn)
+                //AddOfflinePlayer(userManager.GetActiveUser());
+
+            ///
+            
+            // creates hosted offline server
+            this.dualServer = (GameServer)serverDelegate(Mode.OfflineMode, hostedClientDelegate);
+            this.dualClient = dualServer.localClient;
         }
 
         public void StartAsHost()
@@ -162,9 +189,14 @@ namespace Julo.Network
                 return;
             }
 
-            clients = new Dictionary<int, Client>();
+            //clients = new Dictionary<int, Client>();
 
+            Log.Debug("DNMState.CreatingHost");
             SetState(DNMState.CreatingHost);
+
+            // creates hosted online server
+            dualServer = (GameServer) serverDelegate(Mode.OnlineMode, hostedClientDelegate);
+
 
             localClient = StartHost();
 
@@ -173,6 +205,9 @@ namespace Julo.Network
                 SetState(DNMState.Off);
                 Log.Error("DNM: could not create host");
             }
+
+            ///
+
         }
 
         public void StartAsClient()
@@ -197,25 +232,39 @@ namespace Julo.Network
         {
             if(state == DNMState.Offline)
             {
+                // TODO
+                
                 SetState(DNMState.Off);
-                foreach(var p in GetClient(LocalConnectionId).players)
+                foreach(var p in dualServer.connections[LocalConnectionId].players)
                 {
-                    OfflinePlayer op = (OfflinePlayer)p;
+                    OfflineDualPlayer op = (OfflineDualPlayer)p;
                     Destroy(op.gameObject);
                 }
-                clients = null;
+                
+                // TODO cleanup
+
+                dualServer = null;
+                dualClient = null;
+                //clients = null;
             }
             else if(state == DNMState.Host)
             {
                 // TODO destroy and clear things
                 // TODO should clear clients ???????????????
+
                 StopHost();
-                clients = null;
+
+                dualServer = null;
+                dualClient = null;
+                //clients = null;
             }
             else if(state == DNMState.Client)
             {
                 // TODO destroy and clear things
+
                 StopClient();
+
+                dualClient = null;
             }
             else
             {
@@ -226,10 +275,10 @@ namespace Julo.Network
         ////////////////////////////////////////////////////////////
 
         //////////////////// Offline mode //////////////////////////
-
+        /*
         void AddOfflinePlayer(UserProfile user)
         {
-            var player = GameObject.Instantiate(offlinePlayerModel, playerContainer) as OfflinePlayer;
+            var player = GameObject.Instantiate(offlinePlayerModel, playerContainer) as OfflineDualPlayer;
             int newRole;
 
             if(gameState == GameState.NoGame)
@@ -250,19 +299,19 @@ namespace Julo.Network
 
             GetClient(LocalConnectionId).AddPlayer(player);
         }
-
         // TODO !!!
-        public List<DNMPlayer> OfflinePlayers()
+        public List<IDualPlayer> OfflinePlayers()
         {
             return GetClient(LocalConnectionId).players;
         }
+        */
 
         ////////////////////////////////////////////////////////////
 
         /////// SERVER
 
         // Playing
-
+        /*
         public void TryToStartGame()
         {
             if(state != DNMState.Host && state != DNMState.Offline)
@@ -293,7 +342,7 @@ namespace Julo.Network
 
         void PrepareToStartGame()
         {
-            if(playersPerRole != null)
+            if(dualServer.playersPerRole != null)
             {
                 Log.Warn("playersPerRole already initialized");
             }
@@ -304,22 +353,25 @@ namespace Julo.Network
             numRoles = levelData.MaxPlayers;
             CollectPlayers();
 
-            LoadSceneAsync(sceneName, () =>
-            {
-                InstantiateServer();
+            //LoadSceneAsync(sceneName, () =>
+            //{
+                StartGame();
+
+                /*
+                InstantiateGameServer();
 
                 // this is just to exclude DedicatedServer mode that doesn't exist yet
                 if(state == DNMState.Offline)
                 {
                     // instantiate local game client but no messaging
-                    InstantiateClient(gameServer, Mode.OfflineMode, numRoles);
+                    InstantiateGameClient(gameServer, Mode.OfflineMode, numRoles);
                     StartGame();
                     // TODO rest of things!
                 }
                 else if(state == DNMState.Host)
                 {
                     // instantiate local client
-                    InstantiateClient(gameServer, Mode.OnlineMode, numRoles);
+                    InstantiateGameClient(gameServer, Mode.OnlineMode, numRoles);
 
                     var initialMessages = new List<MessageBase>();
                     gameServer.WriteInitialData(initialMessages);
@@ -333,19 +385,23 @@ namespace Julo.Network
                 {
                     Log.Error("DNM: unexpected state call of PrepareToStartGame '{0}'", state);
                 }
-            });
+                * /
+            //});
         }
-
+        
         void StartGame()
         {
             OnClientGameStarted(); // this is to hide game panel
             SetGameState(GameState.Playing);
-            //StartCoroutine(StartGameDelayed());
-            gameServer.StartGame();
+            dualServer.StartGame(/*levelData.MaxPlayers, playersPerRole* /);
         }
+        */
 
-        public void ChangeRole(DNMPlayer player)
+        public void ChangeRole(IDualPlayer player)
         {
+
+            Log.Warn("ChangeRole not implemented");
+            /*
             CheckState(new DNMState[] { DNMState.Offline, DNMState.Host });
             CheckGameState(GameState.NoGame);
             
@@ -374,17 +430,22 @@ namespace Julo.Network
             {
                 Log.Warn("No role to change?");
             }
+            */
         }
-
+        
         // Server callbacks
 
         public override void OnServerConnect(NetworkConnection conn)
         {
-            // Log.Debug("### OnServerConnect({0}, {1})", state.ToString(), conn.connectionId);
+            Log.Debug("### OnServerConnect({0}, {1})", state.ToString(), conn.connectionId);
 
+            CheckState(new DNMState[] { DNMState.CreatingHost, DNMState.Host });
+
+            dualServer.OnConnect(conn);
+
+            /*
             int id = conn.connectionId;
-
-            if(clients.ContainsKey(id))
+            if(dualServer.connections.ContainsKey(id))
             {
                 Log.Error("Client already registered");
                 return;
@@ -431,19 +492,26 @@ namespace Julo.Network
             {
                 conn.Disconnect();
             }
+            */
         }
 
         public override void OnServerDisconnect(NetworkConnection conn)
         {
             // Log.Debug("### OnServerDisconnect({0})", conn.connectionId);
 
+            // TODO avoid warnings for rejected clients
+
+            // TODO pasar a DualServer en vez de violar encapsulamiento
+            
+            CheckState(DNMState.Host);
+
             NetworkServer.DestroyPlayersForConnection(conn);
 
             var id = conn.connectionId;
 
-            if(clients != null && clients.ContainsKey(id))
+            if(dualServer.connections.ContainsKey(id))
             {
-                clients.Remove(id);
+                dualServer.connections.Remove(id);
             }
             else
             {
@@ -472,15 +540,19 @@ namespace Julo.Network
                 return;
             }
 
+            //throw new System.NotImplementedException();
+
+            
+            /*
             CustomAddPlayerMessage msg = messageReader.ReadMessage<CustomAddPlayerMessage>();
 
             string username = msg.username;
 
-            var player = GameObject.Instantiate(onlinePlayerModel/*, playerContainer not needed */) as OnlinePlayer;
-
+            var player = GameObject.Instantiate(onlinePlayerModel/*, playerContainer not needed * /) as OnlinePlayer;
             UserProfile user = new UserProfile(username);
             int role = DNM.SpecRole;
-
+            */
+            /*
             if(gameState == GameState.NoGame)
             {
                 int nextRole = GetNextRole();
@@ -494,13 +566,14 @@ namespace Julo.Network
             {
                 Log.Warn("Unexpected gameState {0}", gameState);
             }
-
             player.SetUser(user);
             player.SetRole(role);
 
-            GetClient(conn).AddPlayer(player);
+            dualServer.connections[conn.connectionId].AddPlayer(player);
+            //GetClient(conn).AddPlayer(player);
 
             NetworkServer.AddPlayerForConnection(conn, player.gameObject, playerControllerId);
+            */
         }
 
         public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId) {
@@ -544,9 +617,11 @@ namespace Julo.Network
         /////// CLIENT
 
         // Misc
-
+        
         public void ClientSetReadyCommand(bool newValue)
         {
+            Log.Warn("ClientSetReadyCommand not implemented");
+            /*
             if(state != DNMState.Host && state != DNMState.Client)
             {
                 Log.Error("Invalid call of ClientSetReady: {0}", state);
@@ -560,9 +635,9 @@ namespace Julo.Network
 
             var readyMessage = new ReadyMessage(newValue);
 
-            client.Send(MsgType.ClientSetReady, readyMessage);
+            client.Send(MsgType.ClientSetReady, readyMessage);*/
         }
-
+        
         // Client callbacks
 
         public override void OnStartClient(NetworkClient client) {
@@ -594,7 +669,7 @@ namespace Julo.Network
         }
 
         public override void OnClientSceneChanged(NetworkConnection conn) {
-            Log.Warn("######## OnClientSceneChanged called ### gameState={0}", gameState);
+            Log.Warn("######## OnClientSceneChanged called ### state={0}", state);
         }
 
         public override void OnClientConnect(NetworkConnection conn)
@@ -612,11 +687,12 @@ namespace Julo.Network
             else if(state == DNMState.StartingAsClient && !NetworkServer.active)
             {
                 conn.RegisterHandler(MsgType.InitialStatus, OnClientInitialStatusMessage);
-                // wait for InitialStatus message
+                // Waiting for InitialStatus message
+                Log.Debug("Waiting for InitialStatus message");
             }
             else
             {
-                Log.Warn("Unexpected OnClientConnect case: {0}", state);
+                Log.Warn("Unexpected OnClientConnect case: {0}, {1}", state, NetworkServer.active);
                 return;
             }
 
@@ -654,9 +730,12 @@ namespace Julo.Network
         //////////////////////////
 
         // Instantiate client/server
-
-        void InstantiateServer()
+        /*
+        void InstantiateGameServer()
         {
+
+            ///
+
             if(gameServer != null)
             {
                 Log.Error("Already have a game server");
@@ -677,91 +756,76 @@ namespace Julo.Network
 
             gameServer.StartServer(mode, levelData.MaxPlayers, playersPerRole);
         }
+        */
 
         delegate void OnClientInstantiated();
-
+        
+        /*
         // instantiates local client
-        void InstantiateClientAsync(StartGameMessage message, OnClientInstantiated onFinishDelegate = null)
+        void InstantiateGameClient(GameServer gameServer, Mode mode, int numRoles)
         {
-            SetGameState(GameState.Preparing);
-            LoadSceneAsync(message.scene, () =>
+            InstantiateClientObject();
+            gameClient.StartClient(gameServer, mode, numRoles);
+        }
+        */
+        /*
+        // instantiates remote client
+        void InstantiateClientAsync(StartRemoteClientMessage message, OnClientInstantiated onFinishDelegate = null)
+        {
+            //var sceneName = message.sceneName;
+            //Log.Debug("Loading scene '{0}'", sceneName);
+
+            //SetGameState(GameState.Preparing);
+            LoadSceneAsync(sceneName, () =>
             {
-                InstantiateClient(message);
+                //InstantiateGameClient(message);
+                // creates non-hosted client
+                dualClient = (GameClient)remoteClientDelegate(message);
+
+
                 SetGameState(GameState.Playing);
                 OnClientGameStarted(); // this is to hide game panel
 
                 onFinishDelegate?.Invoke();
             });
         }
-
-        void InstantiateClient(GameServer gameServer, Mode mode, int numRoles)
-        {
-            InstantiateClientObject();
-            gameClient.StartClient(gameServer, mode, numRoles);
-        }
-
+        */
+        /*
         // instantiates remote client
-        void InstantiateClient(StartGameMessage startGameMessage)
+        void InstantiateGameClient(StartRemoteClientMessage startClientMessage)
         {
-            InstantiateClientObject();
-            gameClient.StartClient(startGameMessage);
-        }
-
-        void InstantiateClientObject(GameServer gameServer = null)
-        {
-            if(gameClient != null)
-            {
-                Log.Error("Already have a game client");
-                return;
-            }
-
-            gameClient = Object.Instantiate(gameClientPrefab) as GameClient;
-
-            CheckState(new DNMState[] { DNMState.Offline, DNMState.Host, DNMState.Client });
-
-            Mode mode = state == DNMState.Offline ? Mode.OfflineMode : Mode.OnlineMode;
-            bool isHosted = state != DNMState.Client;
+            // creates non-hosted client
+            dualClient = (GameClient) remoteClientDelegate(startClientMessage);
         }
 
         // only server to remotes
         void SendStatusToClient(bool accepted, NetworkConnection conn)
         {
+            Log.Debug("Sending InitialStatus message!!!");
             string sceneName = GetSceneName();
-            var state = GameState.NoGame;
-            MessageBase extraMessage = null;
+            //MessageBase extraMessage = null;
+            var initialMessages = new List<MessageBase>();
 
             if(accepted)
             {
-                state = gameState;
-
-                if(gameState == GameState.NoGame || gameState == GameState.WillStart)
+                if(dualServer == null)
                 {
-                    // noop
-                }
-                else if(gameState == GameState.Playing || gameState == GameState.GameOver)
-                {
-                    if(gameServer == null)
-                    {
-                        Log.Error("No tengo server :(");
-                    }
-                    else
-                    {
-                        var initialMessages = new List<MessageBase>();
-                        gameServer.WriteInitialData(initialMessages);
-                        extraMessage = new StartGameMessage(sceneName, initialMessages);
-                    }
+                    Log.Error("No tengo server :(");
                 }
                 else
                 {
-                    Log.Error("Unexpected state {0}...", gameState);
+                    dualServer.WriteRemoteClientData(initialMessages);
+                    //extraMessage = new StartGameMessage(sceneName, initialMessages);
                 }
+
             }
 
-            conn.Send(MsgType.InitialStatus, new StatusMessage(accepted, sceneName, state, extraMessage));
+            Log.Debug("Sending InitialStatus message: {0}, {1}, {2}", accepted, sceneName, initialMessages.Count);
+            conn.Send(MsgType.InitialStatus, new StartRemoteClientMessage(accepted, sceneName, initialMessages));
         }
-
+        */
         // Server message handlers
-
+        /*
         void OnServerClientSetReadyMessage(NetworkMessage messageReader)
         {
             ReadyMessage msg = messageReader.ReadMessage<ReadyMessage>();
@@ -784,7 +848,8 @@ namespace Julo.Network
                 }
             }
         }
-
+        */
+        /*
         void OnServerReadyToStartMessage(NetworkMessage messageReader)
         {
             if(gameState != GameState.Preparing)
@@ -805,19 +870,21 @@ namespace Julo.Network
                 StartGame();
             }
         }
-
+        */
         // Client message handlers
 
         // only in non-hosted clients
         void OnClientInitialStatusMessage(NetworkMessage messageReader)
         {
-            if(NetworkServer.active)
-            {
-                Log.Error("Invalid in host");
-                return;
-            }
+            // TODO pasar a DualClient?
 
-            StatusMessage msg = messageReader.ReadMessage<StatusMessage>();
+            // TODO necessary to receive if rejected?
+
+            CheckState(DNMState.StartingAsClient);
+
+            var msg = messageReader.ReadMessage<StartRemoteClientMessage>();
+
+            Log.Debug("Received InitialStatus message: {0}, {1}, {2}", msg.accepted, msg.count);
 
             if(!msg.accepted)
             {
@@ -825,35 +892,27 @@ namespace Julo.Network
                 return;
             }
 
-            SetGameState(msg.gameState);
+            // creates non-hosted client
+            dualClient = (GameClient)remoteClientDelegate(msg);
 
-            // TODO check game over case
-            if(gameState == GameState.NoGame)
+
+            SetState(DNMState.Client);
+            CreatePlayer(localClient.connection); // create remote initial player
+
+            /*
+            InstantiateClientAsync(msg, () =>
             {
                 SetState(DNMState.Client);
-                RegisterClientHandlers(messageReader.conn);
                 CreatePlayer(localClient.connection); // create remote initial player
-            }
-            // TODO check this cases...
-            else if(gameState == GameState.WillStart || gameState == GameState.Preparing || gameState == GameState.Playing || gameState == GameState.GameOver)
-            {
-                // client is joining a started game
-
-                SetState(DNMState.Client);
-                RegisterClientHandlers(messageReader.conn);
-
-                var startGameMessage = msg.ReadExtraMessage<StartGameMessage>();
-
-                InstantiateClientAsync(startGameMessage, () =>
-                {
-                    CreatePlayer(localClient.connection); // create remote initial player
-                });
-            }
+            });
+            */
         }
 
         // create first local/remote client
         void CreatePlayer(NetworkConnection conn)
         {
+            // TODO set ready here?
+
             ClientScene.Ready(conn);
             var extraMessage = new CustomAddPlayerMessage(userManager.GetActiveUser());
             ClientScene.AddPlayer(null, 0, extraMessage);
@@ -864,7 +923,8 @@ namespace Julo.Network
                 ClientScene.AddPlayer(null, 1, extraMessage);
             }
         }
-
+        
+        /*
         // doing nothing in hosted client
         void OnClientStartGameMessage(NetworkMessage messageReader)
         {
@@ -890,31 +950,32 @@ namespace Julo.Network
                 client.Send(MsgType.ReadyToStart, new EmptyMessage());
             }
         }
+        */
 
         void OnGameServerToClientMessage(NetworkMessage messageReader)
         {
             var msg = messageReader.ReadMessage<WrappedMessage>();
 
-            if(!gameClient)
+            if(dualClient == null)
             {
                 Log.Warn("OnGameClientMessage: no game client {0}", msg.messageType - MsgType.Highest);
 
                 return;
             }
 
-            gameClient.OnMessage(msg);
+            dualClient.SendMessage(msg);
         }
 
         void OnGameClientToServerMessage(NetworkMessage messageReader)
         {
             var msg = messageReader.ReadMessage<WrappedMessage>();
-            if(!gameServer)
+            if(dualServer == null)
             {
                 Log.Warn("OnGameClientSendToServerMessage: no game server");
                 return;
             }
 
-            gameServer.OnMessage(msg, messageReader.conn.connectionId);
+            dualServer.SendMessage(msg, messageReader.conn.connectionId);
         }
 
         ///////////////////// State /////////////////////
@@ -934,7 +995,10 @@ namespace Julo.Network
 
             state = newState;
             Info.Set("DNMState", state.ToString());
-            OnStateChanged(state);
+            foreach(var l in listeners)
+            {
+                l.OnStateChanged(state);
+            }
         }
 
         ///////////////////// Handlers /////////////////////
@@ -942,32 +1006,32 @@ namespace Julo.Network
         void RegisterServerHandlers()
         {
             // client to mark itself as ready/non-ready to start playing
-            NetworkServer.RegisterHandler(MsgType.ClientSetReady, OnServerClientSetReadyMessage);
+            //NetworkServer.RegisterHandler(MsgType.ClientSetReady, OnServerClientSetReadyMessage);
             // client to mark itself as ready/non-ready to start playing
-            NetworkServer.RegisterHandler(MsgType.ReadyToStart, OnServerReadyToStartMessage);
+            //NetworkServer.RegisterHandler(MsgType.ReadyToStart, OnServerReadyToStartMessage);
             // game-level message sent from client to server
             NetworkServer.RegisterHandler(MsgType.GameClientToServer, OnGameClientToServerMessage);
         }
 
         void RegisterClientHandlers(NetworkConnection conn)
         {
-            conn.RegisterHandler(MsgType.StartGame, OnClientStartGameMessage);
+            //conn.RegisterHandler(MsgType.StartGame, OnClientStartGameMessage);
             conn.RegisterHandler(MsgType.GameServerToClient, OnGameServerToClientMessage);
         }
-
+        /*
         void SetGameState(GameState newState)
         {
             gameState = newState;
             Info.Set("GameState", gameState.ToString());
         }
+        */
+        //// IDualListener
 
-        //// DNMListener
-
-        public void AddListener(DNMListener listener)
+        public void AddListener(IDualListener listener)
         {
             listeners.Add(listener);
         }
-
+        /*
         public void OnStateChanged(DNMState newState)
         {
             foreach(var l in listeners)
@@ -983,9 +1047,9 @@ namespace Julo.Network
                 l.OnClientGameStarted();
             }
         }
-
+        */
         // Server utils
-
+        /*
         bool AllClientsInState(GameState state)
         {
             var clientList = new List<Client>(clients.Values);
@@ -1052,7 +1116,7 @@ namespace Julo.Network
 
             foreach(Client client in clients.Values)
             {
-                foreach(DNMPlayer player in client.players)
+                foreach(IDualPlayer player in client.players)
                 {
                     if(!player.IsSpectator() && !player.IsReady())
                     {
@@ -1079,7 +1143,6 @@ namespace Julo.Network
 
             return enoughPlayers;
         }
-
         void CollectPlayers()
         {
             playersPerRole = new List<Player>[numRoles];
@@ -1092,7 +1155,7 @@ namespace Julo.Network
                 }
                 client.stateInServer = GameState.NoGame;
 
-                foreach(DNMPlayer player in client.players)
+                foreach(IDualPlayer player in client.players)
                 {
                     if(!player.IsSpectator())
                     {
@@ -1107,6 +1170,7 @@ namespace Julo.Network
                 }
             }
         }
+        */
 
         //// Messaging
 
@@ -1118,8 +1182,10 @@ namespace Julo.Network
             NetworkServer.SendToAll(msgType, message);
         }
 
+        // TODO no longer call this "game" level
         //// Game-level messaging
 
+        // TODO remove "game" word
         public void GameServerSendTo(int who, short msgType, MessageBase gameMessage)
         {
             CheckState(DNMState.Host);
@@ -1134,15 +1200,17 @@ namespace Julo.Network
             NetworkServer.SendToAll(MsgType.GameServerToClient, new WrappedMessage(msgType, gameMessage));
         }
 
+        // TODO remove "game" word
         public void GameServerSendToAllBut(int who, short msgType, MessageBase gameMessage)
         {
             CheckState(DNMState.Host);
             
-            foreach(var client in clients.Values)
+            //foreach(var client in clients.Values)
+            foreach(var c in dualServer.connections.Values) // TODO TODO TODO TODO TODO 
             {
-                int id = client.connection.connectionId;
+                int id = c.ConnectionId();
 
-                if(id != who && client.connection.isReady)
+                if(id != who && c.networkConnection.isReady)
                 {
                     NetworkServer.SendToClient(id, MsgType.GameServerToClient, new WrappedMessage(msgType, gameMessage));
                 }
@@ -1150,6 +1218,7 @@ namespace Julo.Network
 
         }
 
+        // TODO remove "game" word
         public void GameClientSendToServer(short msgType, MessageBase message)
         {
             CheckState(new DNMState[] { DNMState.Host, DNMState.Client });
@@ -1174,7 +1243,7 @@ namespace Julo.Network
                 WrongState(state.ToString());
             }
         }
-
+        /*
         void CheckGameState(GameState expectedState)
         {
             if(gameState != expectedState)
@@ -1190,7 +1259,7 @@ namespace Julo.Network
                 WrongState(gameState.ToString());
             }
         }
-
+        */
         void WrongState(string stateString)
         {
             var errorMessage = System.String.Format("Unexpected state '{0}'", stateString);
@@ -1200,9 +1269,9 @@ namespace Julo.Network
 
         // Scene loading
 
-        delegate void OnFinishLoadingScene();
+        public delegate void OnFinishLoadingScene();
 
-        void LoadSceneAsync(string sceneName, OnFinishLoadingScene onFinishDelegate)
+        public void LoadSceneAsync(string sceneName, OnFinishLoadingScene onFinishDelegate)
         {
 
             StartCoroutine(LoadSceneCoroutine(sceneName, onFinishDelegate));

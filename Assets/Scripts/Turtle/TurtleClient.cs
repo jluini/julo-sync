@@ -11,13 +11,41 @@ namespace Turtle
 {
     public class TurtleClient : TurnBasedClient
     {
+
+        // creates hosted client
+        public TurtleClient(Mode mode, DualServer server) : base(mode, server)
+        {
+            Log.Debug("Creating hosted TurtleClient");
+        }
+
+        // creates remote client
+        public TurtleClient(StartRemoteClientMessage startMessage) : base(startMessage)
+        {
+            var message = startMessage.ReadInitialMessage<UnityEngine.Networking.NetworkSystem.StringMessage>();
+            Log.Debug("Creating non-hosted TurtleClient: '{0}'", message.value);
+
+            // TODO ...
+
+        }
+
+        protected override void OnMessage(WrappedMessage message)
+        {
+            switch(message.messageType)
+            {
+                default:
+                    base.OnMessage(message);
+                    break;
+            }
+        }
+
+        /*
         public static new TurtleClient instance = null;
 
         public Turtle onlineTurtlePrefab;
 
         public static float torque = 5f;
 
-        public int FrameStep = 15;
+        public int frameStep = 15;
 
         Turtle targetTurtle = null;
 
@@ -26,7 +54,7 @@ namespace Turtle
         TurnType tt = TurnType.None;
         bool turnEnded = true;
 
-        TurtleMatch Match
+        TurtleMatch match
         {
             get
             {
@@ -63,11 +91,6 @@ namespace Turtle
             remoteMatch.CreateFromInitialState(numRoles, onlineTurtlePrefab, initialState);
         }
 
-        /*public override void LateJoinGame(NetworkReader messageReader)
-        {
-            // TODO
-        }*/
-
         protected override void OnStartTurn(TBPlayer player)
         {
             if(tt != TurnType.None)
@@ -80,7 +103,7 @@ namespace Turtle
             var turtles = Match.GetTurtlesForRole(role);
             var aliveTurtles = turtles.FindAll(t => !t.dead);
 
-            if(/*turtles == null || */ aliveTurtles.Count == 0)
+            if(/*turtles == null || * / aliveTurtles.Count == 0)
             {
                 Log.Warn("No alive turtles with role {0}", role);
                 tt = TurnType.Wait;
@@ -156,7 +179,7 @@ namespace Turtle
 
         protected override void OnEndTurn(TBPlayer player)
         {
-            SendToServer(MsgType.ClientUpdate, Match.GetState());
+            SendToServer(MsgType.ClientUpdate, match.GetState());
         }
 
         IEnumerator EndTurnDelayed()
@@ -205,7 +228,7 @@ namespace Turtle
             Log.Error("No turtles");
             return null;
         }
-
+        */
     } // class TurtleClient
 
 } // namespace Turtle

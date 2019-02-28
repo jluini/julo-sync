@@ -4,7 +4,7 @@ namespace Julo.TurnBased
 {
     public class MsgType
     {
-        const short MsgTypeBase = Julo.Network.MsgType.Highest;
+        const short MsgTypeBase = Julo.Game.MsgType.Highest;
 
         public const short StartTurn = MsgTypeBase + 1;
         public const short EndTurn = MsgTypeBase + 2;

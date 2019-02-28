@@ -7,8 +7,8 @@ using Julo.TurnBased;
 
 namespace Turtle
 {
-    [RequireComponent(typeof(DNMPlayer), typeof(TBPlayer))]
-    public class TurtlePlayerDisplay : MonoBehaviour, DNMPlayerListener, TBPlayerListener
+    [RequireComponent(typeof(IDualPlayer), typeof(TBPlayer))]
+    public class TurtlePlayerDisplay : MonoBehaviour, IDualPlayerListener, TBPlayerListener
     {
         [Header("Colors")]
         public Color localColor = Color.black;
@@ -31,14 +31,14 @@ namespace Turtle
 
         void Awake()
         {
-            DNMPlayer dnmPlayer = GetComponent<DNMPlayer>();
-            if (dnmPlayer == null)
+            IDualPlayer dualPlayer = GetComponent<IDualPlayer>();
+            if (dualPlayer == null)
             {
-                Log.Warn("Component DNMPlayer not found!");
+                Log.Warn("Component IDualPlayer not found!");
                 return;
             }
 
-            dnmPlayer.AddListener(this);
+            dualPlayer.AddListener(this);
 
             TBPlayer tbPlayer = GetComponent<TBPlayer>();
             if (tbPlayer == null)
@@ -62,20 +62,22 @@ namespace Turtle
         // DNMPlayerListener
         //////////////////////////////////////////
 
-        public void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isHosted = true, bool isLocal = true)
+        //public void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isHosted = true, bool isLocal = true)
+        public void Init(Mode mode, bool isHosted = true, bool isLocal = true)
         {
             this.isHosted = isHosted;
             this.isLocal = isLocal;
 
-            nameDisplay.text = username;
+            // TODO
+            // nameDisplay.text = username;
 
             SetColor(GetColor(false));
 
-            roleDisplay.text = GetRoleText(role);
-            roleButton.interactable = isHosted;
+            //roleDisplay.text = GetRoleText(role);
+            //roleButton.interactable = isHosted;
 
             // TODO do this here?
-            readyToggle.isOn = mode == Mode.OfflineMode;
+            //readyToggle.isOn = mode == Mode.OfflineMode;
         }
 
         void SetColor(Color newColor)

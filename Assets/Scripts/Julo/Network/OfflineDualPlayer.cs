@@ -7,10 +7,10 @@ using Julo.Logging;
 
 namespace Julo.Network
 {
-    public class OfflinePlayer : MonoBehaviour, DNMPlayer
+    public class OfflineDualPlayer : MonoBehaviour, IDualPlayer
     {
 
-        List<DNMPlayerListener> listeners = new List<DNMPlayerListener>();
+        List<IDualPlayerListener> listeners = new List<IDualPlayerListener>();
         UserProfile user;
 
         int role;
@@ -18,16 +18,16 @@ namespace Julo.Network
 
         public void Init(UserProfile user, uint id, int role)
         {
-            SetUser(user);
+            //SetUser(user);
             this.id = id;
-            SetRole(role);
+            //SetRole(role);
         }
 
         void Start()
         {
-            foreach(DNMPlayerListener l in listeners)
+            foreach(IDualPlayerListener l in listeners)
             {
-                l.Init(user.GetName(), role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OfflineMode, true, true);
+                l.Init(/*user.GetName(), role, DualNetworkManager.GameState.NoGame /* TODO * /, */Mode.OfflineMode, true, true);
             }
         }
 
@@ -36,6 +36,11 @@ namespace Julo.Network
             return id;
         }
 
+        public bool IsLocal()
+        {
+            return true;
+        }
+        /*
         public string GetName()
         {
             if(user != null)
@@ -67,11 +72,6 @@ namespace Julo.Network
             DualNetworkManager.instance.ChangeRole(this);
         }
 
-        public bool IsLocal()
-        {
-            return true;
-        }
-
         public void SetUser(UserProfile user)
         {
             this.user = user;
@@ -86,14 +86,14 @@ namespace Julo.Network
         {
             return false;
         }
-
+        */
         /////////////// Listening ///////////////
 
-        public void AddListener(DNMPlayerListener listener)
+        public void AddListener(IDualPlayerListener listener)
         {
             listeners.Add(listener);
         }
 
-    } // class OfflinePlayer
+    } // class OfflineDualPlayer
 
 } // namespace Julo.Network

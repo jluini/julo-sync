@@ -4,15 +4,18 @@ using Julo.Users;
 
 namespace Julo.Network
 {
-    public interface Player
+    public interface IPlayer
     {
         uint GetId();
 
-        int GetRole();
-
-        string GetName();
 
         bool IsLocal();
+
+        // this is game-level
+
+        //int GetRole();
+        //string GetName();
+
 
     } // interface Player
 

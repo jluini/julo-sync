@@ -6,11 +6,41 @@ using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
 using Julo.Network;
+using Julo.Game;
 
 namespace Julo.TurnBased
 {
     public abstract class TurnBasedClient : GameClient
     {
+
+        // creates hosted client
+        public TurnBasedClient(Mode mode, DualServer server) : base(mode, server)
+        {
+            Log.Debug("Creating hosted TurnBasedClient");
+        }
+
+        // creates remote client
+        public TurnBasedClient(StartRemoteClientMessage startMessage) : base(startMessage)
+        {
+            var message = startMessage.ReadInitialMessage<UnityEngine.Networking.NetworkSystem.StringMessage>();
+            Log.Debug("Creating non-hosted TurnBasedClient: '{0}'", message.value);
+
+            // TODO ...
+
+        }
+
+        protected override void OnMessage(WrappedMessage message)
+        {
+            switch(message.messageType)
+            {
+                default:
+                    base.OnMessage(message);
+                    break;
+            }
+        }
+
+
+        /*
         public static new TurnBasedClient instance = null;
 
         ClientPlayers<TBPlayer> clientPlayers;
@@ -34,13 +64,14 @@ namespace Julo.TurnBased
                 var players = new Dictionary<uint, TBPlayer>();
 
                 // TODO!!!
+                /*
                 foreach(var p in DualNetworkManager.instance.OfflinePlayers())
                 {
                     var pp = (OfflinePlayer)p;
                     var tbp = pp.GetComponent<TBPlayer>();
                     players.Add(p.GetId(), tbp);
                 }
-
+                * /
                 clientPlayers = new FixedClientPlayers<TBPlayer>(players);
             }
             else
@@ -48,7 +79,7 @@ namespace Julo.TurnBased
                 clientPlayers = new CacheClientPlayers<TBPlayer>();
             }
         }
-            
+
         // remote case
         public override void OnStartRemoteClient(StartGameMessage initialMessages)
         {
@@ -58,7 +89,7 @@ namespace Julo.TurnBased
 
             clientPlayers = new CacheClientPlayers<TBPlayer>();
         }
-        
+
         void IsMyTurn(TBPlayer player)
         {
             if(playingPlayer != null)
@@ -73,7 +104,7 @@ namespace Julo.TurnBased
             if(player.IsLocal())
                 StartCoroutine(PlayTurn());
         }
-        
+
         // only in client that owns the current player
         IEnumerator PlayTurn()
         {
@@ -131,11 +162,11 @@ namespace Julo.TurnBased
                 base.OnMessage(message);
             }
         }
-        
+
         protected abstract void OnStartTurn(TBPlayer player);
         protected abstract bool TurnIsOn();
         protected abstract void OnEndTurn(TBPlayer player);
-
+        */
     } // class TurnBasedClient
 
 } // namespace Julo.TurnBased

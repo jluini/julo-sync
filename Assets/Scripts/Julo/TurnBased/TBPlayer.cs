@@ -3,50 +3,55 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
-using Julo.Network;
 using Julo.Logging;
+using Julo.Network;
+using Julo.Game;
 
 namespace Julo.TurnBased
 {
-    public class TBPlayer : MonoBehaviour, Player
+    // TODO should implement IDualPlayer?
+    [RequireComponent(typeof(GamePlayer))]
+    public class TBPlayer : MonoBehaviour, IPlayer
     {
         List<TBPlayerListener> listeners = new List<TBPlayerListener>();
 
-        DNMPlayer _dnmPlayer;
-        DNMPlayer dnmPlayer
+        IDualPlayer _dualPlayer;
+        IDualPlayer dualPlayer
         {
             get
             {
-                if(_dnmPlayer == null)
+                if(_dualPlayer == null)
                 {
-                    _dnmPlayer = GetComponent<DNMPlayer>();
+                    _dualPlayer = GetComponent<IDualPlayer>();
 
-                    if(_dnmPlayer == null)
+                    if(_dualPlayer == null)
                     {
-                        Log.Error("Component DNMPlayer not found!");
+                        Log.Error("Component IDualPlayer not found!");
                     }
                 }
 
-                return _dnmPlayer;
+                return _dualPlayer;
             }
         }
 
         public uint GetId()
         {
-            return dnmPlayer.GetId();
-        }
-        public string GetName()
-        {
-            return dnmPlayer.GetName();
-        }
-        public int GetRole()
-        {
-            return dnmPlayer.GetRole();
+            return dualPlayer.GetId();
         }
         public bool IsLocal()
         {
-            return dnmPlayer.IsLocal();
+            return dualPlayer.IsLocal();
         }
+        /*
+        public string GetName()
+        {
+            return dualPlayer.GetName();
+        }
+        public int GetRole()
+        {
+            return dualPlayer.GetRole();
+        }
+        */
 
         public void AddListener(TBPlayerListener listener)
         {

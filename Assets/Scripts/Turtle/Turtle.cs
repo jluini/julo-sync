@@ -36,7 +36,7 @@ namespace Turtle
         }
 
         SpriteRenderer _renderer = null;
-        SpriteRenderer renderer
+        new SpriteRenderer renderer
         {
             get
             {

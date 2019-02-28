@@ -1,15 +1,16 @@
 ﻿using UnityEngine;
-using UnityEngine.Networking;
 
 using Julo.Logging;
-using Julo.Network;
 using Julo.Users;
 using Julo.Panels;
+using Julo.Network;
+using Julo.Game;
 using Menu;
 
-public class GameManager : MonoBehaviour, DNMListener
-{
+using Turtle;
 
+public class GameManager : MonoBehaviour, IDualListener
+{
     public UserManager userManager;
 
     public DualNetworkManager dnm;
@@ -19,12 +20,33 @@ public class GameManager : MonoBehaviour, DNMListener
     public Panel connectingPanel;
     public LobbyPanel lobbyPanel;
     public Panel onlinePanel;
+    
+    DualServer CreateServer(Mode mode, CreateHostedClientDelegate clientDelegate = null)
+    {
+        return new TurtleServer(mode, clientDelegate);
+    }
+
+    DualClient CreateHostedClient(Mode mode, DualServer server)
+    {
+        return new TurtleClient(mode, server);
+    }
+
+    DualClient CreateRemoteClient(StartRemoteClientMessage startClientMessage)
+    {
+        return new TurtleClient(startClientMessage);
+    }
+
 
     void Start()
     {
         userManager.Init();
         dnm.AddListener(this);
-        dnm.Init(userManager);
+
+        //dnm.Init(userManager);
+
+        
+
+        dnm.Init(userManager, CreateServer, CreateHostedClient, CreateRemoteClient);
     }
 
     // Button handlers
@@ -51,7 +73,8 @@ public class GameManager : MonoBehaviour, DNMListener
 
     public void OnClickStartGame()
     {
-        dnm.TryToStartGame();
+        //dnm.TryToStartGame();
+        dnm.dualServer.TryToStartGame();
     }
 
     public void OnClickBack()
