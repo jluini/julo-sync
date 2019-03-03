@@ -13,14 +13,11 @@ namespace Turtle
     public class TurtleClient : TurnBasedClient
     {
 
-        // creates hosted client
-        public TurtleClient(Mode mode, DualServer server) : base(mode, server)
+        public TurtleClient(Mode mode, DualServer server = null) : base(mode, server)
         {
             // noop
         }
 
-        // creates remote client
-        public TurtleClient() : base() { }
         public override void InitializeState(MessageStackMessage startMessage)
         {
             base.InitializeState(startMessage);
@@ -28,9 +25,16 @@ namespace Turtle
             // TODO ...
         }
 
-        public override void OnPlayerResolved(OnlineDualPlayer player, MessageStackMessage message)
+        public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage stack)
         {
-            base.OnPlayerResolved(player, message);
+            base.ReadPlayer(dualPlayerData, stack);
+
+            // TODO ...
+        }
+
+        public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
+        {
+            base.ResolvePlayer(player, dualPlayerData);
 
             // TODO ...
         }

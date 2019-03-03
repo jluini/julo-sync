@@ -10,19 +10,22 @@ namespace Julo.Network
     
     public class DualServer
     {
-        public Dictionary<int, ConnectionToClient> connections;
-        //public static int LocalConnectionId = 0;
+        public static DualServer instance = null;
+
+        public ConnectionsAndPlayers connections;
 
         protected Mode mode;
-        //protected bool serverOnly;
 
         DualClient localClient = null;
 
         public DualServer(Mode mode)
         {
+            instance = this;
+
             this.mode = mode;
 
-            this.connections = new Dictionary<int, ConnectionToClient>();
+            //this.connections = new Dictionary<int, ConnectionToClient>();
+            connections = new ConnectionsAndPlayers(true);
         }
 
         public void AddLocalClient(DualClient client, ConnectionToClient connection)
@@ -51,7 +54,9 @@ namespace Julo.Network
             }
 
             this.localClient = client;
-            this.connections.Add(id, connection);
+
+            //this.connections.Add(id, connection);
+            this.connections.AddConnectionInServer(id, connection);
         }
 
         public void AddRemoteClient(ConnectionToClient connection)
@@ -63,7 +68,14 @@ namespace Julo.Network
                 return;
             }
 
-            connections.Add(connection.ConnectionId(), connection);
+            var id = connection.ConnectionId();
+            //connections.Add(id, connection);
+            this.connections.AddConnectionInServer(id, connection);
+        }
+
+        public void RemoveClient(int connectionId)
+        {
+            connections.RemoveConnection(connectionId);
         }
 
         /*protected virtual bool AcceptsRemoteClient()
@@ -79,11 +91,13 @@ namespace Julo.Network
         {
             var allPlayers = new List<IDualPlayer>();
 
-            foreach(var c in connections.Values)
+            foreach(var c in connections.AllConnections().Values)
             {
-                foreach(var p in c.players)
+                foreach(var playerData in c.players)
                 {
-                    if(p.ConnectionId() != c.ConnectionId())
+                    var p = playerData.actualPlayer;
+
+                    if(p.ConnectionId() != c.connectionId)
                     {
                         Log.Warn("Wrong data");
                     }
@@ -101,9 +115,11 @@ namespace Julo.Network
         ///////////////////////
         ///
         // only server
-        public List<MessageBase> AddPlayer(uint netId, int connectionId, short controllerId, IDualPlayer player)
+        public List<MessageBase> AddPlayer(IDualPlayer player)
         {
-            connections[connectionId].AddPlayer(player);
+            //connections[player.ConnectionId()].AddPlayer(player);
+
+            connections.GetConnection(player.ConnectionId()).AddPlayer(player);
 
             // setup initial data in server
             var messageStack = new List<MessageBase>();
@@ -125,7 +141,7 @@ namespace Julo.Network
         // only server
         public virtual void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
         {
-            messageStack.Add(new DualPlayerMessage(player.NetworkId(), player.ConnectionId(), player.ControllerId()));
+            messageStack.Add(new DualPlayerMessage(player));
         }
 
         ///////////////////////

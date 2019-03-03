@@ -14,8 +14,8 @@ namespace Julo.Network
 
         List<IDualPlayerListener> listeners = new List<IDualPlayerListener>();
 
-        public int connectionId;
-        public short controllerId;
+        public int connectionId = -1;
+        public short controllerId = -1;
 
         public void Start()
         {
@@ -28,27 +28,17 @@ namespace Julo.Network
                 Log.Debug("Already on right parent");
             }
 
-            //ClientStarted = true;
-
-            int role = GetComponent<GamePlayer>().role;
-
-            //Log.Debug("OnlineDualPlayer::Start()  :  hosted={0}, netId={1}, role={2}", NetworkServer.active, netId, role);
-
-            //Log.Debug("Recibido: " + GameClient.instance.ReceivedAddPlayer(netId));
+            Log.Debug("START: {0}:{1}", connectionId, controllerId);
 
             DualClient.instance.StartOnlinePlayer(this);
-
-            foreach(IDualPlayerListener l in listeners)
-            {
-                // TODO
-                //l.Init(username, role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OnlineMode, NetworkServer.active, isLocalPlayer);
-            }
         }
         
         public void Init(int connectionId, short playerControllerId)
         {
+            Log.Debug("Initting {0}:{1}", connectionId, playerControllerId);
+
             this.connectionId = connectionId;
-            this.controllerId = controllerId;
+            this.controllerId = playerControllerId;
         }
         
         public uint NetworkId()

@@ -1,5 +1,7 @@
 ﻿using UnityEngine.Networking;
 
+using Julo.Logging;
+
 namespace Julo.Game
 {
     public class MsgType
@@ -63,6 +65,7 @@ namespace Julo.Game
 
         public override void Serialize(NetworkWriter writer)
         {
+            Log.Debug("Writing {0}:{1}:{2}", (int)state, numRoles, sceneName);
             writer.Write((int)state);
             writer.Write(numRoles);
             writer.Write(sceneName);
@@ -70,9 +73,13 @@ namespace Julo.Game
 
         public override void Deserialize(NetworkReader reader)
         {
-            state = (GameState)reader.ReadInt32();
+            var stateInt = reader.ReadInt32();
+            state = (GameState)stateInt;
+            Log.Debug("Reading {0}", stateInt);
             numRoles = reader.ReadInt32();
+            Log.Debug("Reading ---:{0}", numRoles);
             sceneName = reader.ReadString();
+            Log.Debug("Reading ---:---:{0}", sceneName);
         }
 
     } // class GameStatusMessage

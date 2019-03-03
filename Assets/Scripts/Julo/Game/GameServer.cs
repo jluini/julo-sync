@@ -9,7 +9,7 @@ using Julo.Network;
 
 namespace Julo.Game
 {
-    public enum GameState { NoGame, Preparing, Playing, GameOver }
+    public enum GameState { Unknown, NoGame, Preparing, Playing, GameOver }
 
 
     public class GameServer : DualServer

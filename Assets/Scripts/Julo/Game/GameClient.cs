@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+
+using UnityEngine;
 
 using Julo.Logging;
 using Julo.Network;
@@ -12,16 +14,15 @@ namespace Julo.Game
         int numRoles;
         string sceneName;
 
-        // creates hosted client
-        public GameClient(Mode mode, DualServer server) : base(mode, server)
+        // only remote client
+        Dictionary<uint, GamePlayerMessage> pendingPlayers = new Dictionary<uint, GamePlayerMessage>();
+
+        public GameClient(Mode mode, DualServer server = null) : base(mode, server)
         {
-            this.gameState = GameState.NoGame;
+            this.gameState = GameState.Unknown;
             this.numRoles = 0;
             this.sceneName = "";
         }
-
-        // creates remote client
-        public GameClient() : base() { }
 
         public override void InitializeState(MessageStackMessage startMessage)
         {
@@ -54,11 +55,37 @@ namespace Julo.Game
             */
         }
 
-        public override void OnPlayerResolved(OnlineDualPlayer player, MessageStackMessage messageStack)
+        public override void ReadPlayer(DualPlayerMessage dualPlayer, MessageStackMessage messageStack)
         {
-            base.OnPlayerResolved(player, messageStack);
+            base.ReadPlayer(dualPlayer, messageStack);
 
-            var gamePlayerMessage = messageStack.ReadMessage<GamePlayerMessage>();
+            var gamePlayerData = messageStack.ReadMessage<GamePlayerMessage>();
+
+            pendingPlayers.Add(dualPlayer.netId, gamePlayerData);
+
+            //messageStack.Add(new GamePlayerMessage(gamePlayer.role, gamePlayer.username));
+        }
+
+        public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
+        {
+            base.ResolvePlayer(player, dualPlayerData);
+
+            var netId = dualPlayerData.netId;
+
+            if(player.NetworkId() != netId)
+            {
+                Log.Error("Not resolved! {0} != {1}", player.NetworkId(), netId);
+                return;
+            }
+
+            if(!pendingPlayers.ContainsKey(netId))
+            {
+                Log.Error("Player {0} not registered", netId);
+                return;
+            }
+
+            var gamePlayerMessage = pendingPlayers[netId];
+            pendingPlayers.Remove(netId);
 
             int role = gamePlayerMessage.role;
             string username = gamePlayerMessage.username;
@@ -75,9 +102,8 @@ namespace Julo.Game
 
             gamePlayer.SetRole(role);
             gamePlayer.SetUsername(username);
-            //SetRole(role);
 
-            Log.Debug("Resolved {0} to {1},{2}", player.NetworkId(), role, username);
+            Log.Debug("Resolved {0} to {1}:{2}", player.NetworkId(), role, username);
         }
 
 

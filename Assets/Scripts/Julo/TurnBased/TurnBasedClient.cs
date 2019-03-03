@@ -8,14 +8,11 @@ namespace Julo.TurnBased
     public abstract class TurnBasedClient : GameClient
     {
 
-        // creates hosted client
-        public TurnBasedClient(Mode mode, DualServer server) : base(mode, server)
+        public TurnBasedClient(Mode mode, DualServer server = null) : base(mode, server)
         {
             // noop
         }
 
-        // creates remote client
-        public TurnBasedClient() : base() { }
         public override void InitializeState(MessageStackMessage startMessage)
         {
             base.InitializeState(startMessage);
@@ -26,13 +23,19 @@ namespace Julo.TurnBased
 
         }
 
-        public override void OnPlayerResolved(OnlineDualPlayer player, MessageStackMessage messageStack)
+        public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage stack)
         {
-            base.OnPlayerResolved(player, messageStack);
-
+            base.ReadPlayer(dualPlayerData, stack);
+            
             // TODO ...
         }
 
+        public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
+        {
+            base.ResolvePlayer(player, dualPlayerData);
+
+            // TODO ...
+        }
 
         protected override void OnMessage(WrappedMessage message)
         {

@@ -112,7 +112,7 @@ namespace Julo.Network
 
         // only offline mode
 
-        uint lastOfflineIdUsed = 0;
+        int lastOfflineIdUsed = 0;
 
         ////////////////////////////////////////////////////////////
 
@@ -185,11 +185,11 @@ namespace Julo.Network
 
         }
 
-        void AddOfflinePlayer(short controllerId)
+        void AddOfflinePlayer(int controllerId)
         {
             var player = GameObject.Instantiate(offlinePlayerModel, playerContainer) as OfflineDualPlayer;
-            player.Init(controllerId);
-            /*var messageStack = */dualServer.AddPlayer(++lastOfflineIdUsed, DNM.LocalConnectionId, controllerId, player);
+            player.Init(++lastOfflineIdUsed);
+            /*var messageStack = */dualServer.AddPlayer(player);
 
             // TODO discarding messageStack
         }
@@ -246,12 +246,12 @@ namespace Julo.Network
                 
                 SetState(DNMState.Off);
 
-                var conn = dualServer.connections[DNM.LocalConnectionId];
+                var conn = dualServer.connections.GetConnection(DNM.LocalConnectionId);
 
                 foreach(var p in conn.players)
                 {
                     Log.Debug("Deleted one player");
-                    OfflineDualPlayer op = (OfflineDualPlayer)p;
+                    OfflineDualPlayer op = (OfflineDualPlayer)p.actualPlayer;
                     Destroy(op.gameObject);
                 }
                 
@@ -465,7 +465,7 @@ namespace Julo.Network
             CheckState(new DNMState[] { DNMState.CreatingHost, DNMState.Host });
 
             int id = conn.connectionId;
-            if(dualServer.connections.ContainsKey(id))
+            if(dualServer.connections.HasConnection(id))
             {
                 Log.Error("Client already registered");
                 return;
@@ -532,9 +532,9 @@ namespace Julo.Network
 
             var id = conn.connectionId;
 
-            if(dualServer.connections.ContainsKey(id))
+            if(dualServer.connections.HasConnection(id))
             {
-                dualServer.connections.Remove(id);
+                dualServer.RemoveClient(id);
             }
             else
             {
@@ -569,21 +569,24 @@ namespace Julo.Network
             var player = GameObject.Instantiate(onlinePlayerModel) as OnlineDualPlayer;
             //player.Init(conn.connectionId, playerControllerId);
 
-            var oldNetId = player.netId;
+            // spawned to get player.netId set
             NetworkServer.AddPlayerForConnection(conn, player.gameObject, playerControllerId);
-
             var netId = player.netId.Value;
+            if(netId == 0)
+            {
+                Log.Error("netId not set");
+                return;
+            }
 
-            Log.Debug("OnServerAddPlayer netId={0} -B {1}", oldNetId, netId);
-
+            // initted to get updated in server
             var connId = conn.connectionId;
-
             player.Init(connId, playerControllerId);
 
-            var messageStack = dualServer.AddPlayer(netId, connId, playerControllerId, player);
+            // added to server to get message stack initialization for remote clients
+            var messageStack = dualServer.AddPlayer(player);
+
 
             NetworkServer.SendToAll(MsgType.NewPlayer, new MessageStackMessage(messageStack));
-
 
 
             /*
@@ -1207,11 +1210,11 @@ namespace Julo.Network
             CheckState(DNMState.Host);
             
             //foreach(var client in clients.Values)
-            foreach(var c in dualServer.connections.Values) // TODO TODO TODO TODO TODO 
+            foreach(var c in dualServer.connections.AllConnections().Values) // TODO TODO TODO TODO TODO 
             {
-                int id = c.ConnectionId();
+                int id = c.connectionId;
 
-                if(id != who && c.networkConnection.isReady)
+                if(id != who && c.connectionToClient.networkConnection.isReady) // TODO necessary right?
                 {
                     NetworkServer.SendToClient(id, MsgType.GameServerToClient, new WrappedMessage(msgType, gameMessage));
                 }

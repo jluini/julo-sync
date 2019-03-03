@@ -454,11 +454,12 @@ namespace Julo.Network
         {
         }
 
-        public DualPlayerMessage(uint netId, int connectionId, short controllerId)
+        //public DualPlayerMessage(uint netId, int connectionId, short controllerId)
+        public DualPlayerMessage(IDualPlayer player)
         {
-            this.netId = netId;
-            this.connectionId = connectionId;
-            this.controllerId = controllerId;
+            this.netId = player.NetworkId();
+            this.connectionId = player.ConnectionId();
+            this.controllerId = player.ControllerId();
         }
 
         public override void Serialize(NetworkWriter writer)

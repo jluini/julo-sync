@@ -11,40 +11,65 @@ namespace Julo.Network
     {
         public static DualClient instance = null;
 
-        bool isInitialized = false;
+        bool isInitialized = false; // TODO why this?
 
         protected Mode mode;
         protected bool isHosted;
 
         protected DualServer server;
 
-        // creates hosted client
-        public DualClient(Mode mode, DualServer server)
-        {
-            instance = this;
+        // only remote client
+        Dictionary<uint, OnlineDualPlayer> pendingPlayers = new Dictionary<uint, OnlineDualPlayer>();
 
-            this.mode = mode;
-            this.server = server;
-            isHosted = true;
+        // only remote
+        ConnectionsAndPlayers clientConnections;
+
+        ConnectionsAndPlayers connections
+        {
+            get
+            {
+                if(isHosted)
+                {
+                    return DualServer.instance.connections;
+                }
+                else
+                {
+                    return clientConnections;
+                }
+            }
         }
 
-        // creates remote client
-        public DualClient()
+        /// <summary>
+        ///     Creates client.
+        /// </summary>
+        /// <param name="mode">Offline or online mode</param>
+        /// <param name="server">
+        ///     If server == null, it's a remote client and mode must be online.
+        ///     If server != null it's a hosted client in either offline or online mode.
+        /// </param>
+        public DualClient(Mode mode, DualServer server = null)
         {
             instance = this;
-
-            this.mode = Mode.OnlineMode;
-            server = null;
-            isHosted = false;
+            this.mode = mode;
+            this.server = server;
+            isHosted = server != null;
 
             isInitialized = false;
+
+            if(!isHosted)
+            {
+                clientConnections = new ConnectionsAndPlayers(false);
+            }
+
+            if(!isHosted && mode == Mode.OfflineMode)
+            {
+                Log.Error("Non-hosted client not allowed in offline mode");
+            }
         }
 
         // only remote
         public virtual void InitializeState(MessageStackMessage messageStack)
         {
-            Log.Debug("INIT STATE");
-
             var numPlayersMessage = messageStack.ReadMessage<IntegerMessage>();
             var numPlayers = numPlayersMessage.value;
 
@@ -55,58 +80,68 @@ namespace Julo.Network
 
                 var dualPlayerMsg = messageStack.ReadMessage<DualPlayerMessage>();
 
-                var netId = dualPlayerMsg.netId;
+                ReadPlayer(dualPlayerMsg, messageStack);
 
-                Log.Debug("            {0} = {1}/{2}", netId, dualPlayerMsg.connectionId, dualPlayerMsg.controllerId);
-                
+                var netId = dualPlayerMsg.netId;
+                var connId = dualPlayerMsg.connectionId;
+                var controllerId = dualPlayerMsg.controllerId;
+
+                Log.Debug("INITIALIZE STATE {0} = {1}/{2}", netId, connId, controllerId);
+
+                OnlineDualPlayer registeredPlayer = null;
 
                 if(pendingPlayers.ContainsKey(netId))
                 {
-                    var player = pendingPlayers[netId];
+                    registeredPlayer = pendingPlayers[netId];
                     pendingPlayers.Remove(netId);
 
-                    ResolvePlayer(player, dualPlayerMsg, messageStack);
+                    //ResolvePlayer(registeredPlayer, dualPlayerMsg, messageStack);
+                    ResolvePlayer(registeredPlayer, dualPlayerMsg);
                 }
-                else
-                {
-                    pendingMessages.Add(netId, new PendingPlayerStack(dualPlayerMsg, messageStack));
-                }
+                //else
+                //{
+                    //pendingMessages.Add(netId, new PendingPlayerStack(dualPlayerMsg, messageStack));
+                //}
+
+                //clientConnections.GetConnection(connId).AddPlayer(registeredPlayer, dualPlayerMsg, messageStack);
+                clientConnections.AddPlayer(connId, registeredPlayer, dualPlayerMsg, messageStack);
             }
         }
 
-        // only remote
+        /*// only remote
         public virtual void OnPlayerResolved(OnlineDualPlayer player, MessageStackMessage messageStack)
         {
             // noop
-        }
+        }*/
 
-        Dictionary<uint, PendingPlayerStack> pendingMessages = new Dictionary<uint, PendingPlayerStack>();
-        Dictionary<uint, OnlineDualPlayer> pendingPlayers  = new Dictionary<uint, OnlineDualPlayer>();
-
-        //
+        // only remote (quasi)
         public void OnNewPlayerMessage(MessageStackMessage messageStack)
         {
-
             if(!isHosted)
             {
                 var dualPlayerMessage = messageStack.ReadMessage<DualPlayerMessage>();
                 var netId = dualPlayerMessage.netId;
 
+                ReadPlayer(dualPlayerMessage, messageStack);
+
                 Log.Debug("NEW PLAYER id={0}", netId);
 
                 // Log.Debug("Received message netId={0}, connId={1}, controller={2}", netId, dualPlayerMessage.connectionId, dualPlayerMessage.controllerId);
 
-                bool isPendingPlayer = pendingPlayers.ContainsKey(netId);
-
-                if(isPendingPlayer)
+                OnlineDualPlayer registeredPlayer = null;
+                if(pendingPlayers.ContainsKey(netId))
                 {
-                    ResolvePlayer(pendingPlayers[netId], dualPlayerMessage, messageStack);
+                    registeredPlayer = pendingPlayers[netId];
                     pendingPlayers.Remove(netId);
+
+                    ResolvePlayer(registeredPlayer, dualPlayerMessage);
                 }
-                else
-                {
-                    pendingMessages.Add(netId, new PendingPlayerStack(dualPlayerMessage, messageStack));
-                }
+                //else
+                //{
+                //    pendingMessages.Add(netId, new PendingPlayerStack(dualPlayerMessage, messageStack));
+                //}
+                
+                clientConnections.AddPlayer(dualPlayerMessage.connectionId, registeredPlayer, dualPlayerMessage, messageStack);
             }
         }
 
@@ -119,12 +154,14 @@ namespace Julo.Network
 
                 Log.Debug("START PLAYER id={0}", netId);
 
-                bool isPendingMessage = pendingMessages.ContainsKey(netId);
+                //bool isPendingMessage = pendingMessages.ContainsKey(netId);
+                //bool isPendingToRegister = connections.HasAnyPlayer(netId);
+                PlayerData playerData = connections.GetPlayerIfAny(netId);
+                bool isRegistered = playerData != null;
 
-                if(isPendingMessage)
+                if(isRegistered)
                 {
-                    ResolvePlayer(player, pendingMessages[netId].dualPlayerData, pendingMessages[netId].stack);
-                    pendingMessages.Remove(netId);
+                    ResolvePlayer(player, playerData.playerData);
                 }
                 else
                 {
@@ -146,7 +183,12 @@ namespace Julo.Network
             }
         }
 
-        void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayer, MessageStackMessage messageStack)
+        public virtual void ReadPlayer(DualPlayerMessage dualPlayer, MessageStackMessage messageStack)
+        {
+            // noop
+        }
+
+        public virtual void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayer/*, MessageStackMessage messageStack*/)
         {
             // Log.Debug("Resolving!!! netId={0}, player={1}, conn={2}/{3}", player.NetworkId(), player, dualPlayer.connectionId, dualPlayer.controllerId);
 
@@ -161,7 +203,7 @@ namespace Julo.Network
 
             player.Init(connId, controllerId);
 
-            OnPlayerResolved(player, messageStack);
+            //OnPlayerResolved(player, messageStack);
         }
 
         /*
@@ -268,7 +310,7 @@ namespace Julo.Network
 
 
     } // class DualClient
-
+    /*
     public class PendingPlayerStack
     {
         public DualPlayerMessage dualPlayerData;
@@ -280,5 +322,6 @@ namespace Julo.Network
             this.stack = stack;
         }
     }
+    */
 
 } // namespace Julo.Network

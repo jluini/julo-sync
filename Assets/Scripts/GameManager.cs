@@ -38,7 +38,7 @@ public class GameManager : MonoBehaviour, IDualListener
 
     DualClient CreateRemoteClient()
     {
-        gameClient = new TurtleClient();
+        gameClient = new TurtleClient(Mode.OnlineMode);
         return gameClient;
     }
 

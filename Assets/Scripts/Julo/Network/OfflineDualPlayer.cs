@@ -12,10 +12,19 @@ namespace Julo.Network
 
         List<IDualPlayerListener> listeners = new List<IDualPlayerListener>();
 
-        short controllerId;
+        // this is
+        int controllerId;
 
-        public void Init(short controllerId)
+        public void Init(int controllerId)
         {
+
+            if(controllerId < 0 || controllerId > short.MaxValue)
+            {
+                var warnMessage = System.String.Format("Invalid controllerId/fake netId = {0}", controllerId);
+                Log.Warn(warnMessage);
+                //throw new System.Exception(warnMessage);
+            }
+
             this.controllerId = controllerId;
         }
 
@@ -39,7 +48,7 @@ namespace Julo.Network
 
         public short ControllerId()
         {
-            return controllerId;
+            return (short)controllerId;
         }
 
         public bool IsLocal()
