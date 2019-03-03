@@ -1,13 +1,11 @@
-﻿using UnityEngine;
-
-using Julo.Users;
-
-namespace Julo.Network
+﻿namespace Julo.Network
 {
     public interface IPlayer
     {
-        uint GetId();
-
+        
+        
+        
+        
 
         bool IsLocal();
 

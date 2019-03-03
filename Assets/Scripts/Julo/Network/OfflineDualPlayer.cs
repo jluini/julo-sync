@@ -11,29 +11,35 @@ namespace Julo.Network
     {
 
         List<IDualPlayerListener> listeners = new List<IDualPlayerListener>();
-        UserProfile user;
 
-        int role;
-        uint id;
+        short controllerId;
 
-        public void Init(UserProfile user, uint id, int role)
+        public void Init(short controllerId)
         {
-            //SetUser(user);
-            this.id = id;
-            //SetRole(role);
+            this.controllerId = controllerId;
         }
 
         void Start()
         {
             foreach(IDualPlayerListener l in listeners)
             {
-                l.Init(/*user.GetName(), role, DualNetworkManager.GameState.NoGame /* TODO * /, */Mode.OfflineMode, true, true);
+                l.InitDualPlayer(/*user.GetName(), role, DualNetworkManager.GameState.NoGame /* TODO * /, */Mode.OfflineMode, true, true);
             }
         }
 
-        public uint GetId()
+        public uint NetworkId()
         {
-            return id;
+            return (uint)controllerId;
+        }
+
+        public int ConnectionId()
+        {
+            return DNM.LocalConnectionId;
+        }
+
+        public short ControllerId()
+        {
+            return controllerId;
         }
 
         public bool IsLocal()

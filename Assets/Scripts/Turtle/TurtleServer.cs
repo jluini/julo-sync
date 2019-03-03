@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
+using UnityEngine;
 using UnityEngine.Networking;
 
 using Julo.Logging;
@@ -12,10 +13,9 @@ namespace Turtle
     public class TurtleServer : TurnBasedServer
     {
 
-        public TurtleServer(Mode mode, CreateHostedClientDelegate clientDelegate = null) : base(mode, clientDelegate)
+        public TurtleServer(Mode mode) : base(mode)
         {
             //instance = this;
-            Log.Debug("Creating TurtleServer");
         }
 
         // only online mode
@@ -24,9 +24,21 @@ namespace Turtle
             base.WriteRemoteClientData(messages);
 
             // TODO pass data to TurtleClient
-
-            messages.Add(new UnityEngine.Networking.NetworkSystem.StringMessage("Estamos a nivel Turtle"));
         }
+
+        ////////// Player //////////
+
+        public override void OnPlayerAdded(IDualPlayer player)
+        {
+            base.OnPlayerAdded(player);
+        }
+
+        public override void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
+        {
+            base.WritePlayer(player, messageStack);
+        }
+
+        ////////// Messaging //////////
 
         protected override void OnMessage(WrappedMessage message, int from)
         {

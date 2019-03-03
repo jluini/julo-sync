@@ -1,5 +1,4 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using UnityEngine;
 
@@ -13,7 +12,7 @@ namespace Julo.TurnBased
     [RequireComponent(typeof(GamePlayer))]
     public class TBPlayer : MonoBehaviour, IPlayer
     {
-        List<TBPlayerListener> listeners = new List<TBPlayerListener>();
+        List<ITurnBasedPlayerListener> listeners = new List<ITurnBasedPlayerListener>();
 
         IDualPlayer _dualPlayer;
         IDualPlayer dualPlayer
@@ -33,15 +32,22 @@ namespace Julo.TurnBased
                 return _dualPlayer;
             }
         }
-
-        public uint GetId()
+        /*
+        public int GetConnectionId()
         {
-            return dualPlayer.GetId();
+            return dualPlayer.ConnectionId();
         }
+
+        public short GetControllerId()
+        {
+            return dualPlayer.ControllerId();
+        }
+        */
         public bool IsLocal()
         {
             return dualPlayer.IsLocal();
         }
+
         /*
         public string GetName()
         {
@@ -53,7 +59,7 @@ namespace Julo.TurnBased
         }
         */
 
-        public void AddListener(TBPlayerListener listener)
+        public void AddListener(ITurnBasedPlayerListener listener)
         {
             listeners.Add(listener);
         }

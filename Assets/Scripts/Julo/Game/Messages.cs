@@ -13,6 +13,37 @@ namespace Julo.Game
 
     } // class MsgType
 
+    ////////////
+
+    public class GamePlayerMessage : MessageBase
+    {
+        public int role;
+        public string username;
+
+        public GamePlayerMessage()
+        {
+        }
+
+        public GamePlayerMessage(int role, string username)
+        {
+            this.role = role;
+            this.username = username;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(role);
+            writer.Write(username);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            role = reader.ReadInt32();
+            username = reader.ReadString();
+        }
+
+    } // class GamePlayerMessage
+
     public class GameStatusMessage : MessageBase
     {
         public GameState state;

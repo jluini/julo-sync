@@ -1,10 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using UnityEngine.Networking.NetworkSystem;
 
-using UnityEngine;
-using UnityEngine.Networking.NetworkSystem;
-
-using Julo.Logging;
 using Julo.Network;
 using Julo.Game;
 
@@ -16,18 +11,28 @@ namespace Julo.TurnBased
         // creates hosted client
         public TurnBasedClient(Mode mode, DualServer server) : base(mode, server)
         {
-            Log.Debug("Creating hosted TurnBasedClient");
+            // noop
         }
 
         // creates remote client
-        public TurnBasedClient(StartRemoteClientMessage startMessage) : base(startMessage)
+        public TurnBasedClient() : base() { }
+        public override void InitializeState(MessageStackMessage startMessage)
         {
-            var message = startMessage.ReadInitialMessage<UnityEngine.Networking.NetworkSystem.StringMessage>();
-            Log.Debug("Creating non-hosted TurnBasedClient: '{0}'", message.value);
+            base.InitializeState(startMessage);
+
+            var message = startMessage.ReadMessage<StringMessage>();
 
             // TODO ...
 
         }
+
+        public override void OnPlayerResolved(OnlineDualPlayer player, MessageStackMessage messageStack)
+        {
+            base.OnPlayerResolved(player, messageStack);
+
+            // TODO ...
+        }
+
 
         protected override void OnMessage(WrappedMessage message)
         {

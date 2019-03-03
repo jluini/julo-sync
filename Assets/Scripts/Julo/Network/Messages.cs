@@ -3,6 +3,7 @@
 using UnityEngine.Networking;
 
 using Julo.Users;
+using Julo.Logging;
 
 namespace Julo.Network
 {
@@ -11,26 +12,24 @@ namespace Julo.Network
     {
         const short MsgTypeBase = UnityEngine.Networking.MsgType.Highest;
 
-        // LOBBY
 
-        // Sent from clients to server to mark themselves as ready/not-ready
-        public const short ClientSetReady = MsgTypeBase + 1;
+        // Connecting
+        public const short ConnectionAccepted = MsgTypeBase + 1;
+        // public const short ConnectionRejected = MsgTypeBase + 2;
 
-        // JOINING
+        public const short InitialStateRequest = MsgTypeBase + 3;
+        public const short InitialState = MsgTypeBase + 4;
 
+
+        // Joining
         // Sent from server to clients to inform initial game state
-        public const short InitialStatus = MsgTypeBase + 2;
+        //public const short InitialStatus = MsgTypeBase + 3;
 
-        // STARTING GAME
+        // Players
 
-        // Sent from server to clients
-        //public const short GameWillStart = MsgTypeBase + 3;
+        public const short NewPlayer = MsgTypeBase + 5;
 
-        // Sent from server to clients to deliver initial game state
-        //public const short StartGame = MsgTypeBase + 4;
-
-        // Sent from clients to server after Prepare
-        //public const short ReadyToStart = MsgTypeBase + 5;
+        // Messaging
 
         public const short GameServerToClient = MsgTypeBase + 6;
         public const short GameClientToServer = MsgTypeBase + 7;
@@ -67,6 +66,7 @@ namespace Julo.Network
 
     } // class ReadyMessage
 
+
     public class CustomAddPlayerMessage : MessageBase
     {
         public string username;
@@ -91,103 +91,98 @@ namespace Julo.Network
         }
     
     } // class CustomAddPlayerMessage
-    /*
-    public class GameStateMessage : MessageBase
+      /*
+      public class GameStateMessage : MessageBase
+      {
+          public DualNetworkManager.GameState newState;
+
+          public GameStateMessage()
+          {
+          }
+
+          public GameStateMessage(DualNetworkManager.GameState newState)
+          {
+              this.newState = newState;
+          }
+
+          public override void Deserialize(NetworkReader reader)
+          {
+              newState = (DualNetworkManager.GameState)reader.ReadInt32();
+          }
+
+          public override void Serialize(NetworkWriter writer)
+          {
+              writer.Write((int)newState);
+          }
+      }
+      */
+      /*
+      public class StartGameMessage : MessageBase
+      {
+          public string scene;
+          public List<MessageBase> initialData;
+
+          public NetworkReader initialDataReader;
+
+          public StartGameMessage()
+          {
+          }
+
+          public StartGameMessage(string scene, List<MessageBase> initialData)
+          {
+              this.scene = scene;
+              this.initialData = initialData;
+          }
+
+          public override void Serialize(NetworkWriter writer)
+          {
+              writer.Write(scene);
+
+              writer.Write(initialData.Count);
+
+              foreach(var m in initialData)
+              {
+                  writer.Write(m);
+              }
+          }
+
+          public override void Deserialize(NetworkReader reader)
+          {
+              scene = reader.ReadString();
+
+              int count = reader.ReadInt32();
+
+              this.initialDataReader = reader;
+          }
+
+          public TMsg ReadInitialMessage<TMsg>() where TMsg : MessageBase, new()
+          {
+              var msg = new TMsg();
+              msg.Deserialize(initialDataReader);
+              return msg;
+          }
+
+      } // class StartGameMessage
+      */
+
+    public class MessageStackMessage : MessageBase
     {
-        public DualNetworkManager.GameState newState;
-
-        public GameStateMessage()
-        {
-        }
-
-        public GameStateMessage(DualNetworkManager.GameState newState)
-        {
-            this.newState = newState;
-        }
-
-        public override void Deserialize(NetworkReader reader)
-        {
-            newState = (DualNetworkManager.GameState)reader.ReadInt32();
-        }
-
-        public override void Serialize(NetworkWriter writer)
-        {
-            writer.Write((int)newState);
-        }
-    }
-    */
-    /*
-    public class StartGameMessage : MessageBase
-    {
-        public string scene;
-        public List<MessageBase> initialData;
-
-        public NetworkReader initialDataReader;
-
-        public StartGameMessage()
-        {
-        }
-
-        public StartGameMessage(string scene, List<MessageBase> initialData)
-        {
-            this.scene = scene;
-            this.initialData = initialData;
-        }
-
-        public override void Serialize(NetworkWriter writer)
-        {
-            writer.Write(scene);
-
-            writer.Write(initialData.Count);
-
-            foreach(var m in initialData)
-            {
-                writer.Write(m);
-            }
-        }
-
-        public override void Deserialize(NetworkReader reader)
-        {
-            scene = reader.ReadString();
-
-            int count = reader.ReadInt32();
-
-            this.initialDataReader = reader;
-        }
-
-        public TMsg ReadInitialMessage<TMsg>() where TMsg : MessageBase, new()
-        {
-            var msg = new TMsg();
-            msg.Deserialize(initialDataReader);
-            return msg;
-        }
-
-    } // class StartGameMessage
-    */
-    public class StartRemoteClientMessage : MessageBase
-    {
-        public bool accepted; // TODO can assume it is true?
-        //public string sceneName; // TOTO necessary?
         public List<MessageBase> data;
         public int count;
 
         public NetworkReader dataReader;
 
-        public StartRemoteClientMessage()
+        public MessageStackMessage()
         {
         }
 
-        public StartRemoteClientMessage(bool accepted, /*string sceneName, */List<MessageBase> data)
+        public MessageStackMessage(List<MessageBase> data)
         {
-            this.accepted = accepted;
-            // this.sceneName = sceneName;
             this.data = data;
         }
 
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write(accepted);
-            //writer.Write(sceneName);
             writer.Write(data.Count);
 
             foreach(var m in data)
@@ -198,8 +193,48 @@ namespace Julo.Network
 
         public override void Deserialize(NetworkReader reader)
         {
-            accepted = reader.ReadBoolean();
-            //sceneName = reader.ReadString();
+            count = reader.ReadInt32();
+            dataReader = reader;
+        }
+
+        public TMsg ReadMessage<TMsg>() where TMsg : MessageBase, new()
+        {
+            var msg = new TMsg();
+            msg.Deserialize(dataReader);
+            return msg;
+        }
+
+    } // class MessageStackMessage
+
+    /*
+    public class StartRemoteClientMessage : MessageBase
+    {
+        public List<MessageBase> data;
+        public int count;
+
+        public NetworkReader dataReader;
+
+        public StartRemoteClientMessage()
+        {
+        }
+
+        public StartRemoteClientMessage(List<MessageBase> data)
+        {
+            this.data = data;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(data.Count);
+
+            foreach(var m in data)
+            {
+                writer.Write(m);
+            }
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
             count = reader.ReadInt32();
             dataReader = reader;
         }
@@ -212,6 +247,53 @@ namespace Julo.Network
         }
 
     } // class StartRemoteClientMessage
+
+    public class StartRemotePlayerMessage : MessageBase
+    {
+        public uint netId;
+        public List<MessageBase> data;
+        public int count;
+
+        public NetworkReader dataReader;
+
+        public StartRemotePlayerMessage()
+        {
+        }
+
+        public StartRemotePlayerMessage(uint netId, List<MessageBase> data)
+        {
+            this.netId = netId;
+            this.data = data;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(netId);
+
+            writer.Write(data.Count);
+
+            foreach(var m in data)
+            {
+                writer.Write(m);
+            }
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            netId = reader.ReadUInt32();
+            count = reader.ReadInt32();
+            dataReader = reader;
+        }
+
+        public TMsg ReadInitialMessage<TMsg>() where TMsg : MessageBase, new()
+        {
+            var msg = new TMsg();
+            msg.Deserialize(dataReader);
+            return msg;
+        }
+
+    } // class StartRemotePlayerMessage
+    */
     /*
     public class StatusMessage : MessageBase
     {
@@ -357,7 +439,57 @@ namespace Julo.Network
             writer.WriteBytesAndSize(msgData, msgSize);
         }
 
+
     } // class WrappedMessage
+
+    ////////////
+
+    public class DualPlayerMessage : MessageBase
+    {
+        public uint netId;
+        public int connectionId;
+        public short controllerId;
+
+        public DualPlayerMessage()
+        {
+        }
+
+        public DualPlayerMessage(uint netId, int connectionId, short controllerId)
+        {
+            this.netId = netId;
+            this.connectionId = connectionId;
+            this.controllerId = controllerId;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(netId);
+            writer.Write(connectionId);
+            writer.Write(controllerId);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            netId = reader.ReadUInt32();
+            connectionId = reader.ReadInt32();
+            controllerId = reader.ReadInt16();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(this == obj)
+            {
+                return true;
+            }
+            if((obj == null) || !this.GetType().Equals(obj.GetType()))
+            {
+                return false;
+            }
+            var other = (DualPlayerMessage)obj;
+            return this.netId == other.netId;
+        }
+
+    } // class DualPlayerMessage
 
 
 } // namespace Julo.Network

@@ -116,7 +116,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 84}
+      - m_Target: {fileID: 6161062864941874973}
         m_MethodName: OnClickChangeRole
         m_Mode: 1
         m_Arguments:
@@ -143,6 +143,7 @@ GameObject:
   - component: {fileID: 88}
   - component: {fileID: 91}
   - component: {fileID: 84}
+  - component: {fileID: 6161062864941874973}
   - component: {fileID: 93}
   - component: {fileID: 99}
   m_Layer: 5
@@ -274,6 +275,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ecc2552cf3756144d8e839533e133470, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &6161062864941874973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 19}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50ac4bf29b8b55448bf6458eea6dd992, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &93

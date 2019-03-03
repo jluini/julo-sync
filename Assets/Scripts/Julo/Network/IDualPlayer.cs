@@ -6,6 +6,10 @@ namespace Julo.Network
 
     public interface IDualPlayer : IPlayer
     {
+        uint NetworkId();
+        int ConnectionId();
+        short ControllerId();
+
         void AddListener(IDualPlayerListener listener);
         
         // all this is game-level

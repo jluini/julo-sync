@@ -3,12 +3,13 @@ using UnityEngine.UI;
 
 using Julo.Logging;
 using Julo.Network;
+using Julo.Game;
 using Julo.TurnBased;
 
 namespace Turtle
 {
-    [RequireComponent(typeof(IDualPlayer), typeof(TBPlayer))]
-    public class TurtlePlayerDisplay : MonoBehaviour, IDualPlayerListener, TBPlayerListener
+    [RequireComponent(typeof(IDualPlayer), typeof(GamePlayer), typeof(TBPlayer))]
+    public class TurtlePlayerDisplay : MonoBehaviour, IDualPlayerListener, IGamePlayerListener, ITurnBasedPlayerListener
     {
         [Header("Colors")]
         public Color localColor = Color.black;
@@ -26,13 +27,16 @@ namespace Turtle
 
         public Toggle readyToggle;
 
+        ////
+
+        Mode mode;
         bool isHosted = false;
         bool isLocal = false;
 
         void Awake()
         {
-            IDualPlayer dualPlayer = GetComponent<IDualPlayer>();
-            if (dualPlayer == null)
+            var dualPlayer = GetComponent<IDualPlayer>();
+            if(dualPlayer == null)
             {
                 Log.Warn("Component IDualPlayer not found!");
                 return;
@@ -40,7 +44,16 @@ namespace Turtle
 
             dualPlayer.AddListener(this);
 
-            TBPlayer tbPlayer = GetComponent<TBPlayer>();
+            var gamePlayer = GetComponent<GamePlayer>();
+            if(gamePlayer == null)
+            {
+                Log.Warn("Component GamePlayer not found!");
+                return;
+            }
+
+            gamePlayer.AddListener(this);
+
+            var tbPlayer = GetComponent<TBPlayer>();
             if (tbPlayer == null)
             {
                 Log.Warn("Component TBPlayer not found!");
@@ -50,8 +63,46 @@ namespace Turtle
             tbPlayer.AddListener(this);
         }
         
-        // TBPlayerListener
-        //////////////////////////////////////////
+        ////// IDualPlayerListener
+
+        public void InitDualPlayer(Mode mode, bool isHosted = true, bool isLocal = true)
+        {
+            this.mode = mode;
+            this.isHosted = isHosted;
+            this.isLocal = isLocal;
+        }
+        
+        ////// IGamePlayerListener
+
+        public void InitGamePlayer(int role, bool isReady, string name)
+        {
+            nameDisplay.text = name;
+
+            SetColor(GetColor(false)); // TODO ??
+
+            roleDisplay.text = GetRoleText(role);
+            roleButton.interactable = isHosted;
+
+            // TODO do this here?
+            readyToggle.isOn = mode == Mode.OfflineMode;
+        }
+
+        public void OnRoleChanged(int newRole)
+        {
+            roleDisplay.text = GetRoleText(newRole);
+        }
+
+        public void OnReadyChanged(bool isReady)
+        {
+            readyToggle.isOn = isReady;
+        }
+
+        public void OnNameChanged(string newName)
+        {
+            nameDisplay.text = newName;
+        }
+
+        ////// ITurnBasedPlayerListener
 
         public void SetPlaying(bool isPlaying)
         {
@@ -59,31 +110,14 @@ namespace Turtle
             SetColor(GetColor(isPlaying));
         }
 
-        // DNMPlayerListener
         //////////////////////////////////////////
-
-        //public void Init(string username, int role, DualNetworkManager.GameState gameState, Mode mode, bool isHosted = true, bool isLocal = true)
-        public void Init(Mode mode, bool isHosted = true, bool isLocal = true)
-        {
-            this.isHosted = isHosted;
-            this.isLocal = isLocal;
-
-            // TODO
-            // nameDisplay.text = username;
-
-            SetColor(GetColor(false));
-
-            //roleDisplay.text = GetRoleText(role);
-            //roleButton.interactable = isHosted;
-
-            // TODO do this here?
-            //readyToggle.isOn = mode == Mode.OfflineMode;
-        }
-
+        
         void SetColor(Color newColor)
         {
             nameDisplay.color = newColor;
         }
+
+        //////////////////////////////////////////
 
         Color GetColor(bool isPlaying)
         {
@@ -95,16 +129,6 @@ namespace Turtle
             {
                 return isPlaying ? remotePlayingColor : remoteColor;
             }
-        }
-
-        public void OnReadyChanged(bool isReady)
-        {
-            readyToggle.isOn = isReady;
-        }
-
-        public void OnRoleChanged(int newRole)
-        {
-            roleDisplay.text = GetRoleText(newRole);
         }
 
         string GetRoleText(int role)

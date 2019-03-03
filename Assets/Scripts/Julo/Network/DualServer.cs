@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 
 using UnityEngine.Networking;
+using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
 
@@ -10,129 +11,136 @@ namespace Julo.Network
     public class DualServer
     {
         public Dictionary<int, ConnectionToClient> connections;
-        public static int LocalConnectionId = 0;
-
-        public DualClient localClient = null;
+        //public static int LocalConnectionId = 0;
 
         protected Mode mode;
-        protected bool serverOnly;
+        //protected bool serverOnly;
 
-        public DualServer(Mode mode, CreateHostedClientDelegate clientDelegate = null)
+        DualClient localClient = null;
+
+        public DualServer(Mode mode)
         {
             this.mode = mode;
-            this.serverOnly = clientDelegate == null;
 
             this.connections = new Dictionary<int, ConnectionToClient>();
-
-            if(clientDelegate != null)
-            {
-                // creates hosted client
-                localClient = clientDelegate(mode, this);
-
-                if(mode == Mode.OfflineMode)
-                {
-                    var singleConnection = new ConnectionToClient(null);
-                    connections.Add(LocalConnectionId, singleConnection);
-                    
-                    // TODO add offline player !!!!!!!!!!
-                }
-            }
         }
 
-        // a client tries to connect to this server
-        public void OnConnect(NetworkConnection conn)
+        public void AddLocalClient(DualClient client, ConnectionToClient connection)
         {
-            int id = conn.connectionId;
-            if(connections.ContainsKey(id))
+            if(client == null)
             {
-                Log.Error("Client already registered");
+                Log.Error("client is null");
+                return;
+            }
+            if(connection == null)
+            {
+                Log.Error("conection is null");
+                return;
+            }
+            if(localClient != null)
+            {
+                Log.Error("Already have a local client");
                 return;
             }
 
-            bool accepted = false;
-            bool connectionIsLocal = id == LocalConnectionId;
+            var id = connection.ConnectionId();
 
-            if(connectionIsLocal)
+            if(id != DNM.LocalConnectionId)
             {
-                if(serverOnly || connections.Count > 0)
-                {
-                    Log.Error("Unexpected local connection");
-                    return;
-                }
-                // this is just the local connection when starting as host
-                accepted = true;
-            }
-            else
-            {
-                if(!serverOnly && connections.Count == 0)
-                {
-                    Log.Warn("Remote client connecting before local one in host");
-                }
-
-                accepted = AcceptsRemoteClient();
-
-                // TODO send status even if rejected?
-                SendStatusToRemoteClient(accepted, conn);
+                Log.Error("Unexpected connectionId={0}", id);
             }
 
-            if(accepted)
-            {
-                var ctc = new ConnectionToClient(conn);
-                connections.Add(id, ctc);
-            }
-            else
-            {
-                conn.Disconnect();
-            }
+            this.localClient = client;
+            this.connections.Add(id, connection);
         }
 
-        ///////////////////////
-        
-        public void TryToStartGame()
+        public void AddRemoteClient(ConnectionToClient connection)
         {
-            Log.Warn("TryToStartGame not implemented");
-        }
-        
-        ///////////////////////
+            // TODO checks?
+            if(connection == null)
+            {
+                Log.Error("conection is null");
+                return;
+            }
 
-        protected virtual bool AcceptsRemoteClient()
+            connections.Add(connection.ConnectionId(), connection);
+        }
+
+        /*protected virtual bool AcceptsRemoteClient()
         {
             // TODO accept criteria
             return true;
-        }
-        
-        void SendStatusToRemoteClient(bool accepted, NetworkConnection conn)
-        {
-            var initialMessages = new List<MessageBase>();
-            if(accepted)
-            {
-                WriteRemoteClientData(initialMessages);
-            }
-            Log.Debug("Sending InitialStatus message: {0}, {1}", accepted, initialMessages.Count);
-            conn.Send(MsgType.InitialStatus, new StartRemoteClientMessage(accepted, initialMessages));
-        }
+        }*/
 
         ///////////////////////
-        
+
         // only online mode
-        public virtual void WriteRemoteClientData(List<MessageBase> messages)
+        public virtual void WriteRemoteClientData(List<MessageBase> messageStack)
         {
-            messages.Add(new UnityEngine.Networking.NetworkSystem.StringMessage("La vida loca"));
+            var allPlayers = new List<IDualPlayer>();
+
+            foreach(var c in connections.Values)
+            {
+                foreach(var p in c.players)
+                {
+                    if(p.ConnectionId() != c.ConnectionId())
+                    {
+                        Log.Warn("Wrong data");
+                    }
+                    allPlayers.Add(p);
+                }
+            }
+            messageStack.Add(new IntegerMessage(allPlayers.Count));
+
+            foreach(IDualPlayer p in allPlayers)
+            {
+                WritePlayer(p, messageStack);
+            }
         }
         
+        ///////////////////////
+        ///
+        // only server
+        public List<MessageBase> AddPlayer(uint netId, int connectionId, short controllerId, IDualPlayer player)
+        {
+            connections[connectionId].AddPlayer(player);
+
+            // setup initial data in server
+            var messageStack = new List<MessageBase>();
+
+            // Log.Debug("Adding DualPlayer({0} = {1}:{2}) to stack", netId, connectionId, controllerId);
+
+            OnPlayerAdded(player);
+            WritePlayer(player, messageStack);
+
+            return messageStack;
+        }
+
+        // only server
+        public virtual void OnPlayerAdded(IDualPlayer player)
+        {
+            // noop
+        }
+
+        // only server
+        public virtual void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
+        {
+            messageStack.Add(new DualPlayerMessage(player.NetworkId(), player.ConnectionId(), player.ControllerId()));
+        }
+
         ///////////////////////
 
         // sending messages to clients
-            // TODO tratar de no recibirlo wrapped
-            // TODO usar polimorfismo en vez de if...
+        // TODO tratar de no recibirlo wrapped
+        // TODO usar polimorfismo en vez de if...
 
         protected void SendTo(int destinationId, short msgType, MessageBase msg)
         {
             if(mode == Mode.OfflineMode)
             {
-                if(destinationId != LocalConnectionId)
+                if(destinationId != DNM.LocalConnectionId)
                 {
-                    Log.Warn("Invalid connectionId != {0} in offline mode: {1}", LocalConnectionId, destinationId);
+                    Log.Warn("Invalid connectionId != {0} in offline mode: {1}", DNM.LocalConnectionId, destinationId);
                     return;
                 }
 

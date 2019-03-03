@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
 using Julo.Network;
@@ -15,17 +16,23 @@ namespace Turtle
         // creates hosted client
         public TurtleClient(Mode mode, DualServer server) : base(mode, server)
         {
-            Log.Debug("Creating hosted TurtleClient");
+            // noop
         }
 
         // creates remote client
-        public TurtleClient(StartRemoteClientMessage startMessage) : base(startMessage)
+        public TurtleClient() : base() { }
+        public override void InitializeState(MessageStackMessage startMessage)
         {
-            var message = startMessage.ReadInitialMessage<UnityEngine.Networking.NetworkSystem.StringMessage>();
-            Log.Debug("Creating non-hosted TurtleClient: '{0}'", message.value);
+            base.InitializeState(startMessage);
 
             // TODO ...
+        }
 
+        public override void OnPlayerResolved(OnlineDualPlayer player, MessageStackMessage message)
+        {
+            base.OnPlayerResolved(player, message);
+
+            // TODO ...
         }
 
         protected override void OnMessage(WrappedMessage message)

@@ -4,14 +4,73 @@ using UnityEngine.Networking;
 
 using Julo.Users;
 using Julo.Logging;
+using Julo.Game; // TODO remove!
 
 namespace Julo.Network
 {
     public class OnlineDualPlayer : NetworkBehaviour, IDualPlayer
     {
-        bool ClientStarted = false;
+        //bool ClientStarted = false;
 
         List<IDualPlayerListener> listeners = new List<IDualPlayerListener>();
+
+        public int connectionId;
+        public short controllerId;
+
+        public void Start()
+        {
+            if(transform.parent != DualNetworkManager.instance.playerContainer)
+            {
+                transform.SetParent(DualNetworkManager.instance.playerContainer);
+            }
+            else
+            {
+                Log.Debug("Already on right parent");
+            }
+
+            //ClientStarted = true;
+
+            int role = GetComponent<GamePlayer>().role;
+
+            //Log.Debug("OnlineDualPlayer::Start()  :  hosted={0}, netId={1}, role={2}", NetworkServer.active, netId, role);
+
+            //Log.Debug("Recibido: " + GameClient.instance.ReceivedAddPlayer(netId));
+
+            DualClient.instance.StartOnlinePlayer(this);
+
+            foreach(IDualPlayerListener l in listeners)
+            {
+                // TODO
+                //l.Init(username, role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OnlineMode, NetworkServer.active, isLocalPlayer);
+            }
+        }
+        
+        public void Init(int connectionId, short playerControllerId)
+        {
+            this.connectionId = connectionId;
+            this.controllerId = controllerId;
+        }
+        
+        public uint NetworkId()
+        {
+            return netId.Value;
+        }
+
+        public int ConnectionId()
+        {
+            return connectionId;
+        }
+
+        public short ControllerId()
+        {
+            return controllerId;
+        }
+
+        public bool IsLocal()
+        {
+            return isLocalPlayer;
+        }
+
 
         /* this is game level
         
@@ -51,40 +110,7 @@ namespace Julo.Network
                 }
             }
         }
-        public void OnClickChangeRole()
-        {
-            DualNetworkManager.instance.ChangeRole(this);
-        }
         */
-        public void Start()
-        {
-            if(transform.parent != DualNetworkManager.instance.playerContainer)
-            {
-                transform.SetParent(DualNetworkManager.instance.playerContainer);
-            }
-            else
-            {
-                Log.Debug("Already on right parent");
-            }
-
-            ClientStarted = true;
-
-            foreach(IDualPlayerListener l in listeners)
-            {
-                // TODO
-                //l.Init(username, role, DualNetworkManager.GameState.NoGame /* TODO */, Mode.OnlineMode, NetworkServer.active, isLocalPlayer);
-            }
-        }
-
-
-        public uint GetId()
-        {
-            return netId.Value;
-        }
-        public bool IsLocal()
-        {
-            return isLocalPlayer;
-        }
 
         /*
         public string GetName()

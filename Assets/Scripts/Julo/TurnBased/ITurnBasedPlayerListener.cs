@@ -3,7 +3,7 @@
 namespace Julo.TurnBased
 {
 
-    public interface TBPlayerListener
+    public interface ITurnBasedPlayerListener
     {
 
         void SetPlaying(bool isPlaying);

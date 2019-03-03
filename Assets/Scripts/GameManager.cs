@@ -20,22 +20,27 @@ public class GameManager : MonoBehaviour, IDualListener
     public Panel connectingPanel;
     public LobbyPanel lobbyPanel;
     public Panel onlinePanel;
+
+    GameServer gameServer;
+    GameClient gameClient;
     
-    DualServer CreateServer(Mode mode, CreateHostedClientDelegate clientDelegate = null)
+    DualServer CreateServer(Mode mode)
     {
-        return new TurtleServer(mode, clientDelegate);
+        gameServer = new TurtleServer(mode);
+        return gameServer;
     }
 
     DualClient CreateHostedClient(Mode mode, DualServer server)
     {
-        return new TurtleClient(mode, server);
+        gameClient = new TurtleClient(mode, server);
+        return gameClient;
     }
 
-    DualClient CreateRemoteClient(StartRemoteClientMessage startClientMessage)
+    DualClient CreateRemoteClient()
     {
-        return new TurtleClient(startClientMessage);
+        gameClient = new TurtleClient();
+        return gameClient;
     }
-
 
     void Start()
     {
@@ -74,7 +79,7 @@ public class GameManager : MonoBehaviour, IDualListener
     public void OnClickStartGame()
     {
         //dnm.TryToStartGame();
-        dnm.dualServer.TryToStartGame();
+        gameServer.TryToStartGame();
     }
 
     public void OnClickBack()
@@ -118,6 +123,14 @@ public class GameManager : MonoBehaviour, IDualListener
         else if(state == DNMState.StartingAsClient)
         {
             panels.OpenPanel(connectingPanel);
+        }
+        else if(state == DNMState.WaitingAcceptanceAsClient)
+        {
+
+        }
+        else if(state == DNMState.WaitingInitialStateAsClient)
+        {
+
         }
         else if(state == DNMState.Client)
         {

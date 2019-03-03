@@ -2406,7 +2406,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 8, y: 0.0000076293945}
+  m_AnchoredPosition: {x: 8, y: -0.0000076293945}
   m_SizeDelta: {x: -16, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &413954375
@@ -8569,8 +8569,7 @@ MonoBehaviour:
   m_PlayerSpawnMethod: 0
   m_OfflineScene: 
   m_OnlineScene: 
-  m_SpawnPrefabs:
-  - {fileID: 36, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
+  m_SpawnPrefabs: []
   m_CustomConfig: 0
   m_MaxConnections: 4
   m_ConnectionConfig:
@@ -8633,8 +8632,6 @@ MonoBehaviour:
   onlinePlayerModel: {fileID: 84, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
   playerContainer: {fileID: 648092877}
   sceneToggle: {fileID: 735660803}
-  gameServerPrefab: {fileID: 99, guid: 4be395baef54d9f43937bf0663f49293, type: 3}
-  gameClientPrefab: {fileID: 100, guid: b151b6b2910285c4fb36aa6b4551d7b7, type: 3}
 --- !u!1 &2106734798
 GameObject:
   m_ObjectHideFlags: 0
@@ -8917,7 +8914,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 749309339}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999997
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

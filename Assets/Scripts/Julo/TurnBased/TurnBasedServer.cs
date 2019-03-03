@@ -23,10 +23,9 @@ namespace Julo.TurnBased
         int lastRolePlayed = 0;
         */
 
-        public TurnBasedServer(Mode mode, CreateHostedClientDelegate clientDelegate = null) : base(mode, clientDelegate)
+        public TurnBasedServer(Mode mode) : base(mode)
         {
             instance = this;
-            Log.Debug("Creating TBServer");
         }
 
         // only online mode
@@ -38,6 +37,19 @@ namespace Julo.TurnBased
 
             messages.Add(new UnityEngine.Networking.NetworkSystem.StringMessage("Nivel TB!!"));
         }
+
+        ////////// Player //////////
+
+        public override void OnPlayerAdded(IDualPlayer player)
+        {
+            base.OnPlayerAdded(player);
+        }
+        public override void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
+        {
+            base.WritePlayer(player, messageStack); 
+        }
+
+        ////////// Messaging //////////
 
         protected override void OnMessage(WrappedMessage message, int from)
         {

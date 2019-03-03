@@ -1,4 +1,4 @@
-﻿using UnityEngine.Networking.NetworkSystem;
+﻿using UnityEngine;
 
 using Julo.Logging;
 using Julo.Network;
@@ -15,27 +15,28 @@ namespace Julo.Game
         // creates hosted client
         public GameClient(Mode mode, DualServer server) : base(mode, server)
         {
-            Log.Debug("Creating hosted GameClient: {0}", mode);
-
             this.gameState = GameState.NoGame;
             this.numRoles = 0;
             this.sceneName = "";
         }
 
         // creates remote client
-        public GameClient(StartRemoteClientMessage startMessage) : base(startMessage)
-        {
-            Log.Debug("Creating non-hosted GameClient");
+        public GameClient() : base() { }
 
-            var message = startMessage.ReadInitialMessage<GameStatusMessage>();
+        public override void InitializeState(MessageStackMessage startMessage)
+        {
+            base.InitializeState(startMessage);
+            var message = startMessage.ReadMessage<GameStatusMessage>();
 
             gameState = message.state;
             numRoles = message.numRoles;
             sceneName = message.sceneName;
 
+            /*
             switch(gameState)
             {
                 case GameState.NoGame:
+                    Log.Debug("I joined but no game yet");
                     break;
                 case GameState.Preparing:
                 case GameState.Playing:
@@ -50,7 +51,35 @@ namespace Julo.Game
 
                     break;
             }
+            */
         }
+
+        public override void OnPlayerResolved(OnlineDualPlayer player, MessageStackMessage messageStack)
+        {
+            base.OnPlayerResolved(player, messageStack);
+
+            var gamePlayerMessage = messageStack.ReadMessage<GamePlayerMessage>();
+
+            int role = gamePlayerMessage.role;
+            string username = gamePlayerMessage.username;
+
+            //var b = (MonoBehaviour)player;
+            //var gamePlayer = b.GetComponent<GamePlayer>();
+            var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
+
+            if(gamePlayer.role == role)
+                Log.Warn("Role already set to {0}", role);
+
+            if(gamePlayer.username == username)
+                Log.Warn("Username already set to {0}", username);
+
+            gamePlayer.SetRole(role);
+            gamePlayer.SetUsername(username);
+            //SetRole(role);
+
+            Log.Debug("Resolved {0} to {1},{2}", player.NetworkId(), role, username);
+        }
+
 
         protected override void OnMessage(WrappedMessage message)
         {
