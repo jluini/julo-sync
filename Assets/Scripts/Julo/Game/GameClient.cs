@@ -62,8 +62,6 @@ namespace Julo.Game
             var gamePlayerData = messageStack.ReadMessage<GamePlayerMessage>();
 
             pendingPlayers.Add(dualPlayer.netId, gamePlayerData);
-
-            //messageStack.Add(new GamePlayerMessage(gamePlayer.role, gamePlayer.username));
         }
 
         public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
@@ -90,8 +88,6 @@ namespace Julo.Game
             int role = gamePlayerMessage.role;
             string username = gamePlayerMessage.username;
 
-            //var b = (MonoBehaviour)player;
-            //var gamePlayer = b.GetComponent<GamePlayer>();
             var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
 
             if(gamePlayer.role == role)
@@ -111,6 +107,7 @@ namespace Julo.Game
         {
             switch(message.messageType)
             {
+                /*
                 case MsgType.StartGame:
 
                     var startGameMessage = message.ReadExtraMessage<StartGameMessage>();
@@ -129,7 +126,7 @@ namespace Julo.Game
                     SetState(GameState.Playing);
 
                     break;
-
+                */
                 default:
                     base.OnMessage(message);
                     break;

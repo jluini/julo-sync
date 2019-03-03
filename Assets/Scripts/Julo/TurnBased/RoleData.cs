@@ -7,14 +7,10 @@ namespace Julo.TurnBased
     // only in server
     public class RoleData
     {
-
         public bool isAlive;
 
-        //public List<TBPlayer> players;
-
-        public RoleData(/*List<TBPlayer> players*/)
+        public RoleData()
         {
-            //this.players = players;
             this.isAlive = true;
         }
 

@@ -1,19 +1,10 @@
 ﻿namespace Julo.Network
 {
+    // TODO unificate with IDualPlayer?
     public interface IPlayer
     {
         
-        
-        
-        
-
         bool IsLocal();
-
-        // this is game-level
-
-        //int GetRole();
-        //string GetName();
-
 
     } // interface Player
 

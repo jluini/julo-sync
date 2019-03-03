@@ -39,7 +39,6 @@ namespace Julo.Game
 
             // TODO pass role data to clients?
             messages.Add(new GameStatusMessage(gameState, numRoles, sceneName));
-            //Log.Debug("Written game status: {0}, {1}, {2}", gameState, numRoles, sceneName);
         }
 
         public void StartGame(int numRoles, List<IDualPlayer>[] playersPerRole, string sceneName)

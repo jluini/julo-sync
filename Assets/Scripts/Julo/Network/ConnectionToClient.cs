@@ -11,14 +11,11 @@ namespace Julo.Network
         public NetworkConnection networkConnection;
         public List<IDualPlayer> players;
 
-        public DualNetworkManager.GameState stateInServer;
-
         // if conn == null it is the "offline" connection from the server to the single local client
         public ConnectionToClient(NetworkConnection conn)
         {
             networkConnection = conn;
             players = new List<IDualPlayer>();
-            //stateInServer = DualNetworkManager.GameState.NoGame;
         }
 
         public int ConnectionId()
@@ -37,12 +34,6 @@ namespace Julo.Network
         {
             players.Add(player);
         }
-        /*
-        public bool ConnectionIsReady()
-        {
-            return networkConnection.isReady;
-        }
-        */
 
     } // class ConnectionToClient
 } // namespace Julo.Network

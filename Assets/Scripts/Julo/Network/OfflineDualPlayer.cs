@@ -22,7 +22,6 @@ namespace Julo.Network
             {
                 var warnMessage = System.String.Format("Invalid controllerId/fake netId = {0}", controllerId);
                 Log.Warn(warnMessage);
-                //throw new System.Exception(warnMessage);
             }
 
             this.controllerId = controllerId;
@@ -32,7 +31,7 @@ namespace Julo.Network
         {
             foreach(IDualPlayerListener l in listeners)
             {
-                l.InitDualPlayer(/*user.GetName(), role, DualNetworkManager.GameState.NoGame /* TODO * /, */Mode.OfflineMode, true, true);
+                l.InitDualPlayer(Mode.OfflineMode, true, true);
             }
         }
 
@@ -55,53 +54,7 @@ namespace Julo.Network
         {
             return true;
         }
-        /*
-        public string GetName()
-        {
-            if(user != null)
-            {
-                return user.GetName();
-            }
-            else
-            {
-                return "-";
-            }
-        }
-
-        public int GetRole()
-        {
-            return role;
-        }
-
-        public void SetRole(int newRole)
-        {
-            this.role = newRole;
-            foreach(DNMPlayerListener l in listeners)
-            {
-                l.OnRoleChanged(newRole);
-            }
-        }
-
-        public void OnClickChangeRole()
-        {
-            DualNetworkManager.instance.ChangeRole(this);
-        }
-
-        public void SetUser(UserProfile user)
-        {
-            this.user = user;
-        }
-
-        public bool IsReady()
-        {
-            return true;
-        }
-
-        public bool IsSpectator()
-        {
-            return false;
-        }
-        */
+        
         /////////////// Listening ///////////////
 
         public void AddListener(IDualPlayerListener listener)

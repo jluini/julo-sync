@@ -32,32 +32,11 @@ namespace Julo.TurnBased
                 return _dualPlayer;
             }
         }
-        /*
-        public int GetConnectionId()
-        {
-            return dualPlayer.ConnectionId();
-        }
-
-        public short GetControllerId()
-        {
-            return dualPlayer.ControllerId();
-        }
-        */
+        
         public bool IsLocal()
         {
             return dualPlayer.IsLocal();
         }
-
-        /*
-        public string GetName()
-        {
-            return dualPlayer.GetName();
-        }
-        public int GetRole()
-        {
-            return dualPlayer.GetRole();
-        }
-        */
 
         public void AddListener(ITurnBasedPlayerListener listener)
         {

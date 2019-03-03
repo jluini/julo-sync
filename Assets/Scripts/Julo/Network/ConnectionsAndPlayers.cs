@@ -19,12 +19,6 @@ namespace Julo.Network
             connectionData = new Dictionary<int, ConnectionData>();
         }
 
-        /*// TODO change name?
-        public Dictionary<int, ConnectionData> Data()
-        {
-            return connectionData;
-        }*/
-
         public bool HasConnection(int connectionId)
         {
             return connectionData.ContainsKey(connectionId);

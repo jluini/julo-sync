@@ -2,7 +2,7 @@
 
 namespace Julo.Network
 {
-    // TODO needed?
+    // TODO unificate with IPlayer?
 
     public interface IDualPlayer : IPlayer
     {
@@ -11,14 +11,6 @@ namespace Julo.Network
         short ControllerId();
 
         void AddListener(IDualPlayerListener listener);
-        
-        // all this is game-level
-
-        //void SetUser(UserProfile user);
-        //void SetRole(int newRole);
-
-        //bool IsReady();
-        //bool IsSpectator();
     }
 
 } // namespace Julo.Network

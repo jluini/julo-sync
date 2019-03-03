@@ -24,7 +24,6 @@ namespace Julo.Network
 
             this.mode = mode;
 
-            //this.connections = new Dictionary<int, ConnectionToClient>();
             connections = new ConnectionsAndPlayers(true);
         }
 
@@ -55,7 +54,6 @@ namespace Julo.Network
 
             this.localClient = client;
 
-            //this.connections.Add(id, connection);
             this.connections.AddConnectionInServer(id, connection);
         }
 
@@ -69,7 +67,6 @@ namespace Julo.Network
             }
 
             var id = connection.ConnectionId();
-            //connections.Add(id, connection);
             this.connections.AddConnectionInServer(id, connection);
         }
 
@@ -117,14 +114,10 @@ namespace Julo.Network
         // only server
         public List<MessageBase> AddPlayer(IDualPlayer player)
         {
-            //connections[player.ConnectionId()].AddPlayer(player);
-
             connections.GetConnection(player.ConnectionId()).AddPlayer(player);
 
             // setup initial data in server
             var messageStack = new List<MessageBase>();
-
-            // Log.Debug("Adding DualPlayer({0} = {1}:{2}) to stack", netId, connectionId, controllerId);
 
             OnPlayerAdded(player);
             WritePlayer(player, messageStack);
@@ -210,18 +203,7 @@ namespace Julo.Network
         }
 
         /*
-        protected virtual void OnStartServer() { }
-
-        // only online mode
-        public virtual void WriteInitialData(List<MessageBase> messages)
-        {
-            messages.Add(new UnityEngine.Networking.NetworkSystem.IntegerMessage(numRoles));
-        }
-
-        public abstract void StartGame();
-
         ///////// Messaging
-        
 
         protected void SendTo(int who, short msgType, MessageBase msg)
         {
@@ -256,20 +238,8 @@ namespace Julo.Network
                 DualNetworkManager.instance.GameServerSendToAllBut(who, msgType, msg);
             }
         }
-
-        // only online mode
-        public virtual void OnMessage(WrappedMessage message, int from)
-        {
-            throw new System.Exception("Unhandled message");
-        }
-
-        ///////// Utils
-        
-        protected List<Player> GetPlayersForRole(int role)
-        {
-            return playersPerRole[role - 1];
-        }
         */
+
     } // class DNMServer
 
 } // namespace Julo.Network

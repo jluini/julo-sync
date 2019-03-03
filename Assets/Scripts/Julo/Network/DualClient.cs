@@ -108,12 +108,6 @@ namespace Julo.Network
             }
         }
 
-        /*// only remote
-        public virtual void OnPlayerResolved(OnlineDualPlayer player, MessageStackMessage messageStack)
-        {
-            // noop
-        }*/
-
         // only remote (quasi)
         public void OnNewPlayerMessage(MessageStackMessage messageStack)
         {
@@ -124,9 +118,7 @@ namespace Julo.Network
 
                 ReadPlayer(dualPlayerMessage, messageStack);
 
-                Log.Debug("NEW PLAYER id={0}", netId);
-
-                // Log.Debug("Received message netId={0}, connId={1}, controller={2}", netId, dualPlayerMessage.connectionId, dualPlayerMessage.controllerId);
+                // Log.Debug("NEW PLAYER id={0}", netId);
 
                 OnlineDualPlayer registeredPlayer = null;
                 if(pendingPlayers.ContainsKey(netId))
@@ -136,10 +128,6 @@ namespace Julo.Network
 
                     ResolvePlayer(registeredPlayer, dualPlayerMessage);
                 }
-                //else
-                //{
-                //    pendingMessages.Add(netId, new PendingPlayerStack(dualPlayerMessage, messageStack));
-                //}
                 
                 clientConnections.AddPlayer(dualPlayerMessage.connectionId, registeredPlayer, dualPlayerMessage, messageStack);
             }
@@ -152,10 +140,8 @@ namespace Julo.Network
             {
                 uint netId = player.netId.Value;
 
-                Log.Debug("START PLAYER id={0}", netId);
+                //Log.Debug("START PLAYER id={0}", netId);
 
-                //bool isPendingMessage = pendingMessages.ContainsKey(netId);
-                //bool isPendingToRegister = connections.HasAnyPlayer(netId);
                 PlayerData playerData = connections.GetPlayerIfAny(netId);
                 bool isRegistered = playerData != null;
 
@@ -167,19 +153,6 @@ namespace Julo.Network
                 {
                     pendingPlayers.Add(netId, player);
                 }
-
-
-                /*
-                if(pendingMessages.ContainsKey(thisId))
-                {
-                    OnPlayerRegistered(player, pendingMessages[thisId]);
-                    pendingMessages.Remove(thisId);
-                }
-                else
-                {
-                    Log.Warn("No message for registering this player netId={0}", thisId);
-                }
-                */
             }
         }
 
@@ -202,83 +175,7 @@ namespace Julo.Network
                 Log.Warn("Controller id already set to {0}", controllerId);
 
             player.Init(connId, controllerId);
-
-            //OnPlayerResolved(player, messageStack);
         }
-
-        /*
-        public virtual void OnPlayerRegistered(OnlineDualPlayer player, MessageStackMessage message)
-        {
-            var dualPlayerMessage = message.ReadInitialMessage<DualPlayerMessage>();
-
-            uint netId = dualPlayerMessage.netId;
-            int connectionId = dualPlayerMessage.connectionId;
-            short controllerId = dualPlayerMessage.controllerId;
-
-            Log.Debug("Se quiere setear DualPlayer({0} = {1}:{2}) a netId={3}", netId, connectionId, controllerId, player.netId.Value);
-
-            if(player.netId.Value != netId)
-            {
-                Log.Warn("Unmatching last message");
-                return;
-            }
-
-            player.connectionId = connectionId;
-            player.controllerId = controllerId;
-        }
-        */
-        ////
-        /*
-        public void OnConnectAsLocal(NetworkConnection conn)
-        {
-            // TODO set ready here?
-            ClientScene.Ready(conn);
-            AddPlayer(0);
-        }
-
-        public void OnConnectAsRemote(NetworkConnection conn)
-        {
-            conn.RegisterHandler(MsgType.InitialStatus, OnClientInitialStatusMessage);
-            // Waiting for InitialStatus message
-            Log.Debug("Waiting for InitialStatus message");
-        }
-
-        // only in non-hosted clients
-        void OnClientInitialStatusMessage(NetworkMessage messageReader)
-        {
-            // TODO necessary to receive if rejected?
-
-            var msg = messageReader.ReadMessage<MessageStackMessage>();
-
-            Log.Debug("Received InitialStatus message: {0}, {1}", msg.accepted, msg.count);
-
-            if(!msg.accepted)
-            {
-                Log.Warn("I was rejected :(");
-                return;
-            }
-
-            // creates non-hosted client
-            dualClient = remoteClientDelegate(msg);
-
-
-            SetState(DNMState.Client);
-            CreatePlayer(localClient.connection); // create remote initial player
-
-            /*
-            InstantiateClientAsync(msg, () =>
-            {
-                SetState(DNMState.Client);
-                CreatePlayer(localClient.connection); // create remote initial player
-            });
-            * /
-        }
-
-        void AddPlayer(short playerControllerId)
-        {
-            DualNetworkManager.instance.AddPlayerCommand(playerControllerId);
-        }
-        */
 
         // sending messages to server
             // TODO tratar de no recibirlo wrapped
@@ -310,18 +207,5 @@ namespace Julo.Network
 
 
     } // class DualClient
-    /*
-    public class PendingPlayerStack
-    {
-        public DualPlayerMessage dualPlayerData;
-        public MessageStackMessage stack;
-
-        public PendingPlayerStack(DualPlayerMessage dualPlayerData, MessageStackMessage stack)
-        {
-            this.dualPlayerData = dualPlayerData;
-            this.stack = stack;
-        }
-    }
-    */
 
 } // namespace Julo.Network
