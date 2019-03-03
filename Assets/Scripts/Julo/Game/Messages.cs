@@ -8,14 +8,46 @@ namespace Julo.Game
     {
         const short MsgTypeBase = Julo.Network.MsgType.Highest;
 
-        public const short StartGame = MsgTypeBase + 1;
-        public const short ReadyToStart = MsgTypeBase + 2;
+        public const short ChangeRole = MsgTypeBase + 1;
+        public const short ChangeReady = MsgTypeBase + 2;
+        public const short ChangeUsername = MsgTypeBase + 3;
+
+        public const short StartGame = MsgTypeBase + 20;
+        public const short ReadyToStart = MsgTypeBase + 30;
 
         public const short Highest = ReadyToStart;
 
     } // class MsgType
 
     ////////////
+
+    public class ChangeRoleMessage : MessageBase
+    {
+        public uint playerId;
+        public int newRole;
+
+        public ChangeRoleMessage()
+        {
+        }
+
+        public ChangeRoleMessage(uint playerId, int newRole)
+        {
+            this.playerId = playerId;
+            this.newRole = newRole;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(playerId);
+            writer.Write(newRole);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            playerId = reader.ReadUInt32();
+            newRole = reader.ReadInt32();
+        }
+    } // class ChangeRoleMessage
 
     public class GamePlayerMessage : MessageBase
     {
@@ -65,7 +97,6 @@ namespace Julo.Game
 
         public override void Serialize(NetworkWriter writer)
         {
-            Log.Debug("Writing {0}:{1}:{2}", (int)state, numRoles, sceneName);
             writer.Write((int)state);
             writer.Write(numRoles);
             writer.Write(sceneName);
@@ -75,11 +106,8 @@ namespace Julo.Game
         {
             var stateInt = reader.ReadInt32();
             state = (GameState)stateInt;
-            Log.Debug("Reading {0}", stateInt);
             numRoles = reader.ReadInt32();
-            Log.Debug("Reading ---:{0}", numRoles);
             sceneName = reader.ReadString();
-            Log.Debug("Reading ---:---:{0}", sceneName);
         }
 
     } // class GameStatusMessage

@@ -35,9 +35,14 @@ namespace Julo.Network
         {
             this.connectionId = connectionId;
             this.controllerId = playerControllerId;
+
+            foreach(var l in listeners)
+            {
+                l.InitDualPlayer(Mode.OnlineMode, NetworkServer.active, isLocalPlayer);
+            }
         }
         
-        public uint NetworkId()
+        public uint PlayerId()
         {
             return netId.Value;
         }

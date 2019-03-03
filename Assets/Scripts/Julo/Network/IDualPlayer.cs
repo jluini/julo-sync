@@ -6,7 +6,7 @@ namespace Julo.Network
 
     public interface IDualPlayer : IPlayer
     {
-        uint NetworkId();
+        
         int ConnectionId();
         short ControllerId();
 

@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 
+using UnityEngine;
+
 using Julo.Logging;
 
 namespace Julo.Network
@@ -61,13 +63,13 @@ namespace Julo.Network
             connectionData.Add(id, new ConnectionData(id));
         }
 
-        public bool HasAnyPlayer(uint netId)
+        public bool HasAnyPlayer(uint playerId)
         {
             foreach(var conn in connectionData.Values)
             {
                 foreach(var p in conn.players)
                 {
-                    if(p.playerData.netId == netId)
+                    if(p.playerData.playerId == playerId)
                     {
                         return true;
                     }
@@ -86,13 +88,13 @@ namespace Julo.Network
             GetConnection(connectionId).AddPlayer(player, playerData, stack);
         }
 
-        public PlayerData GetPlayerIfAny(uint netId)
+        public PlayerData GetPlayerIfAny(uint playerId)
         {
             foreach(var conn in connectionData.Values)
             {
                 foreach(var p in conn.players)
                 {
-                    if(p.playerData.netId == netId)
+                    if(p.playerData.playerId == playerId)
                     {
                         return p;
                     }
@@ -101,6 +103,37 @@ namespace Julo.Network
             
             return null;
         }
+
+        public T GetPlayerAs<T>(uint playerId)
+        {
+            var dualPlayerData = GetPlayerIfAny(playerId);
+
+            if(dualPlayerData == null)
+            {
+                Log.Error("Player {0} not found", playerId);
+                return default(T);
+            }
+
+            var dualPlayer = dualPlayerData.actualPlayer;
+            if(dualPlayer == null)
+            {
+                Log.Error("Player not registered");
+                return default(T);
+            }
+
+            var mb = (MonoBehaviour)dualPlayer;
+
+            T player = mb.GetComponent<T>();
+
+            if(player == null)
+            {
+                Log.Error("Component {0} not found", typeof(T));
+                return default(T);
+            }
+
+            return player;
+        }
+
     } // class ConnectionsAndPlayers
 
     public class ConnectionData
@@ -163,15 +196,6 @@ namespace Julo.Network
         public PlayerData(IDualPlayer actualPlayer, DualPlayerMessage playerData, MessageStackMessage stack)
         {
             this.actualPlayer = actualPlayer;
-            if(actualPlayer != null)
-            {
-                Log.Debug("Player data starts synchronized");
-            }
-            else
-            {
-                Log.Debug("Waiting to resolve player with netId={0}", playerData.netId);
-            }
-
             this.playerData = playerData;
             this.stack = stack;
         }

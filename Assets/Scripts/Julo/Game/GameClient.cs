@@ -55,24 +55,24 @@ namespace Julo.Game
             */
         }
 
-        public override void ReadPlayer(DualPlayerMessage dualPlayer, MessageStackMessage messageStack)
+        public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage messageStack)
         {
-            base.ReadPlayer(dualPlayer, messageStack);
+            base.ReadPlayer(dualPlayerData, messageStack);
 
             var gamePlayerData = messageStack.ReadMessage<GamePlayerMessage>();
 
-            pendingPlayers.Add(dualPlayer.netId, gamePlayerData);
+            pendingPlayers.Add(dualPlayerData.playerId, gamePlayerData);
         }
 
         public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
         {
             base.ResolvePlayer(player, dualPlayerData);
 
-            var netId = dualPlayerData.netId;
+            var netId = dualPlayerData.playerId;
 
-            if(player.NetworkId() != netId)
+            if(player.PlayerId() != netId)
             {
-                Log.Error("Not resolved! {0} != {1}", player.NetworkId(), netId);
+                Log.Error("Not resolved! {0} != {1}", player.PlayerId(), netId);
                 return;
             }
 
@@ -96,10 +96,9 @@ namespace Julo.Game
             if(gamePlayer.username == username)
                 Log.Warn("Username already set to {0}", username);
 
-            gamePlayer.SetRole(role);
-            gamePlayer.SetUsername(username);
+            gamePlayer.Init(role, false/* TODO */, username);
 
-            Log.Debug("Resolved {0} to {1}:{2}", player.NetworkId(), role, username);
+            // Log.Debug("Resolved {0} to {1}:{2}", player.PlayerId(), role, username);
         }
 
 
@@ -107,6 +106,18 @@ namespace Julo.Game
         {
             switch(message.messageType)
             {
+                case MsgType.ChangeRole:
+
+                    if(!isHosted)
+                    {
+                        var changeRoleMsg = message.ReadInternalMessage<ChangeRoleMessage>();
+                        var playerId = changeRoleMsg.playerId;
+                        var newRole = changeRoleMsg.newRole;
+
+                        connections.GetPlayerAs<GamePlayer>(playerId).SetRole(newRole);
+                    }
+
+                    break;
                 /*
                 case MsgType.StartGame:
 

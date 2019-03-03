@@ -133,7 +133,7 @@ namespace Julo.Network
             return extraReader;
         }
 
-        public TMsg ReadExtraMessage<TMsg>() where TMsg : MessageBase, new()
+        public TMsg ReadInternalMessage<TMsg>() where TMsg : MessageBase, new()
         {
             var msg = new TMsg();
             msg.Deserialize(extraReader);
@@ -171,7 +171,7 @@ namespace Julo.Network
 
     public class DualPlayerMessage : MessageBase
     {
-        public uint netId;
+        public uint playerId;
         public int connectionId;
         public short controllerId;
 
@@ -181,25 +181,26 @@ namespace Julo.Network
 
         public DualPlayerMessage(IDualPlayer player)
         {
-            this.netId = player.NetworkId();
+            this.playerId = player.PlayerId();
             this.connectionId = player.ConnectionId();
             this.controllerId = player.ControllerId();
         }
 
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write(netId);
+            writer.Write(playerId);
             writer.Write(connectionId);
             writer.Write(controllerId);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
-            netId = reader.ReadUInt32();
+            playerId = reader.ReadUInt32();
             connectionId = reader.ReadInt32();
             controllerId = reader.ReadInt16();
         }
-
+        
+        /*
         public override bool Equals(object obj)
         {
             if(this == obj)
@@ -211,9 +212,9 @@ namespace Julo.Network
                 return false;
             }
             var other = (DualPlayerMessage)obj;
-            return this.netId == other.netId;
+            return this.playerId == other.playerId;
         }
-
+        */
     } // class DualPlayerMessage
 
 

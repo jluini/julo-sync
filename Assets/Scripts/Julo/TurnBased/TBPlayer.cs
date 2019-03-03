@@ -32,7 +32,12 @@ namespace Julo.TurnBased
                 return _dualPlayer;
             }
         }
-        
+
+        public uint PlayerId()
+        {
+            return dualPlayer.PlayerId();
+        }
+
         public bool IsLocal()
         {
             return dualPlayer.IsLocal();

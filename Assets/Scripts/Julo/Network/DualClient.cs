@@ -24,7 +24,7 @@ namespace Julo.Network
         // only remote
         ConnectionsAndPlayers clientConnections;
 
-        ConnectionsAndPlayers connections
+        protected ConnectionsAndPlayers connections
         {
             get
             {
@@ -82,11 +82,11 @@ namespace Julo.Network
 
                 ReadPlayer(dualPlayerMsg, messageStack);
 
-                var netId = dualPlayerMsg.netId;
+                var netId = dualPlayerMsg.playerId;
                 var connId = dualPlayerMsg.connectionId;
                 var controllerId = dualPlayerMsg.controllerId;
 
-                Log.Debug("INITIALIZE STATE {0} = {1}/{2}", netId, connId, controllerId);
+                // Log.Debug("INITIALIZE STATE {0} = {1}/{2}", netId, connId, controllerId);
 
                 OnlineDualPlayer registeredPlayer = null;
 
@@ -94,17 +94,14 @@ namespace Julo.Network
                 {
                     registeredPlayer = pendingPlayers[netId];
                     pendingPlayers.Remove(netId);
+                }
 
-                    //ResolvePlayer(registeredPlayer, dualPlayerMsg, messageStack);
+                clientConnections.AddPlayer(connId, registeredPlayer, dualPlayerMsg, messageStack);
+
+                if(registeredPlayer != null)
+                {
                     ResolvePlayer(registeredPlayer, dualPlayerMsg);
                 }
-                //else
-                //{
-                    //pendingMessages.Add(netId, new PendingPlayerStack(dualPlayerMsg, messageStack));
-                //}
-
-                //clientConnections.GetConnection(connId).AddPlayer(registeredPlayer, dualPlayerMsg, messageStack);
-                clientConnections.AddPlayer(connId, registeredPlayer, dualPlayerMsg, messageStack);
             }
         }
 
@@ -114,7 +111,7 @@ namespace Julo.Network
             if(!isHosted)
             {
                 var dualPlayerMessage = messageStack.ReadMessage<DualPlayerMessage>();
-                var netId = dualPlayerMessage.netId;
+                var netId = dualPlayerMessage.playerId;
 
                 ReadPlayer(dualPlayerMessage, messageStack);
 
@@ -125,11 +122,14 @@ namespace Julo.Network
                 {
                     registeredPlayer = pendingPlayers[netId];
                     pendingPlayers.Remove(netId);
+                }
 
+                clientConnections.AddPlayer(dualPlayerMessage.connectionId, registeredPlayer, dualPlayerMessage, messageStack);
+
+                if(registeredPlayer != null)
+                {
                     ResolvePlayer(registeredPlayer, dualPlayerMessage);
                 }
-                
-                clientConnections.AddPlayer(dualPlayerMessage.connectionId, registeredPlayer, dualPlayerMessage, messageStack);
             }
         }
 
@@ -140,7 +140,7 @@ namespace Julo.Network
             {
                 uint netId = player.netId.Value;
 
-                //Log.Debug("START PLAYER id={0}", netId);
+                // Log.Debug("START PLAYER id={0}", netId);
 
                 PlayerData playerData = connections.GetPlayerIfAny(netId);
                 bool isRegistered = playerData != null;
@@ -156,18 +156,40 @@ namespace Julo.Network
             }
         }
 
-        public virtual void ReadPlayer(DualPlayerMessage dualPlayer, MessageStackMessage messageStack)
+        public virtual void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage messageStack)
         {
             // noop
         }
 
-        public virtual void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayer/*, MessageStackMessage messageStack*/)
+        public virtual void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
         {
             // Log.Debug("Resolving!!! netId={0}, player={1}, conn={2}/{3}", player.NetworkId(), player, dualPlayer.connectionId, dualPlayer.controllerId);
 
-            var netId = dualPlayer.netId;
-            var connId = dualPlayer.connectionId;
-            var controllerId = dualPlayer.controllerId;
+            var playerId = player.PlayerId();
+            var p = connections.GetPlayerIfAny(playerId);
+
+            if(p == null)
+            {
+                Log.Error("Unregistered player {0}", playerId);
+                return;
+            }
+
+            if(p.actualPlayer == null)
+            {
+                p.actualPlayer = player;
+            }
+            else
+            {
+                Log.Warn("Actual player already was set");
+                if(player != p.actualPlayer)
+                {
+                    Log.Warn("    and to something different!!!");
+                }
+            }
+
+            var netId = dualPlayerData.playerId;
+            var connId = dualPlayerData.connectionId;
+            var controllerId = dualPlayerData.controllerId;
 
             if(player.ConnectionId() == connId)
                 Log.Warn("Connection id already set to {0}", connId);

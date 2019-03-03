@@ -406,7 +406,7 @@ namespace Julo.Network
 
         public override void OnServerConnect(NetworkConnection conn)
         {
-            Log.Debug("### OnServerConnect({0}, {1})", state.ToString(), conn.connectionId);
+            // Log.Debug("### OnServerConnect({0}, {1})", state.ToString(), conn.connectionId);
 
             CheckState(new DNMState[] { DNMState.CreatingHost, DNMState.Host });
 
@@ -627,7 +627,7 @@ namespace Julo.Network
         public override void OnClientConnect(NetworkConnection conn)
         {
             int id = conn.connectionId;
-            Log.Debug("### OnClientConnect({0}, {1}) hosted:{2}", state, id, NetworkServer.active ? "SI" : "no");
+            //Log.Debug("### OnClientConnect({0}, {1}) hosted:{2}", state, id, NetworkServer.active ? "SI" : "no");
 
             // from UNET code
             // TODO !!!
@@ -820,8 +820,6 @@ namespace Julo.Network
                 Log.Warn("Unexpected ConnectionAccepted message");
                 return;
             }
-
-            Log.Debug("I was accepted :)");
 
             // creates non-hosted client
             dualClient = remoteClientDelegate();

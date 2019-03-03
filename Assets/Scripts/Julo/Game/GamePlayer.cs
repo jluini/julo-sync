@@ -9,12 +9,42 @@ namespace Julo.Game
 {
 
     [RequireComponent(typeof(IDualPlayer))]
-    public class GamePlayer : MonoBehaviour
+    public class GamePlayer : MonoBehaviour, IPlayer
     {
+        public int role = -1;
+        public bool isReady = false;
+        public string username = "-";
+
         List<IGamePlayerListener> listeners = new List<IGamePlayerListener>();
 
-        public int role = -1;
-        public string username = "-";
+        IDualPlayer _dualPlayer;
+        IDualPlayer dualPlayer
+        {
+            get
+            {
+                if(_dualPlayer == null)
+                {
+                    _dualPlayer = GetComponent<IDualPlayer>();
+
+                    if(_dualPlayer == null)
+                    {
+                        Log.Error("Component IDualPlayer not found!");
+                    }
+                }
+
+                return _dualPlayer;
+            }
+        }
+
+        public uint PlayerId()
+        {
+            return dualPlayer.PlayerId();
+        }
+
+        public bool IsLocal()
+        {
+            return dualPlayer.IsLocal();
+        }
 
         public void OnClickChangeRole()
         {
@@ -25,6 +55,18 @@ namespace Julo.Game
             else
             {
                 Log.Warn("Clicking change role but no server");
+            }
+        }
+
+        public void Init(int newRole, bool isReady, string username)
+        {
+            this.role = newRole;
+            this.isReady = isReady;
+            this.username = username;
+
+            foreach(var l in listeners)
+            {
+                l.InitGamePlayer(role, isReady, username);
             }
         }
 

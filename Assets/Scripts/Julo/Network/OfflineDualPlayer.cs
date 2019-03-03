@@ -25,17 +25,19 @@ namespace Julo.Network
             }
 
             this.controllerId = controllerId;
-        }
 
-        void Start()
-        {
+            // TODO here or in Start() ?
             foreach(IDualPlayerListener l in listeners)
             {
                 l.InitDualPlayer(Mode.OfflineMode, true, true);
             }
         }
 
-        public uint NetworkId()
+        //void Start()
+        //{
+        //}
+
+        public uint PlayerId()
         {
             return (uint)controllerId;
         }
