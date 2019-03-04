@@ -202,26 +202,6 @@ namespace Julo.Game
                     OnGameStarted();
                     break;
 
-                /*
-                case MsgType.StartGame:
-
-                    var startGameMessage = message.ReadExtraMessage<StartGameMessage>();
-
-                    numRoles = startGameMessage.numRoles;
-                    sceneName = startGameMessage.sceneName;
-
-                    CheckState(GameState.NoGame);
-
-                    SetState(GameState.Preparing);
-
-                    DualNetworkManager.instance.LoadSceneAsync(sceneName, () =>
-                    {
-                    });
-
-                    SetState(GameState.Playing);
-
-                    break;
-                */
                 default:
                     base.OnMessage(message);
                     break;

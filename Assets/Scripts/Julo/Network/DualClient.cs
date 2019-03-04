@@ -11,8 +11,6 @@ namespace Julo.Network
     {
         public static DualClient instance = null;
 
-        bool isInitialized = false; // TODO why this?
-
         protected Mode mode;
         protected bool isHosted;
 
@@ -54,8 +52,6 @@ namespace Julo.Network
             this.server = server;
             isHosted = server != null;
 
-            isInitialized = false;
-
             if(!isHosted)
             {
                 clientConnections = new ConnectionsAndPlayers(false);
@@ -73,8 +69,6 @@ namespace Julo.Network
             var numPlayersMessage = messageStack.ReadMessage<IntegerMessage>();
             var numPlayers = numPlayersMessage.value;
 
-            //Log.Debug("Detectados {0} players preexistentes", numPlayers);
-
             for(int i = 0; i < numPlayers; i++)
             {
                 var dualPlayerMsg = messageStack.ReadMessage<DualPlayerMessage>();
@@ -84,8 +78,6 @@ namespace Julo.Network
                 var netId = dualPlayerMsg.playerId;
                 var connId = dualPlayerMsg.connectionId;
                 var controllerId = dualPlayerMsg.controllerId;
-
-                // Log.Debug("INITIALIZE STATE {0} = {1}/{2}", netId, connId, controllerId);
 
                 OnlineDualPlayer registeredPlayer = null;
 
@@ -104,7 +96,6 @@ namespace Julo.Network
             }
         }
 
-        // only remote (quasi)
         public void OnNewPlayerMessage(MessageStackMessage messageStack)
         {
             if(!isHosted)
@@ -113,8 +104,6 @@ namespace Julo.Network
                 var netId = dualPlayerMessage.playerId;
 
                 ReadPlayer(dualPlayerMessage, messageStack);
-
-                // Log.Debug("NEW PLAYER id={0}", netId);
 
                 OnlineDualPlayer registeredPlayer = null;
                 if(pendingPlayers.ContainsKey(netId))
@@ -139,8 +128,6 @@ namespace Julo.Network
             {
                 uint netId = player.netId.Value;
 
-                // Log.Debug("START PLAYER id={0}", netId);
-
                 PlayerData playerData = connections.GetPlayerIfAny(netId);
                 bool isRegistered = playerData != null;
 
@@ -162,8 +149,6 @@ namespace Julo.Network
 
         public virtual void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
         {
-            // Log.Debug("Resolving!!! netId={0}, player={1}, conn={2}/{3}", player.NetworkId(), player, dualPlayer.connectionId, dualPlayer.controllerId);
-
             var playerId = player.PlayerId();
             var p = connections.GetPlayerIfAny(playerId);
 
@@ -225,7 +210,6 @@ namespace Julo.Network
         {
             throw new System.Exception("Unhandled message");
         }
-
 
     } // class DualClient
 

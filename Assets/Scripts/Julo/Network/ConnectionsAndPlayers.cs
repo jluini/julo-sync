@@ -6,11 +6,9 @@ using Julo.Logging;
 
 namespace Julo.Network
 {
-
-
+    // TODO change name
     public class ConnectionsAndPlayers
     {
-
         Dictionary<int, ConnectionData> connectionData;
         bool isServer;
 
@@ -113,13 +111,13 @@ namespace Julo.Network
             return false;
         }
 
-        public void AddPlayer(int connectionId, IDualPlayer player, DualPlayerMessage playerData/*, MessageStackMessage stack*/)
+        public void AddPlayer(int connectionId, IDualPlayer player, DualPlayerMessage playerData)
         {
             if(!HasConnection(connectionId))
             {
                 AddConnectionInClient(connectionId);
             }
-            GetConnection(connectionId).AddPlayer(player, playerData/*, stack*/);
+            GetConnection(connectionId).AddPlayer(player, playerData);
         }
 
         public PlayerData GetPlayerIfAny(uint playerId)
@@ -216,11 +214,10 @@ namespace Julo.Network
         ///     In client.
         ///     actualPlayer could be null if not started yet
         /// </summary>
-        public void AddPlayer(IDualPlayer actualPlayer, DualPlayerMessage dualPlayerData/*, MessageStackMessage stack*/)
+        public void AddPlayer(IDualPlayer actualPlayer, DualPlayerMessage dualPlayerData)
         {
-            players.Add(new PlayerData(actualPlayer, dualPlayerData/*, stack*/));
+            players.Add(new PlayerData(actualPlayer, dualPlayerData));
         }
-        
     }
     
     public class PlayerData
@@ -228,23 +225,18 @@ namespace Julo.Network
         public IDualPlayer actualPlayer;
         public DualPlayerMessage playerData;
 
-
-        //public MessageStackMessage stack;
-
         // in server
         public PlayerData(IDualPlayer player)
         {
             this.actualPlayer = player;
             playerData = new DualPlayerMessage(player);
-            //stack = null;
         }
 
         // in client
-        public PlayerData(IDualPlayer actualPlayer, DualPlayerMessage playerData/*, MessageStackMessage stack*/)
+        public PlayerData(IDualPlayer actualPlayer, DualPlayerMessage playerData)
         {
             this.actualPlayer = actualPlayer;
             this.playerData = playerData;
-            //this.stack = stack;
         }
     }
 

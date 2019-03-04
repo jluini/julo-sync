@@ -28,36 +28,7 @@ namespace Julo.Network
 
         public const short Highest = GameClientToServer;
     }
-    /*
-    /// <summary>
-    /// Message sent from clients to change its ready state.
-    /// </summary>
-    public class ReadyMessage : MessageBase
-    {
-        public bool value;
-
-        public ReadyMessage()
-        {
-            // no op
-        }
-
-        public ReadyMessage(bool value)
-        {
-            this.value = value;
-        }
-
-        public override void Deserialize(NetworkReader reader)
-        {
-            value = reader.ReadBoolean();
-        }
-
-        public override void Serialize(NetworkWriter writer)
-        {
-            writer.Write(value);
-        }
-
-    } // class ReadyMessage
-    */
+    
     public class MessageStackMessage : MessageBase
     {
         public List<MessageBase> data;
@@ -200,22 +171,6 @@ namespace Julo.Network
             controllerId = reader.ReadInt16();
         }
         
-        /*
-        public override bool Equals(object obj)
-        {
-            if(this == obj)
-            {
-                return true;
-            }
-            if((obj == null) || !this.GetType().Equals(obj.GetType()))
-            {
-                return false;
-            }
-            var other = (DualPlayerMessage)obj;
-            return this.playerId == other.playerId;
-        }
-        */
     } // class DualPlayerMessage
-
 
 } // namespace Julo.Network

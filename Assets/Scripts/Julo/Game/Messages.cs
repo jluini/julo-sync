@@ -55,7 +55,6 @@ namespace Julo.Game
 
     public class ChangeReadyMessage : MessageBase
     {
-        //public uint playerId;
         public int connectionId;
         public bool newReady;
 
@@ -63,23 +62,20 @@ namespace Julo.Game
         {
         }
 
-        public ChangeReadyMessage(/*uint playerId, */int connectionId, bool newReady)
+        public ChangeReadyMessage(int connectionId, bool newReady)
         {
-            //this.playerId = playerId;
             this.connectionId = connectionId;
             this.newReady = newReady;
         }
 
         public override void Serialize(NetworkWriter writer)
         {
-            //writer.Write(playerId);
             writer.Write(connectionId);
             writer.Write(newReady);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
-            //playerId = reader.ReadUInt32();
             connectionId = reader.ReadInt32();
             newReady = reader.ReadBoolean();
         }

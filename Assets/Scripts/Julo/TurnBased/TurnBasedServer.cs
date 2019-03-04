@@ -13,16 +13,13 @@ namespace Julo.TurnBased
 {
     public abstract class TurnBasedServer : GameServer
     {
-
-        public static TurnBasedServer instance;
-
+        public new static TurnBasedServer instance;
         
         float preturnWaitTime = 1f;
         RoleData[] roleData;
         int lastRolePlayed = 0;
 
-        //bool aPlayerIsPlaying = false;
-        GamePlayer playingPlayer = null; // TODO should be TBPlayer?
+        GamePlayer playingPlayer = null;
 
         public TurnBasedServer(Mode mode) : base(mode)
         {
@@ -38,8 +35,6 @@ namespace Julo.TurnBased
             {
                 messages.Add(new PlayerMessage(playingPlayer));
             }
-
-            // TODO pass data to TurnBasedClient
         }
 
         ////////// Player //////////
@@ -161,7 +156,6 @@ namespace Julo.TurnBased
 
                     // TODO it's picking always the first player of the role
                     playingPlayer = players[0];
-                    //var nextPlayerId = playingPlayer.PlayerId();
 
                     SendToAll(MsgType.StartTurn, new PlayerMessage(playingPlayer));
 
@@ -175,7 +169,6 @@ namespace Julo.TurnBased
 
         protected abstract void OnStartTurn(int role);
         protected abstract bool RoleIsAlive(int numRole);
-
 
     } // class TurnBasedServer
 

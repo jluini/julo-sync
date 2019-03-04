@@ -136,60 +136,6 @@ namespace TurtleGame
             }
         }
 
-        /*
-        
-
-        public Turtle onlineTurtlePrefab;
-
-        public static float torque = 5f;
-
-        public int frameStep = 15;
-
-        Turtle targetTurtle = null;
-
-        enum TurnType { None, Keyboard, Wait }
-
-        TurnType currentTurn = TurnType.None;
-        bool turnEnded = true;
-
-        TurtleMatch match
-        {
-            get
-            {
-                return isHosted ? turtleServer.GetMatch() : remoteMatch;
-            }
-        }
-
-        // only if hosted
-        TurtleServer turtleServer;
-
-        // only if remote
-        TurtleMatch remoteMatch;
-        
-        // local case
-        public override void OnStartLocalClient(GameServer server)
-        {
-            base.OnStartLocalClient(server);
-
-            instance = this;
-
-            this.turtleServer = (TurtleServer) server;
-        }
-
-        // remote case
-        public override void OnStartRemoteClient(StartGameMessage initialMessages)
-        {
-            base.OnStartRemoteClient(initialMessages);
-
-            instance = this;
-
-            var initialState = initialMessages.ReadInitialMessage<GameState>();
-
-            remoteMatch = new TurtleMatch();
-            remoteMatch.CreateFromInitialState(numRoles, onlineTurtlePrefab, initialState);
-        }
-        */
-
         protected override void OnStartTurn(TBPlayer player)
         {
             if(currentTurn != TurnType.None)
@@ -202,7 +148,7 @@ namespace TurtleGame
             var turtles = match.GetTurtlesForRole(role);
             var aliveTurtles = turtles.FindAll(t => !t.dead);
 
-            if(/*turtles == null || */ aliveTurtles.Count == 0)
+            if(aliveTurtles.Count == 0)
             {
                 Log.Warn("No alive turtles with role {0}", role);
                 currentTurn = TurnType.Wait;
@@ -313,4 +259,3 @@ namespace TurtleGame
     } // class TurtleClient
 
 } // namespace Turtle
-

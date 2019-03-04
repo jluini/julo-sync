@@ -12,13 +12,9 @@ namespace Julo.Game
 {
     public enum GameState { Unknown, NoGame, WillStart, CancelingStart, Preparing, Playing, GameOver }
 
-
     public abstract class GameServer : DualServer
     {
         public new static GameServer instance = null;
-
-        public new GameClient localClient = null;
-
 
         Dictionary<int, bool> clientsAreReadyToStart;
 

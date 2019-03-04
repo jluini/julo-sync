@@ -3,7 +3,7 @@
 namespace Julo.Network
 {
 
-    public delegate DualServer CreateServerDelegate(Mode mode/*, CreateHostedClientDelegate createClient = null*/);
+    public delegate DualServer CreateServerDelegate(Mode mode);
     public delegate DualClient CreateHostedClientDelegate(Mode mode, DualServer server);
     public delegate DualClient CreateRemoteClientDelegate();
 

@@ -75,12 +75,6 @@ namespace Julo.Network
             connections.RemoveConnection(connectionId);
         }
 
-        /*protected virtual bool AcceptsRemoteClient()
-        {
-            // TODO accept criteria
-            return true;
-        }*/
-
         ///////////////////////
 
         // only online mode

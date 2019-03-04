@@ -39,21 +39,20 @@ namespace Julo.TurnBased
                     playingPlayer.SetPlaying(true);
                 }
             }
-
         }
 
         public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage stack)
         {
             base.ReadPlayer(dualPlayerData, stack);
-            
-            // TODO ...
+
+            // noop
         }
 
         public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
         {
             base.ResolvePlayer(player, dualPlayerData);
 
-            // TODO ...
+            // noop
         }
 
         protected override void OnPrepareToStart(MessageStackMessage messageStack)
@@ -141,100 +140,6 @@ namespace Julo.TurnBased
         protected abstract bool TurnIsOn();
         protected abstract void OnEndTurn(TBPlayer player);
 
-        /*
-        public static new TurnBasedClient instance = null;
-
-        ClientPlayers<TBPlayer> clientPlayers;
-
-        TBPlayer playingPlayer = null;
-
-
-        // only local
-        TurnBasedServer tbServer;
-
-
-        // local case
-        public override void OnStartLocalClient(GameServer server)
-        {
-            base.OnStartLocalClient(server);
-
-            instance = this;
-            this.tbServer = (TurnBasedServer)server;
-
-            if(mode == Mode.OfflineMode)
-            {
-                var players = new Dictionary<uint, TBPlayer>();
-
-                // TODO!!!
-                /*
-                foreach(var p in DualNetworkManager.instance.OfflinePlayers())
-                {
-                    var pp = (OfflinePlayer)p;
-                    var tbp = pp.GetComponent<TBPlayer>();
-                    players.Add(p.GetId(), tbp);
-                }
-                * /
-                clientPlayers = new FixedClientPlayers<TBPlayer>(players);
-            }
-            else
-            {
-                clientPlayers = new CacheClientPlayers<TBPlayer>();
-            }
-        }
-
-        // remote case
-        public override void OnStartRemoteClient(StartGameMessage initialMessages)
-        {
-            base.OnStartRemoteClient(initialMessages);
-
-            instance = this;
-
-            clientPlayers = new CacheClientPlayers<TBPlayer>();
-        }
-
-        ////// Message handlers
-
-        void OnStartTurnMessage(TurnMessage turnMsg)
-        {
-            var netId = turnMsg.playerNetId;
-
-            var player = clientPlayers.GetPlayerByNetId(netId);
-
-            IsMyTurn(player);
-        }
-
-        void OnEndTurnMessage()
-        {
-            if(playingPlayer == null)
-            {
-                Log.Warn("Already cleaned up");
-                return;
-            }
-
-            playingPlayer.SetPlaying(false);
-            playingPlayer = null;
-        }
-
-
-        public override void OnMessage(WrappedMessage message)
-        {
-            short msgType = message.messageType;
-
-            if(msgType == Julo.TurnBased.MsgType.StartTurn)
-            {
-                var turnMsg = message.ReadExtraMessage<TurnMessage>();
-                OnStartTurnMessage(turnMsg);
-            }
-            else if(msgType == Julo.TurnBased.MsgType.EndTurn)
-            {
-                OnEndTurnMessage();
-            }
-            else
-            {
-                base.OnMessage(message);
-            }
-        }
-        */
     } // class TurnBasedClient
 
 } // namespace Julo.TurnBased

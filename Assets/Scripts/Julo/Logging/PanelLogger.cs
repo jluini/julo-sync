@@ -2,9 +2,7 @@
 
 namespace Julo.Logging
 {
-    /*
-     * TODO add severity levels
-     */
+    // TODO add severity levels
     public class PanelLogger : MonoBehaviour, Logger, MessageColorProvider
     {
         public bool showInConsole = true;
