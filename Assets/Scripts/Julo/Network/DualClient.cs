@@ -14,9 +14,10 @@ namespace Julo.Network
         protected Mode mode;
         protected bool isHosted;
 
+        // only hosted
         protected DualServer server;
 
-        // only remote client
+        // only remote
         Dictionary<uint, OnlineDualPlayer> pendingPlayers = new Dictionary<uint, OnlineDualPlayer>();
 
         // only remote
