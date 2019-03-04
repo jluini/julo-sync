@@ -1,5 +1,7 @@
 using UnityEngine.Networking;
 
+using Julo.Game;
+
 namespace Julo.TurnBased
 {
     public class MsgType
@@ -12,17 +14,17 @@ namespace Julo.TurnBased
         public const short Highest = EndTurn;
     }
 
-    public class TurnMessage : MessageBase
+    public class PlayerMessage : MessageBase
     {
         public uint playerId;
 
-        public TurnMessage()
+        public PlayerMessage()
         {
         }
 
-        public TurnMessage(uint playerId)
+        public PlayerMessage(GamePlayer player)
         {
-            this.playerId = playerId;
+            playerId = player == null ? 0 : player.PlayerId();
         }
 
         public override void Serialize(NetworkWriter writer)
@@ -34,6 +36,8 @@ namespace Julo.TurnBased
         {
             playerId = reader.ReadUInt32();
         }
-    }
+
+    } // class PlayerMessage
+
 
 } // namespace Julo.TurnBased

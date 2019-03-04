@@ -27,35 +27,34 @@ namespace Julo.Game
             this.sceneName = "";
         }
 
-        public override void InitializeState(MessageStackMessage startMessage)
+        public sealed override void InitializeState(MessageStackMessage messageStack)
         {
-            base.InitializeState(startMessage);
-            var message = startMessage.ReadMessage<GameStatusMessage>();
+            base.InitializeState(messageStack);
+
+            var message = messageStack.ReadMessage<GameStatusMessage>();
 
             gameState = message.state;
             numRoles = message.numRoles;
             sceneName = message.sceneName;
 
-            /*
             switch(gameState)
             {
                 case GameState.NoGame:
+                case GameState.WillStart:
                     Log.Debug("I joined but no game yet");
                     break;
+
                 case GameState.Preparing:
                 case GameState.Playing:
                 case GameState.GameOver:
-
                     DualNetworkManager.instance.LoadSceneAsync(sceneName, () =>
                     {
-                        // LATE JOINING
-
-                        // TODO read actual game state
+                        OnLateJoin(messageStack);
                     });
 
                     break;
             }
-            */
+            
         }
 
         public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage messageStack)
@@ -139,6 +138,7 @@ namespace Julo.Game
 
         protected abstract void OnPrepareToStart(MessageStackMessage messageStack);
         protected abstract void OnGameStarted();
+        protected abstract void OnLateJoin(MessageStackMessage messageStack);
 
         protected override void OnMessage(WrappedMessage message)
         {

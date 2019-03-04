@@ -6,6 +6,7 @@ using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
 using Julo.Network;
+using Julo.Game;
 using Julo.TurnBased;
 
 namespace TurtleGame
@@ -75,13 +76,17 @@ namespace TurtleGame
             remoteMatch = new TurtleMatch();
         }
 
-        public override void InitializeState(MessageStackMessage startMessage)
+        protected override void OnLateJoin(MessageStackMessage messageStack)
         {
-            base.InitializeState(startMessage);
+            base.OnLateJoin(messageStack);
 
-            //remoteMatch.CreateFromInitialState(numRoles, onlineTurtleModel, initialState);
+            if(gameState == GameState.Playing || gameState == GameState.GameOver)
+            {
+                var stateMessage = messageStack.ReadMessage<TurtleGameState>();
+                remoteMatch.CreateFromInitialState(numRoles, onlineTurtleModel, stateMessage);
 
-            // TODO ...
+                OnGameStarted();
+            }
         }
 
         public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage stack)
@@ -105,7 +110,6 @@ namespace TurtleGame
             var stateMessage = messageStack.ReadMessage<TurtleGameState>();
 
             remoteMatch.CreateFromInitialState(numRoles, onlineTurtleModel, stateMessage);
-
         }
 
         protected override void OnGameStarted()

@@ -404,7 +404,7 @@ namespace Julo.Network
 
         public override void OnServerConnect(NetworkConnection conn)
         {
-            // Log.Debug("### OnServerConnect({0}, {1})", state.ToString(), conn.connectionId);
+            // if(conn.connectionId > 0) Log.Debug("### OnServerConnect({0}, {1})", state.ToString(), conn.connectionId);
 
             CheckState(new DNMState[] { DNMState.CreatingHost, DNMState.Host });
 
@@ -448,6 +448,7 @@ namespace Julo.Network
                     }
                     else
                     {
+                        Log.Debug("Disconnecting");
                         conn.Disconnect();
                     }
                 }
@@ -580,7 +581,7 @@ namespace Julo.Network
                 // it was host and was stopped
                 // it will be stopped OnStopHost
             }
-            else if(state == DNMState.StartingAsClient)
+            else if(state == DNMState.WaitingAcceptanceAsClient)
             {
                 // it was trying to connect as client and failed
                 SetState(DNMState.Off);
@@ -603,14 +604,7 @@ namespace Julo.Network
         public override void OnClientConnect(NetworkConnection conn)
         {
             int id = conn.connectionId;
-            //Log.Debug("### OnClientConnect({0}, {1}) hosted:{2}", state, id, NetworkServer.active ? "SI" : "no");
-
-            // from UNET code
-            // TODO !!!
-            if(!clientLoadedScene)
-            {
-                ClientScene.Ready(conn);
-            }
+            // if(!NetworkServer.active) Log.Debug("### OnClientConnect({0}, {1}) hosted:{2}", state, id, NetworkServer.active ? "SI" : "no");
 
             // TODO check if id checking is correct
 
@@ -627,7 +621,8 @@ namespace Julo.Network
                 RegisterServerHandlers();
                 RegisterClientHandlers(conn);
 
-                AddInitialPlayer(conn);
+                GetReady(conn);
+                AddInitialPlayer();
             }
             else if(state == DNMState.StartingAsClient && id != DNM.LocalConnectionId)
             {
@@ -652,7 +647,7 @@ namespace Julo.Network
         public override void OnClientDisconnect(NetworkConnection conn) {
             // Log.Debug("### OnClientDisconnect({0})", conn);
 
-            if(state == DNMState.WaitingAcceptanceAsClient)
+            if(state == DNMState.StartingAsClient || state == DNMState.WaitingAcceptanceAsClient)
             {
                 Log.Debug("I was rejected :(");
             }
@@ -684,7 +679,19 @@ namespace Julo.Network
 
         //////////////////////////
 
-        void AddInitialPlayer(NetworkConnection connectionToServer)
+        void GetReady(NetworkConnection conn)
+        {
+            // from UNET code
+            // TODO !!!
+            if(clientLoadedScene)
+            {
+                Log.Warn("Cuando pasa esto??");
+            }
+
+            ClientScene.Ready(conn);
+        }
+
+        void AddInitialPlayer()
         {
             AddPlayerCommand(0);
             if(sceneToggle.isOn) // TODO remove this!!!
@@ -802,6 +809,8 @@ namespace Julo.Network
 
             var username = "Carlitos"; // TODO
 
+            GetReady(messageReader.conn);
+
             client.Send(MsgType.InitialStateRequest, new StringMessage(username)); // TODO
 
             SetState(DNMState.WaitingInitialStateAsClient);
@@ -818,7 +827,7 @@ namespace Julo.Network
 
             dualClient.InitializeState(msg);
 
-            AddInitialPlayer(messageReader.conn);
+            AddInitialPlayer();
         }
 
         void OnGameServerToClientMessage(NetworkMessage messageReader)

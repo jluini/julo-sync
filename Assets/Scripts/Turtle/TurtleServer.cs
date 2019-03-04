@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 
 using Julo.Logging;
 using Julo.Network;
+using Julo.Game;
 using Julo.TurnBased;
 
 namespace TurtleGame
@@ -32,7 +33,11 @@ namespace TurtleGame
         {
             base.WriteRemoteClientData(messages);
 
-            // TODO pass data to TurtleClient
+            if(gameState == GameState.Playing || gameState == GameState.GameOver)
+            {
+                messages.Add(match.GetState());
+            }
+
         }
 
         ////////// Player //////////

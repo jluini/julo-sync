@@ -18,13 +18,27 @@ namespace Julo.TurnBased
             // noop
         }
 
-        public override void InitializeState(MessageStackMessage startMessage)
+        protected override void OnLateJoin(MessageStackMessage messageStack)
         {
-            base.InitializeState(startMessage);
+            
+            if(gameState == GameState.Playing)
+            {
+                var currentPlayerMessage = messageStack.ReadMessage<PlayerMessage>();
+                var currentPlayerId = currentPlayerMessage.playerId;
 
-            var message = startMessage.ReadMessage<StringMessage>();
+                if(currentPlayerId > 0)
+                {
+                    playingPlayer = connections.GetPlayerAs<TBPlayer>(currentPlayerId);
 
-            // TODO ...
+                    if(playingPlayer == null)
+                    {
+                        Log.Error("Current player not found");
+                        return;
+                    }
+
+                    playingPlayer.SetPlaying(true);
+                }
+            }
 
         }
 
@@ -53,9 +67,15 @@ namespace Julo.TurnBased
             {
                 case MsgType.StartTurn:
 
-                    var turnMsg = message.ReadInternalMessage<TurnMessage>();
+                    var turnMsg = message.ReadInternalMessage<PlayerMessage>();
 
                     var playerId = turnMsg.playerId;
+
+                    if(playerId == 0)
+                    {
+                        Log.Error("Unexpected StartTurn message with playerId=0");
+                        return;
+                    }
 
                     var player = connections.GetPlayerIfAny(playerId);
 

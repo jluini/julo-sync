@@ -57,6 +57,12 @@ namespace TurtleGame
 
         public void UpdateState(TurtleGameState newState)
         {
+            if(turtlesPerRole == null)
+            {
+                Log.Warn("Not initialized yet");
+                return;
+            }
+
             foreach(var turtleState in newState.units)
             {
                 var turtle = GetTurtleFor(turtleState);

@@ -77,7 +77,6 @@ namespace Julo.Network
 
             for(int i = 0; i < numPlayers; i++)
             {
-
                 var dualPlayerMsg = messageStack.ReadMessage<DualPlayerMessage>();
 
                 ReadPlayer(dualPlayerMsg, messageStack);
