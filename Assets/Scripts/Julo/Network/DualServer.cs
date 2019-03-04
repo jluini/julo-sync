@@ -139,7 +139,8 @@ namespace Julo.Network
 
         ///////////////////////
 
-        // sending messages to clients
+        // ///////// Messaging
+
         // TODO tratar de no recibirlo wrapped
         // TODO usar polimorfismo en vez de if...
 
@@ -201,44 +202,6 @@ namespace Julo.Network
         {
             throw new System.Exception("Unhandled message");
         }
-
-        /*
-        ///////// Messaging
-
-        protected void SendTo(int who, short msgType, MessageBase msg)
-        {
-            DualNetworkManager.instance.GameServerSendTo(who, msgType, msg);
-        }
-
-        protected void SendToAll(short msgType, MessageBase msg)
-        {
-            // TODO tratar de no recibirlo wrapped
-            // TODO usar polimorfismo en vez de if...
-            if(mode == Mode.OfflineMode)
-            {
-                GameClient.instance.OnMessage(new WrappedMessage(msgType, msg));
-            }
-            else
-            {
-                DualNetworkManager.instance.GameServerSendToAll(msgType, msg);
-            }
-        }
-
-        protected void SendToAllBut(int who, short msgType, MessageBase msg)
-        {
-            if(mode == Mode.OfflineMode)
-            {
-                if(who != 0)
-                {
-                    Log.Warn("Unexpected 'but' id {0} in offline mode", who);
-                }
-            }
-            else
-            {
-                DualNetworkManager.instance.GameServerSendToAllBut(who, msgType, msg);
-            }
-        }
-        */
 
     } // class DNMServer
 

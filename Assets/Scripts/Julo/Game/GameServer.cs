@@ -14,7 +14,7 @@ namespace Julo.Game
 
     public class GameServer : DualServer
     {
-        public static GameServer instance = null;
+        public new static GameServer instance = null;
 
         public new GameClient localClient = null;
         public List<IDualPlayer>[] playersPerRole; // TODO should be GamePlayer's?
@@ -70,9 +70,10 @@ namespace Julo.Game
             var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
 
             int role = GetNextRole();
+            bool ready = mode == Mode.OfflineMode;
             string username = "Jorge"; // TODO
 
-            gamePlayer.Init(role, false /* TODO */, username);
+            gamePlayer.Init(role, ready, username);
         }
 
         public override void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
@@ -80,10 +81,66 @@ namespace Julo.Game
             base.WritePlayer(player, messageStack);
 
             var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
-            messageStack.Add(new GamePlayerMessage(gamePlayer.role, gamePlayer.username));
+            messageStack.Add(new GamePlayerMessage(gamePlayer.role, gamePlayer.isReady, gamePlayer.username));
         }
 
         ////////// Roles //////////
+
+        public void ChangeReady(int connectionId, bool newReady)
+        {
+            if(gameState != GameState.NoGame)
+            {
+                Log.Error("Cannot change ready now");
+            }
+
+            var players = connections.GetConnection(connectionId).players;
+
+            foreach(var playerData in players)
+            {
+                var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerData.playerData.playerId);
+                //gamePlayer.SetReady(newReady);
+            }
+
+            SendToAll(MsgType.ChangeReady, new ChangeReadyMessage(connectionId, newReady));
+        }
+
+        public void ChangeRole(GamePlayer player)
+        {
+            if(gameState != GameState.NoGame)
+            {
+                Log.Error("Unexpected call of ChangeRole");
+                return;
+            }
+
+            int currentRole = player.role;
+
+            int newRole;
+            if(currentRole == DNM.SpecRole)
+            {
+                newRole = DNM.FirstPlayerRole;
+            }
+            else
+            {
+                newRole = currentRole + 1;
+                if(newRole > GetMaxPlayers())
+                {
+                    // no spec role in offline mode
+                    newRole = mode == Mode.OfflineMode ? DNM.FirstPlayerRole : DNM.SpecRole;
+                }
+            }
+
+            if(newRole != currentRole)
+            {
+                // sets role in server
+                player.SetRole(newRole);
+
+                SendToAll(MsgType.ChangeRole, new ChangeRoleMessage(player.PlayerId(), newRole));
+            }
+            else
+            {
+                Log.Warn("No role to change?");
+            }
+        }
 
         int GetNextRole()
         {
@@ -128,44 +185,6 @@ namespace Julo.Game
             return ret;
         }
 
-        public void ChangeRole(GamePlayer player)
-        {
-            if(gameState != GameState.NoGame)
-            {
-                Log.Error("Unexpected call of ChangeRole");
-                return;
-            }
-
-            int currentRole = player.role;
-
-            int newRole;
-            if(currentRole == DNM.SpecRole)
-            {
-                newRole = DNM.FirstPlayerRole;
-            }
-            else
-            {
-                newRole = currentRole + 1;
-                if(newRole > GetMaxPlayers())
-                {
-                    // no spec role in offline mode
-                    newRole = mode == Mode.OfflineMode ? DNM.FirstPlayerRole : DNM.SpecRole;
-                }
-            }
-
-            if(newRole != currentRole)
-            {
-                // sets role in server
-                player.SetRole(newRole);
-
-                SendToAll(MsgType.ChangeRole, new ChangeRoleMessage(player.PlayerId(), newRole));
-            }
-            else
-            {
-                Log.Warn("No role to change?");
-            }
-        }
-
         ////////// * //////////
         
         int GetMaxPlayers()
@@ -184,7 +203,21 @@ namespace Julo.Game
 
         protected override void OnMessage(WrappedMessage message, int from)
         {
-            base.OnMessage(message, from);
+            switch(message.messageType)
+            {
+                case MsgType.ChangeReady:
+
+                    var changeReadyMsg = message.ReadInternalMessage<ChangeReadyMessage>();
+                    var newReady = changeReadyMsg.newReady;
+
+                    ChangeReady(from, newReady);
+
+                    break;
+
+                default:
+                    base.OnMessage(message, from);
+                    break;
+            }
         }
 
         ///

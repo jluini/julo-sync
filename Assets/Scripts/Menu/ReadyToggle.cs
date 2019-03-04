@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+using Julo.Logging;
 using Julo.Network;
+using Julo.Game;
 
 namespace Menu
 {
@@ -15,7 +17,7 @@ namespace Menu
         {
             if(mode == Mode.OnlineMode)
             {
-                DualNetworkManager.instance.ClientSetReadyCommand(newValue);
+                GameClient.instance.OnReadyChanged(newValue);
             }
         }
 

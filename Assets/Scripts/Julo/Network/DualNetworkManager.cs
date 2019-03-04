@@ -568,28 +568,6 @@ namespace Julo.Network
 
         /////// CLIENT
 
-        // Misc
-        
-        public void ClientSetReadyCommand(bool newValue)
-        {
-            Log.Warn("ClientSetReadyCommand not implemented");
-            /*
-            if(state != DNMState.Host && state != DNMState.Client)
-            {
-                Log.Error("Invalid call of ClientSetReady: {0}", state);
-                return;
-            }
-
-            if(gameState != GameState.NoGame)
-            {
-                Log.Error("Invalid call of ClientSetReady: {0}", gameState);
-            }
-
-            var readyMessage = new ReadyMessage(newValue);
-
-            client.Send(MsgType.ClientSetReady, readyMessage);*/
-        }
-        
         // Client callbacks
 
         public override void OnStartClient(NetworkClient client) {

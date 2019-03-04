@@ -47,32 +47,70 @@ namespace Julo.Game
             playerId = reader.ReadUInt32();
             newRole = reader.ReadInt32();
         }
+
     } // class ChangeRoleMessage
+
+    public class ChangeReadyMessage : MessageBase
+    {
+        //public uint playerId;
+        public int connectionId;
+        public bool newReady;
+
+        public ChangeReadyMessage()
+        {
+        }
+
+        public ChangeReadyMessage(/*uint playerId, */int connectionId, bool newReady)
+        {
+            //this.playerId = playerId;
+            this.connectionId = connectionId;
+            this.newReady = newReady;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            //writer.Write(playerId);
+            writer.Write(connectionId);
+            writer.Write(newReady);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            //playerId = reader.ReadUInt32();
+            connectionId = reader.ReadInt32();
+            newReady = reader.ReadBoolean();
+        }
+
+    } // class ChangeReadyMessage
 
     public class GamePlayerMessage : MessageBase
     {
         public int role;
+        public bool isReady;
         public string username;
 
         public GamePlayerMessage()
         {
         }
 
-        public GamePlayerMessage(int role, string username)
+        public GamePlayerMessage(int role, bool isReady, string username)
         {
             this.role = role;
+            this.isReady = isReady;
             this.username = username;
         }
 
         public override void Serialize(NetworkWriter writer)
         {
             writer.Write(role);
+            writer.Write(isReady);
             writer.Write(username);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
             role = reader.ReadInt32();
+            isReady = reader.ReadBoolean();
             username = reader.ReadString();
         }
 

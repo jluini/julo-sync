@@ -84,7 +84,7 @@ namespace Turtle
             roleButton.interactable = isHosted;
 
             // TODO do this here?
-            readyToggle.isOn = mode == Mode.OfflineMode;
+            readyToggle.isOn = isReady;
         }
 
         public void OnRoleChanged(int newRole)

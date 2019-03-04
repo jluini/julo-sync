@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 
-using UnityEngine;
-
 using Julo.Logging;
 using Julo.Network;
 
@@ -9,6 +7,7 @@ namespace Julo.Game
 {
     public class GameClient : DualClient
     {
+        public new static GameClient instance = null;
 
         GameState gameState;
         int numRoles;
@@ -19,6 +18,8 @@ namespace Julo.Game
 
         public GameClient(Mode mode, DualServer server = null) : base(mode, server)
         {
+            instance = this;
+
             this.gameState = GameState.Unknown;
             this.numRoles = 0;
             this.sceneName = "";
@@ -86,6 +87,8 @@ namespace Julo.Game
             pendingPlayers.Remove(netId);
 
             int role = gamePlayerMessage.role;
+            bool ready = gamePlayerMessage.isReady;
+
             string username = gamePlayerMessage.username;
 
             var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
@@ -96,16 +99,40 @@ namespace Julo.Game
             if(gamePlayer.username == username)
                 Log.Warn("Username already set to {0}", username);
 
-            gamePlayer.Init(role, false/* TODO */, username);
+            gamePlayer.Init(role, ready, username);
 
             // Log.Debug("Resolved {0} to {1}:{2}", player.PlayerId(), role, username);
         }
 
+        // //////////////////////
+        
+        public void OnReadyChanged(bool newReady)
+        {
+            SendToServer(MsgType.ChangeReady, new ChangeReadyMessage(-5, newReady));
+        }
+        
+        // //////////////////////
 
         protected override void OnMessage(WrappedMessage message)
         {
             switch(message.messageType)
             {
+                case MsgType.ChangeReady:
+                    var msg = message.ReadInternalMessage<ChangeReadyMessage>();
+
+                    var connectionId = msg.connectionId;
+                    var newReady = msg.newReady;
+
+                    var players = connections.GetConnection(connectionId).players;
+
+                    foreach(var playerData in players)
+                    {
+                        var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerData.playerData.playerId);
+                        gamePlayer.SetReady(newReady);
+                    }
+
+                    break;
+
                 case MsgType.ChangeRole:
 
                     if(!isHosted)

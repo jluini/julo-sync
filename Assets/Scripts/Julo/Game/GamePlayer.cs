@@ -79,6 +79,16 @@ namespace Julo.Game
             }
         }
 
+        public void SetReady(bool newReady)
+        {
+            this.isReady = newReady;
+
+            foreach(var l in listeners)
+            {
+                l.OnReadyChanged(newReady);
+            }
+        }
+
         public void SetUsername(string username)
         {
             this.username = username;
