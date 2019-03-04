@@ -14,25 +14,25 @@ namespace Julo.TurnBased
 
     public class TurnMessage : MessageBase
     {
-        public uint playerNetId;
+        public uint playerId;
 
         public TurnMessage()
         {
         }
 
-        public TurnMessage(uint playerNetId)
+        public TurnMessage(uint playerId)
         {
-            this.playerNetId = playerNetId;
+            this.playerId = playerId;
         }
 
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write(playerNetId);
+            writer.Write(playerId);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
-            playerNetId = reader.ReadUInt32();
+            playerId = reader.ReadUInt32();
         }
     }
 

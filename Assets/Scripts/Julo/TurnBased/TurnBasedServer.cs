@@ -16,12 +16,11 @@ namespace Julo.TurnBased
 
         public static TurnBasedServer instance;
 
-        /*
-        public float preturnWaitTime = 1f;
-        bool aPlayerIsPlaying = false;
+        
+        float preturnWaitTime = 1f;
         RoleData[] roleData;
         int lastRolePlayed = 0;
-        */
+        bool aPlayerIsPlaying = false;
 
         public TurnBasedServer(Mode mode) : base(mode)
         {
@@ -53,8 +52,127 @@ namespace Julo.TurnBased
 
         protected override void OnMessage(WrappedMessage message, int from)
         {
-            base.OnMessage(message, from);
+            switch(message.messageType)
+            {
+                case MsgType.EndTurn:
+                    aPlayerIsPlaying = false;
+                    SendToAll(MsgType.EndTurn, new EmptyMessage()); // TODO Send to all but!
+
+                    break;
+
+                default:
+                    base.OnMessage(message, from);
+                    break;
+            }
         }
+
+        protected override void OnPrepareToStart(List<MessageBase> messageStack)
+        {
+            roleData = new RoleData[numRoles];
+            for(int r = 1; r <= numRoles; r++)
+            {
+                roleData[r - 1] = new RoleData();
+            }
+        }
+
+        protected override void OnStartGame()
+        {
+            DualNetworkManager.instance.StartCoroutine(GameRoutine());
+        }
+
+        IEnumerator GameRoutine()
+        {
+            do
+            {
+                yield return new WaitForSecondsRealtime(preturnWaitTime);
+
+                // next turn
+                int someAliveRole = -1;
+                int aliveRoles = 0;
+
+                for(int r = 1; r <= numRoles; r++)
+                {
+                    bool roleWasAlive = roleData[r - 1].isAlive;
+                    bool roleIsAlive = RoleIsAlive(r);
+
+                    if(roleIsAlive)
+                    {
+                        if(!roleWasAlive)
+                        {
+                            Log.Warn("Role {0} revived!", r);
+                        }
+                        aliveRoles++;
+                        someAliveRole = r;
+                    }
+
+                    if(roleWasAlive != roleIsAlive)
+                    {
+                        roleData[r - 1].isAlive = roleIsAlive;
+                    }
+                }
+
+                if(aliveRoles == 0)
+                {
+                    // it's a draw
+
+                    Log.Debug("It's a draw");
+
+                    // TODO
+                    break;
+                }
+                else if(aliveRoles == 1)
+                {
+                    //it's a win for "someAliveRole"
+
+                    Log.Debug("It's a win for {0}", someAliveRole);
+
+                    // TODO
+                    break;
+                }
+                else
+                {
+                    int nextRoleToPlay = lastRolePlayed;
+                    while(true)
+                    {
+                        nextRoleToPlay++;
+                        if(nextRoleToPlay > numRoles)
+                        {
+                            nextRoleToPlay = 1;
+                        }
+
+                        if(roleData[nextRoleToPlay - 1].isAlive)
+                        {
+                            break;
+                        }
+                    }
+
+                    lastRolePlayed = nextRoleToPlay;
+
+                    OnStartTurn(nextRoleToPlay);
+
+                    // it's turn for nextRoleToPlay
+
+                    var players = GetPlayersForRole(nextRoleToPlay);
+
+                    // TODO it's picking always the first player of the role
+                    var nextPlayer = players[0];
+                    var nextPlayerId = nextPlayer.PlayerId();
+
+                    SendToAll(MsgType.StartTurn, new TurnMessage(nextPlayerId));
+
+                    aPlayerIsPlaying = true;
+
+                    do
+                    {
+                        yield return new WaitForEndOfFrame();
+
+                    } while(aPlayerIsPlaying);
+                }
+            } while(true);
+        }
+
+        protected abstract void OnStartTurn(int role);
+        protected abstract bool RoleIsAlive(int numRole);
 
         /*
         protected override void OnStartServer()
@@ -194,12 +312,8 @@ namespace Julo.TurnBased
                 base.OnMessage(message, from);
             }
         }
-
-        protected abstract void OnStartGame();
-        protected abstract void OnStartTurn(int role);
-
-        protected abstract bool RoleIsAlive(int numRole);
         */
+
     } // class TurnBasedServer
 
 } // namespace Julo.TurnBased

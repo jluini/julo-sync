@@ -8,19 +8,78 @@ using Julo.Logging;
 using Julo.Network;
 using Julo.TurnBased;
 
-namespace Turtle
+namespace TurtleGame
 {
     public class TurtleClient : TurnBasedClient
     {
+        public static new TurtleClient instance = null;
 
-        public TurtleClient(Mode mode, DualServer server = null) : base(mode, server)
+        public static float torque = 5f;
+
+        public int frameStep = 15;
+
+        Turtle targetTurtle = null;
+
+        enum TurnType { None, Keyboard, Wait }
+
+        TurnType currentTurn = TurnType.None;
+        bool turnEnded = true;
+
+        public delegate void GameStartedDelegate();
+        GameStartedDelegate gameStartedDelegate;
+
+        // only if hosted
+        TurtleServer turtleServer;
+
+        // only if remote
+        Turtle onlineTurtleModel;
+        TurtleMatch remoteMatch;
+
+        TurtleMatch match
         {
-            // noop
+            get
+            {
+                return isHosted ? turtleServer.GetMatch() : remoteMatch;
+            }
+        }
+
+        // starts hosted client
+        public TurtleClient(Mode mode, GameStartedDelegate gameStartedDelegate, DualServer server) : base(mode, server)
+        {
+            instance = this;
+            this.gameStartedDelegate = gameStartedDelegate;
+
+            if(server == null)
+            {
+                Log.Error("No server");
+            }
+            else
+            {
+                turtleServer = (TurtleServer)server;
+            }
+        }
+
+        // starts remote client
+        public TurtleClient(GameStartedDelegate gameStartedDelegate, Turtle onlineTurtleModel) : base(Mode.OnlineMode, null)
+        {
+            instance = this;
+
+            this.gameStartedDelegate = gameStartedDelegate;
+            this.onlineTurtleModel = onlineTurtleModel;
+
+            if(onlineTurtleModel == null)
+            {
+                Log.Error("No turtle model");
+            }
+
+            remoteMatch = new TurtleMatch();
         }
 
         public override void InitializeState(MessageStackMessage startMessage)
         {
             base.InitializeState(startMessage);
+
+            //remoteMatch.CreateFromInitialState(numRoles, onlineTurtleModel, initialState);
 
             // TODO ...
         }
@@ -39,10 +98,34 @@ namespace Turtle
             // TODO ...
         }
 
+        protected override void OnPrepareToStart(MessageStackMessage messageStack)
+        {
+            base.OnPrepareToStart(messageStack);
+
+            var stateMessage = messageStack.ReadMessage<TurtleGameState>();
+
+            remoteMatch.CreateFromInitialState(numRoles, onlineTurtleModel, stateMessage);
+
+        }
+
+        protected override void OnGameStarted()
+        {
+            gameStartedDelegate();
+        }
+
         protected override void OnMessage(WrappedMessage message)
         {
             switch(message.messageType)
             {
+                case MsgType.ServerUpdate:
+                    if(!isHosted)
+                    {
+                        var newState = message.ReadInternalMessage<TurtleGameState>();
+                        match.UpdateState(newState);
+                    }
+
+                    break;
+
                 default:
                     base.OnMessage(message);
                     break;
@@ -50,7 +133,7 @@ namespace Turtle
         }
 
         /*
-        public static new TurtleClient instance = null;
+        
 
         public Turtle onlineTurtlePrefab;
 
@@ -62,7 +145,7 @@ namespace Turtle
 
         enum TurnType { None, Keyboard, Wait }
 
-        TurnType tt = TurnType.None;
+        TurnType currentTurn = TurnType.None;
         bool turnEnded = true;
 
         TurtleMatch match
@@ -101,29 +184,30 @@ namespace Turtle
             remoteMatch = new TurtleMatch();
             remoteMatch.CreateFromInitialState(numRoles, onlineTurtlePrefab, initialState);
         }
+        */
 
         protected override void OnStartTurn(TBPlayer player)
         {
-            if(tt != TurnType.None)
+            if(currentTurn != TurnType.None)
             {
-                Log.Warn("Unexpected TurnType {0} (A)", tt);
+                Log.Warn("Unexpected TurnType {0} (A)", currentTurn);
             }
 
             int role = player.GetRole();
 
-            var turtles = Match.GetTurtlesForRole(role);
+            var turtles = match.GetTurtlesForRole(role);
             var aliveTurtles = turtles.FindAll(t => !t.dead);
 
-            if(/*turtles == null || * / aliveTurtles.Count == 0)
+            if(/*turtles == null || */ aliveTurtles.Count == 0)
             {
                 Log.Warn("No alive turtles with role {0}", role);
-                tt = TurnType.Wait;
+                currentTurn = TurnType.Wait;
                 turnEnded = false;
-                StartCoroutine(EndTurnDelayed());
+                DualNetworkManager.instance.StartCoroutine(EndTurnDelayed());
                 return;
             }
 
-            tt = TurnType.Keyboard;
+            currentTurn = TurnType.Keyboard;
 
             targetTurtle = GetNextTurtle(aliveTurtles);
 
@@ -132,11 +216,11 @@ namespace Turtle
 
         protected override bool TurnIsOn()
         {
-            if(tt == TurnType.Wait)
+            if(currentTurn == TurnType.Wait)
             {
                 if(turnEnded)
                 {
-                    tt = TurnType.None;
+                    currentTurn = TurnType.None;
                     return false;
                 }
                 else
@@ -144,20 +228,20 @@ namespace Turtle
                     return true;
                 }
             }
-            else if(tt != TurnType.Keyboard)
+            else if(currentTurn != TurnType.Keyboard)
             {
-                Log.Warn("Unexpected TurnType {0} (A)", tt);
+                Log.Warn("Unexpected TurnType {0} (A)", currentTurn);
                 return false;
             }
 
-            if(Time.frameCount % FrameStep == 0)
+            if(Time.frameCount % frameStep == 0)
             {
-                SendToServer(MsgType.ClientUpdate, Match.GetState());
+                SendToServer(MsgType.ClientUpdate, match.GetState());
             }
 
             if(targetTurtle.dead)
             {
-                tt = TurnType.None;
+                currentTurn = TurnType.None;
                 return false;
             }
 
@@ -176,11 +260,11 @@ namespace Turtle
             if(fire3 > 0)
             {
                 targetTurtle.SetPlaying(false);
-                tt = TurnType.None;
+                currentTurn = TurnType.None;
                 return false;
             }
 
-            foreach(var t in Match.GetAllTurtles())
+            foreach(var t in match.GetAllTurtles())
             {
                 t.SetDead(t.transform.position.y < -1.5f);
             }
@@ -197,24 +281,6 @@ namespace Turtle
         {
             yield return new WaitForSecondsRealtime(2f);
             turnEnded = true;
-        }
-        
-        public override void OnMessage(WrappedMessage message)
-        {
-            short msgType = message.messageType;
-
-            if(msgType == MsgType.ServerUpdate)
-            {
-                if(!isHosted)
-                {
-                    var newState = message.ReadExtraMessage<GameState>();
-                    Match.UpdateState(newState);
-                }
-            }
-            else
-            {
-                base.OnMessage(message);
-            }
         }
 
         ///// Utils
@@ -239,7 +305,7 @@ namespace Turtle
             Log.Error("No turtles");
             return null;
         }
-        */
+
     } // class TurtleClient
 
 } // namespace Turtle

@@ -224,7 +224,6 @@ namespace Julo.Network
             if(state == DNMState.Offline)
             {
                 // TODO
-                Log.Debug("Stopped");
                 
                 SetState(DNMState.Off);
 
@@ -232,7 +231,6 @@ namespace Julo.Network
 
                 foreach(var p in conn.players)
                 {
-                    Log.Debug("Deleted one player");
                     OfflineDualPlayer op = (OfflineDualPlayer)p.actualPlayer;
                     Destroy(op.gameObject);
                 }
@@ -945,33 +943,6 @@ namespace Julo.Network
             }
 
             return enoughPlayers;
-        }
-        void CollectPlayers()
-        {
-            playersPerRole = new List<Player>[numRoles];
-
-            foreach(Client client in clients.Values)
-            {
-                if(client.stateInServer != GameState.NoGame)
-                {
-                    Log.Warn("Unexpected state in server A: {0}", client.stateInServer);
-                }
-                client.stateInServer = GameState.NoGame;
-
-                foreach(IDualPlayer player in client.players)
-                {
-                    if(!player.IsSpectator())
-                    {
-                        int role = player.GetRole();
-
-                        if(playersPerRole[role - 1] == null)
-                        {
-                            playersPerRole[role - 1] = new List<Player>();
-                        }
-                        playersPerRole[role - 1].Add(player);
-                    }
-                }
-            }
         }
         */
 

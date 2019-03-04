@@ -12,8 +12,11 @@ namespace Julo.Game
         public const short ChangeReady = MsgTypeBase + 2;
         public const short ChangeUsername = MsgTypeBase + 3;
 
-        public const short StartGame = MsgTypeBase + 20;
-        public const short ReadyToStart = MsgTypeBase + 30;
+        public const short GameWillStart = MsgTypeBase + 20;
+        public const short GameCanceled = MsgTypeBase + 21;
+        public const short PrepareToStart = MsgTypeBase + 30;
+        public const short StartGame = MsgTypeBase + 31;
+        public const short ReadyToStart = MsgTypeBase + 40;
 
         public const short Highest = ReadyToStart;
 
@@ -150,16 +153,16 @@ namespace Julo.Game
 
     } // class GameStatusMessage
 
-    public class StartGameMessage : MessageBase
+    public class PrepareToStartMessage : MessageBase
     {
         public int numRoles;
         public string sceneName;
 
-        public StartGameMessage()
+        public PrepareToStartMessage()
         {
         }
 
-        public StartGameMessage(int numRoles, string sceneName)
+        public PrepareToStartMessage(int numRoles, string sceneName)
         {
             this.numRoles = numRoles;
             this.sceneName = sceneName;
@@ -177,6 +180,6 @@ namespace Julo.Game
             sceneName = reader.ReadString();
         }
 
-    } // class StartGameMessage
+    } // class PrepareToStartMessage
 
 } // namespace Julo.Game

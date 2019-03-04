@@ -6,7 +6,7 @@ using Julo.Network;
 using Julo.Game;
 using Julo.TurnBased;
 
-namespace Turtle
+namespace TurtleGame
 {
     [RequireComponent(typeof(IDualPlayer), typeof(GamePlayer), typeof(TBPlayer))]
     public class TurtlePlayerDisplay : MonoBehaviour, IDualPlayerListener, IGamePlayerListener, ITurnBasedPlayerListener

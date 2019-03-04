@@ -200,7 +200,8 @@ namespace Julo.Network
 
         protected virtual void OnMessage(WrappedMessage message, int from)
         {
-            throw new System.Exception("Unhandled message");
+            var msg = System.String.Format("Unhandled message number={0}", message.messageType - MsgType.Highest);
+            throw new System.Exception(msg);
         }
 
     } // class DNMServer

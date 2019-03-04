@@ -8,14 +8,23 @@ using Julo.Logging;
 using Julo.Network;
 using Julo.TurnBased;
 
-namespace Turtle
+namespace TurtleGame
 {
     public class TurtleServer : TurnBasedServer
     {
+        public static new TurtleServer instance;
 
-        public TurtleServer(Mode mode) : base(mode)
+        Turtle offlineTurtleModel;
+        Turtle onlineTurtleModel;
+
+        TurtleMatch match;
+
+        public TurtleServer(Mode mode, Turtle offlineTurtleModel, Turtle onlineTurtleModel) : base(mode)
         {
-            //instance = this;
+            instance = this;
+
+            this.offlineTurtleModel = offlineTurtleModel;
+            this.onlineTurtleModel = onlineTurtleModel;
         }
 
         // only online mode
@@ -38,11 +47,65 @@ namespace Turtle
             base.WritePlayer(player, messageStack);
         }
 
+        protected override void OnPrepareToStart(List<MessageBase> messageStack)
+        {
+            base.OnPrepareToStart(messageStack);
+
+            match = new TurtleMatch();
+
+            match.CreateFromSpawnPoints(
+                numRoles,
+                mode == Mode.OfflineMode ? offlineTurtleModel : onlineTurtleModel,
+                Object.FindObjectsOfType<SpawnPoint>()
+            );
+
+            messageStack.Add(match.GetState());
+        }
+
+        /*
+        protected override void OnStartGame()
+        {
+            base.OnStartGame();
+            // noop
+        }
+        */
+        protected override void OnStartTurn(int role)
+        {
+            SendToAll(MsgType.ServerUpdate, match.GetState());
+        }
+
+        public TurtleMatch GetMatch()
+        {
+            return match;
+        }
+
+        protected override bool RoleIsAlive(int numRole)
+        {
+            return match.GetTurtlesForRole(numRole).FindAll(t => !t.dead).Count > 0;
+        }
+
+
         ////////// Messaging //////////
 
         protected override void OnMessage(WrappedMessage message, int from)
         {
-            base.OnMessage(message, from);
+            switch(message.messageType)
+            {
+                case MsgType.ClientUpdate:
+                    // TODO check he is playing
+
+                    var msg = message.ReadInternalMessage<TurtleGameState>();
+
+                    match.UpdateState(msg);
+
+                    // TODO SendToAllRemoteBut ?
+                    SendToAllBut(from, MsgType.ServerUpdate, msg);
+
+                    break;
+                default:
+                    base.OnMessage(message, from);
+                    break;
+            }
         }
 
 

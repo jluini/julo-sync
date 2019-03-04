@@ -4,7 +4,7 @@ using UnityEngine;
 
 using Julo.Logging;
 
-namespace Turtle
+namespace TurtleGame
 {
 
     public class TurtleMatch
@@ -40,7 +40,7 @@ namespace Turtle
             }
         }
 
-        public void CreateFromInitialState(int numRoles, Turtle turtleModel, GameState initialState)
+        public void CreateFromInitialState(int numRoles, Turtle turtleModel, TurtleGameState initialState)
         {
             Init(numRoles);
 
@@ -50,12 +50,12 @@ namespace Turtle
             }
         }
 
-        public GameState GetState()
+        public TurtleGameState GetState()
         {
-            return new GameState(GetAllTurtles());
+            return new TurtleGameState(GetAllTurtles());
         }
 
-        public void UpdateState(GameState newState)
+        public void UpdateState(TurtleGameState newState)
         {
             foreach(var turtleState in newState.units)
             {
@@ -139,4 +139,4 @@ namespace Turtle
 
     } // class TurtleMatch
 
-} // namespace Turtle
+} // namespace TurtleGame

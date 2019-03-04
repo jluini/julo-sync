@@ -98,6 +98,13 @@ namespace Julo.Game
             }
         }
 
+        public bool IsSpectator()
+        {
+            return role == DNM.SpecRole;
+        }
+
+        //  ///////////////////
+
         public void AddListener(IGamePlayerListener listener)
         {
             listeners.Add(listener);

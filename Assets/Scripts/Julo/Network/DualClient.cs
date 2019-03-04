@@ -96,7 +96,7 @@ namespace Julo.Network
                     pendingPlayers.Remove(netId);
                 }
 
-                clientConnections.AddPlayer(connId, registeredPlayer, dualPlayerMsg, messageStack);
+                clientConnections.AddPlayer(connId, registeredPlayer, dualPlayerMsg);
 
                 if(registeredPlayer != null)
                 {
@@ -124,7 +124,7 @@ namespace Julo.Network
                     pendingPlayers.Remove(netId);
                 }
 
-                clientConnections.AddPlayer(dualPlayerMessage.connectionId, registeredPlayer, dualPlayerMessage, messageStack);
+                clientConnections.AddPlayer(dualPlayerMessage.connectionId, registeredPlayer, dualPlayerMessage);
 
                 if(registeredPlayer != null)
                 {

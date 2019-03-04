@@ -2406,7 +2406,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 8, y: -0.0000076293945}
+  m_AnchoredPosition: {x: 8, y: 0.0000076293945}
   m_SizeDelta: {x: -16, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &413954375
@@ -5638,6 +5638,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   userManager: {fileID: 2087382075}
   dnm: {fileID: 2101215941}
+  offlineTurtleModel: {fileID: 90, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
+  onlineTurtleModel: {fileID: 90, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
   panels: {fileID: 1808581277}
   mainMenuPanel: {fileID: 1709616375}
   connectingPanel: {fileID: 955805273}
@@ -8914,7 +8916,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 749309339}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999997
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

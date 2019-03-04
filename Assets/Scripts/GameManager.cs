@@ -7,14 +7,19 @@ using Julo.Network;
 using Julo.Game;
 using Menu;
 
-using Turtle;
+using TurtleGame;
 
 public class GameManager : MonoBehaviour, IDualListener
 {
+    [Header("Main")]
     public UserManager userManager;
-
     public DualNetworkManager dnm;
 
+    [Header("Turtles")]
+    public Turtle offlineTurtleModel;
+    public Turtle onlineTurtleModel;
+
+    [Header("Panels")]
     public PanelManager panels;
     public Panel mainMenuPanel;
     public Panel connectingPanel;
@@ -26,19 +31,19 @@ public class GameManager : MonoBehaviour, IDualListener
     
     DualServer CreateServer(Mode mode)
     {
-        gameServer = new TurtleServer(mode);
+        gameServer = new TurtleServer(mode, offlineTurtleModel, onlineTurtleModel);
         return gameServer;
     }
 
     DualClient CreateHostedClient(Mode mode, DualServer server)
     {
-        gameClient = new TurtleClient(mode, server);
+        gameClient = new TurtleClient(mode, OnGameStarted, server);
         return gameClient;
     }
 
     DualClient CreateRemoteClient()
     {
-        gameClient = new TurtleClient(Mode.OnlineMode);
+        gameClient = new TurtleClient(OnGameStarted, onlineTurtleModel);
         return gameClient;
     }
 
@@ -144,7 +149,7 @@ public class GameManager : MonoBehaviour, IDualListener
     }
 
 
-    public void OnClientGameStarted()
+    void OnGameStarted()
     {
         lobbyPanel.SetPlaying(true);
     }

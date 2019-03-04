@@ -1,17 +1,19 @@
 ﻿using System.Collections.Generic;
 
+using UnityEngine.Networking.NetworkSystem;
+
 using Julo.Logging;
 using Julo.Network;
 
 namespace Julo.Game
 {
-    public class GameClient : DualClient
+    public abstract class GameClient : DualClient
     {
         public new static GameClient instance = null;
 
-        GameState gameState;
-        int numRoles;
-        string sceneName;
+        protected GameState gameState;
+        protected int numRoles;
+        protected string sceneName;
 
         // only remote client
         Dictionary<uint, GamePlayerMessage> pendingPlayers = new Dictionary<uint, GamePlayerMessage>();
@@ -112,16 +114,41 @@ namespace Julo.Game
         }
         
         // //////////////////////
+        
+        void OnPrepareToStartMessage(MessageStackMessage messageStack)
+        {
+            var prepareMessage = messageStack.ReadMessage<PrepareToStartMessage>();
+
+            numRoles = prepareMessage.numRoles;
+            sceneName = prepareMessage.sceneName;
+
+            if(isHosted)
+            {
+                SendToServer(MsgType.ReadyToStart, new EmptyMessage());
+                return;
+            }
+
+            DualNetworkManager.instance.LoadSceneAsync(sceneName, () =>
+            {
+                OnPrepareToStart(messageStack);
+                SendToServer(MsgType.ReadyToStart, new EmptyMessage());
+            });
+        }
+
+        // //////////////////////
+
+        protected abstract void OnPrepareToStart(MessageStackMessage messageStack);
+        protected abstract void OnGameStarted();
 
         protected override void OnMessage(WrappedMessage message)
         {
             switch(message.messageType)
             {
                 case MsgType.ChangeReady:
-                    var msg = message.ReadInternalMessage<ChangeReadyMessage>();
+                    var changeReadyMessage = message.ReadInternalMessage<ChangeReadyMessage>();
 
-                    var connectionId = msg.connectionId;
-                    var newReady = msg.newReady;
+                    var connectionId = changeReadyMessage.connectionId;
+                    var newReady = changeReadyMessage.newReady;
 
                     var players = connections.GetConnection(connectionId).players;
 
@@ -145,6 +172,36 @@ namespace Julo.Game
                     }
 
                     break;
+
+                case MsgType.GameWillStart:
+
+                    var remainingSecsMessage = message.ReadInternalMessage<IntegerMessage>();
+                    var secs = remainingSecsMessage.value;
+
+                    Log.Debug("Game will start in {0} secs...", secs);
+
+                    gameState = GameState.WillStart;
+
+                    break;
+
+                case MsgType.GameCanceled:
+                    gameState = GameState.NoGame;
+                    Log.Debug("Game canceled");
+                    break;
+
+                case MsgType.PrepareToStart:
+                    gameState = GameState.Preparing;
+
+                    var messageStack = message.ReadInternalMessage<MessageStackMessage>();
+
+                    OnPrepareToStartMessage(messageStack);
+
+                    break;
+
+                case MsgType.StartGame:
+                    OnGameStarted();
+                    break;
+
                 /*
                 case MsgType.StartGame:
 

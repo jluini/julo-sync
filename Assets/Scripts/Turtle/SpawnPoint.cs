@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Turtle
+namespace TurtleGame
 {
 
     public class SpawnPoint : MonoBehaviour

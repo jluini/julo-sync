@@ -4,18 +4,18 @@ using UnityEngine.Networking;
 
 using Julo.Logging;
 
-namespace Turtle
+namespace TurtleGame
 {
     
-    public class GameState : MessageBase
+    public class TurtleGameState : MessageBase
     {
         public List<TurtleState> units;
 
-        public GameState()
+        public TurtleGameState()
         {
         }
 
-        public GameState(List<Turtle> turtles)
+        public TurtleGameState(List<Turtle> turtles)
         {
             units = new List<TurtleState>();
 

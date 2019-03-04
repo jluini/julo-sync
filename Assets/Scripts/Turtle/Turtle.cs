@@ -4,7 +4,7 @@ using UnityEngine;
 
 using Julo.Logging;
 
-namespace Turtle
+namespace TurtleGame
 {
     public class Turtle : MonoBehaviour
     {

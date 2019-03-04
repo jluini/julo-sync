@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Turtle
+namespace TurtleGame
 {
     public class TurtleState : MessageBase
     {

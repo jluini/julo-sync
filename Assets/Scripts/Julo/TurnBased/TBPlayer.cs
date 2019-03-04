@@ -33,6 +33,25 @@ namespace Julo.TurnBased
             }
         }
 
+        GamePlayer _gamePlayer;
+        GamePlayer gamePlayer
+        {
+            get
+            {
+                if(_gamePlayer == null)
+                {
+                    _gamePlayer = GetComponent<GamePlayer>();
+
+                    if(_gamePlayer == null)
+                    {
+                        Log.Error("Component GamePlayer not found!");
+                    }
+                }
+
+                return _gamePlayer;
+            }
+        }
+
         public uint PlayerId()
         {
             return dualPlayer.PlayerId();
@@ -41,6 +60,11 @@ namespace Julo.TurnBased
         public bool IsLocal()
         {
             return dualPlayer.IsLocal();
+        }
+
+        public int GetRole()
+        {
+            return gamePlayer.role;
         }
 
         public void AddListener(ITurnBasedPlayerListener listener)
