@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 
-using UnityEngine;
-
 namespace Julo.Logging
 {
     public class Info

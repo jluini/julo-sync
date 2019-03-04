@@ -28,7 +28,7 @@ namespace Julo.Logging
             messageList.AddMessage(new DebugMessage(message, this));
             if(showInConsole)
             {
-                UnityEngine.Debug.Log(message);
+                UnityEngine.Debug.Log(Utils.Escaped(message));
             }
         }
         public void Info(string messageBody, params object[] args)
@@ -38,7 +38,7 @@ namespace Julo.Logging
             messageList.AddMessage(new InfoMessage(message, this));
             if(showInConsole)
             {
-                UnityEngine.Debug.Log(message);
+                UnityEngine.Debug.Log(Utils.Escaped(message));
             }
         }
         public void Warn(string messageBody, params object[] args)
@@ -48,7 +48,7 @@ namespace Julo.Logging
             messageList.AddMessage(new WarningMessage(message, this));
             if(showInConsole)
             {
-                UnityEngine.Debug.LogWarning(message);
+                UnityEngine.Debug.LogWarning(Utils.Escaped(message));
             }
         }
         public void Error(string messageBody, params object[] args)
@@ -58,7 +58,7 @@ namespace Julo.Logging
             messageList.AddMessage(new ErrorMessage(message, this));
             if(showInConsole)
             {
-                UnityEngine.Debug.LogError(message);
+                UnityEngine.Debug.LogError(Utils.Escaped(message));
             }
         }
 

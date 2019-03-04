@@ -59,21 +59,8 @@ namespace Julo.Logging
             builder.Append(">");
             //AppendEscaped(builder, name);
             //builder.Append("</b> says> ");
-            AppendEscaped(builder, text);
+            Utils.AppendEscaped(builder, text);
             builder.Append("</color>");
-        }
-
-        static void AppendEscaped(StringBuilder builder, string original)
-        {
-            for(int i = 0; i < original.Length; i++)
-            {
-                if(original[i] == '<')
-                    builder.Append("&lt;");
-                else if(original[i] == '>')
-                    builder.Append("&gt;");
-                else
-                    builder.Append(original[i]);
-            }
         }
 
         IEnumerator ScrollToBottomDelayed()
