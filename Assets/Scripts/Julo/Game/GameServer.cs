@@ -57,7 +57,7 @@ namespace Julo.Game
 
             int role = gameState == GameState.NoGame ? GetNextRole() : DNM.SpecRole;
             bool ready = mode == Mode.OfflineMode;
-            string username = "Jorge"; // TODO
+            string username = System.String.Format("Player {0}", player.PlayerId()); // TODO
 
             gamePlayer.Init(role, ready, username);
         }
