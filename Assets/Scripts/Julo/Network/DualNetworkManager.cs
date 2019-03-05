@@ -578,7 +578,7 @@ namespace Julo.Network
             }
 
             state = newState;
-            Info.Set("DNMState", state.ToString());
+            
             foreach(var l in listeners)
             {
                 l.OnStateChanged(state);
