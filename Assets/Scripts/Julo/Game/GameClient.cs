@@ -54,7 +54,6 @@ namespace Julo.Game
 
                     break;
             }
-            
         }
 
         public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage messageStack)
@@ -184,6 +183,19 @@ namespace Julo.Game
 
                     break;
 
+                case MsgType.ChangeUsername:
+
+                    if(!isHosted)
+                    {
+                        var usernameMsg = message.ReadInternalMessage<ChangeUsernameMessage>();
+                        var playerId = usernameMsg.playerId;
+                        var newName = usernameMsg.newName;
+
+                        connections.GetPlayerAs<GamePlayer>(playerId).SetUsername(newName);
+                    }
+
+                    break;
+
                 case MsgType.GameWillStart:
 
                     var remainingSecsMessage = message.ReadInternalMessage<IntegerMessage>();
@@ -210,6 +222,8 @@ namespace Julo.Game
                     break;
 
                 case MsgType.StartGame:
+                    Log.Debug("Game started!");
+
                     OnGameStarted();
                     break;
 
@@ -244,6 +258,31 @@ namespace Julo.Game
             throw new System.Exception(errorMessage);
         }
 
+        /// 
+        
+        public bool ChangeName(GamePlayer gamePlayer, string newName)
+        {
+            if(!gamePlayer.IsLocal())
+            {
+                Log.Error("Unexpected call of OnNameEntered");
+                return false;
+            }
+
+            // TODO validate name
+
+            newName = newName.Trim();
+
+            if(newName.Length == 0)
+            {
+                Log.Error("Invalid name");
+                return false;
+            }
+
+            SendToServer(MsgType.ChangeUsername, new ChangeUsernameMessage(gamePlayer.PlayerId(), newName));
+
+            return true;
+        }
+        
         /// 
 
         void SetState(GameState newState)

@@ -369,6 +369,29 @@ namespace Julo.Game
         {
             switch(message.messageType)
             {
+                case MsgType.ChangeUsername:
+
+                    var usernameMsg = message.ReadInternalMessage<ChangeUsernameMessage>();
+
+                    // TODO validate name
+
+                    var playerId = usernameMsg.playerId;
+                    var newName = usernameMsg.newName;
+
+                    var player = connections.GetPlayerAs<GamePlayer>(playerId);
+
+                    if(player == null)
+                    {
+                        Log.Error("Player to change name not found");
+                        return;
+                    }
+
+                    player.SetUsername(newName);
+
+                    SendToAll(MsgType.ChangeUsername, usernameMsg);
+
+                    break;
+
                 case MsgType.ChangeReady:
 
                     var changeReadyMsg = message.ReadInternalMessage<ChangeReadyMessage>();

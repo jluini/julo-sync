@@ -53,6 +53,35 @@ namespace Julo.Game
 
     } // class ChangeRoleMessage
 
+    public class ChangeUsernameMessage : MessageBase
+    {
+        public uint playerId;
+        public string newName;
+
+        public ChangeUsernameMessage()
+        {
+        }
+
+        public ChangeUsernameMessage(uint playerId, string newName)
+        {
+            this.playerId = playerId;
+            this.newName = newName;
+        }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(playerId);
+            writer.Write(newName);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            playerId = reader.ReadUInt32();
+            newName = reader.ReadString();
+        }
+
+    } // class ChangeUsernameMessage
+
     public class ChangeReadyMessage : MessageBase
     {
         public int connectionId;
