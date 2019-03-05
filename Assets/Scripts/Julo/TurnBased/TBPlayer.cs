@@ -52,16 +52,6 @@ namespace Julo.TurnBased
             }
         }
 
-        public uint PlayerId()
-        {
-            return dualPlayer.PlayerId();
-        }
-
-        public bool IsLocal()
-        {
-            return dualPlayer.IsLocal();
-        }
-
         public int GetRole()
         {
             return gamePlayer.role;
@@ -78,6 +68,26 @@ namespace Julo.TurnBased
             {
                 l.SetPlaying(isPlaying);
             }
+        }
+
+        public uint PlayerId()
+        {
+            return dualPlayer.PlayerId();
+        }
+
+        public int ConnectionId()
+        {
+            return dualPlayer.ConnectionId();
+        }
+
+        public short ControllerId()
+        {
+            return dualPlayer.ControllerId();
+        }
+
+        public bool IsLocal()
+        {
+            return dualPlayer.IsLocal();
         }
 
     } // class TBPlayer

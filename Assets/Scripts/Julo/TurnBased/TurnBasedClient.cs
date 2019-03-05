@@ -20,7 +20,6 @@ namespace Julo.TurnBased
 
         protected override void OnLateJoin(MessageStackMessage messageStack)
         {
-            
             if(gameState == GameState.Playing)
             {
                 var currentPlayerMessage = messageStack.ReadMessage<PlayerMessage>();
@@ -48,9 +47,9 @@ namespace Julo.TurnBased
             // noop
         }
 
-        public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
+        protected override void OnPlayerResolved(OnlineDualPlayer player, DualPlayerMessage playerScreenshot)
         {
-            base.ResolvePlayer(player, dualPlayerData);
+            base.OnPlayerResolved(player, playerScreenshot);
 
             // noop
         }
@@ -75,7 +74,7 @@ namespace Julo.TurnBased
                         Log.Error("Unexpected StartTurn message with playerId=0");
                         return;
                     }
-
+                    /*
                     var player = connections.GetPlayerIfAny(playerId);
 
                     if(player == null)
@@ -83,8 +82,11 @@ namespace Julo.TurnBased
                         Log.Error("Playing player not found id={0}", playerId);
                         return;
                     }
+                    */
 
-                    IsMyTurn(connections.GetPlayerAs<TBPlayer>(player));
+                    // TODO cache the TBPlayers!!!
+
+                    IsMyTurn(connections.GetPlayerAs<TBPlayer>(playerId));
 
                     break;
 

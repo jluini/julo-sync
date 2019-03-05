@@ -2,14 +2,10 @@
 
 namespace Julo.Network
 {
-    // TODO unificate with IPlayer?
+    // Unificates OfflineDualPlayer / OnlineDualPlayer
 
     public interface IDualPlayer : IPlayer
     {
-        
-        int ConnectionId();
-        short ControllerId();
-
         void AddListener(IDualPlayerListener listener);
     }
 

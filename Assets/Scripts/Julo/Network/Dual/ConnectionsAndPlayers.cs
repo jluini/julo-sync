@@ -9,154 +9,135 @@ namespace Julo.Network
     // TODO change name
     public class ConnectionsAndPlayers
     {
-        Dictionary<int, ConnectionData> connectionData;
+        Dictionary<int, ConnectionInfo> connections;
+        Dictionary<uint, PlayerInfo> players;
+        public int localConnectionNumber;
+
         bool isServer;
 
-        public ConnectionsAndPlayers(bool isServer)
+        public ConnectionsAndPlayers(bool isServer, int localConnectionNumber)
         {
             this.isServer = isServer;
+            this.localConnectionNumber = localConnectionNumber;
 
-            connectionData = new Dictionary<int, ConnectionData>();
+            if(isServer != (localConnectionNumber == 0))
+            {
+                Log.Error("Unmatching isServer={0}, localConn={1}", isServer, localConnectionNumber);
+            }
+
+            connections = new Dictionary<int, ConnectionInfo>();
+            players = new Dictionary<uint, PlayerInfo>();
         }
+
+        // ///////// Connections
 
         public bool HasConnection(int connectionId)
         {
-            return connectionData.ContainsKey(connectionId);
+            return connections.ContainsKey(connectionId);
         }
 
-        public ConnectionData GetConnection(int connectionId)
+        public void AddConnection(ConnectionInfo connection)
         {
-            return connectionData[connectionId];
-        }
-
-        // TODO return Values list instead of dict?
-        public Dictionary<int, ConnectionData> AllConnections()
-        {
-            return connectionData;
-        }
-
-        public List<PlayerData> AllPlayersData()
-        {
-            var ret = new List<PlayerData>();
-            foreach(var conn in connectionData.Values)
+            connections.Add(connection.connectionId, connection);
+            if(connection.players.Count > 0)
             {
-                foreach(var p in conn.players)
-                {
-                    ret.Add(p);
-                }
+                Log.Error("Connection added with players");
             }
-
-            return ret;
         }
 
-        public List<IDualPlayer> AllPlayers()
+        public ConnectionInfo GetConnection(int connectionId)
         {
-            var ret = new List<IDualPlayer>();
-
-            foreach(var p in AllPlayersData())
-            {
-                ret.Add(p.actualPlayer);
-            }
-
-            return ret;
+            return connections[connectionId];
         }
 
-        public List<T> AllPlayers<T>() where T : MonoBehaviour
+        public IEnumerable<ConnectionInfo> AllConnections()
         {
-            var ret = new List<T>();
-
-            foreach(var p in AllPlayers())
-            {
-                ret.Add(GetPlayerAs<T>(p));
-            }
-
-            return ret;
+            return connections.Values;
         }
 
         public void RemoveConnection(int id)
         {
-            foreach(var p in connectionData[id].players)
+            if(!connections.ContainsKey(id))
             {
-                // TODO remove player?
-            }
-
-            connectionData.Remove(id);
-        }
-
-        public void AddConnectionInServer(int id, ConnectionToClient connection)
-        {
-            if(connectionData.ContainsKey(id))
-            {
-                Log.Error("Already have a connection with id={0}", id);
+                Log.Error("No connection with id={0}", id);
                 return;
             }
 
-            connectionData.Add(id, new ConnectionData(id, connection));
-        }
+            var connectionInfo = connections[id];
 
-        public void AddConnectionInClient(int id)
-        {
-            connectionData.Add(id, new ConnectionData(id));
-        }
-
-        public bool HasAnyPlayer(uint playerId)
-        {
-            foreach(var p in AllPlayers())
+            foreach(var p in connectionInfo.players)
             {
-                if(p.PlayerId() == playerId)
+                // TODO remove players?
+                var playerId = p.PlayerId();
+                if(!players.ContainsKey(playerId))
                 {
-                    return true;
+                    Log.Error("Player not found here");
+                }
+                else
+                {
+                    // TODO do something with actual player?
+                    players.Remove(playerId);
                 }
             }
-            return false;
+
+            connections.Remove(id);
         }
 
-        public void AddPlayer(int connectionId, IDualPlayer player, DualPlayerMessage playerData)
-        {
-            if(!HasConnection(connectionId))
-            {
-                AddConnectionInClient(connectionId);
-            }
-            GetConnection(connectionId).AddPlayer(player, playerData);
-        }
+        // ///////// Players
 
-        public PlayerData GetPlayerIfAny(uint playerId)
+        public IEnumerable<PlayerInfo> AllPlayers()
         {
-            foreach(var conn in connectionData.Values)
+            return players.Values;
+        }
+        
+        public PlayerInfo GetPlayerInfo(uint playerId)
+        {
+            if(players.ContainsKey(playerId))
             {
-                foreach(var p in conn.players)
-                {
-                    if(p.playerData.playerId == playerId)
-                    {
-                        return p;
-                    }
-                }
+                return players[playerId];
             }
-            
+
+            Log.Warn("PlayerInfo not found");
+
             return null;
         }
 
-        public T GetPlayerAs<T>(uint playerId) where T : MonoBehaviour
+        public IDualPlayer GetPlayer(uint playerId)
         {
-            var dualPlayerData = GetPlayerIfAny(playerId);
-
-            if(dualPlayerData == null)
-            {
-                Log.Error("Player {0} not found", playerId);
-                return default(T);
-            }
-
-            return GetPlayerAs<T>(dualPlayerData);
+            return GetPlayerInfo(playerId)?.actualPlayer;
         }
 
-        public T GetPlayerAs<T>(PlayerData playerData) where T : MonoBehaviour
+        // player can be null
+        public void AddPlayer(int connectionId, PlayerInfo playerInfo/*IDualPlayer player, DualPlayerMessage playerScreenshot*/)
         {
+            if(!HasConnection(connectionId))
+            {
+                AddConnection(new ConnectionInfo(connectionId));
+            }
+            //GetConnection(connectionId).AddPlayer(player, playerScreenshot);
 
-            var dualPlayer = playerData.actualPlayer;
+            GetConnection(connectionId).AddPlayer(playerInfo);
+
+            var playerId = playerInfo.PlayerId();
+
+            players.Add(playerId, playerInfo);
+        }
+
+        // TODO don't use every frame; cache in higher leves instead
+        public T GetPlayerAs<T>(uint playerId) where T : MonoBehaviour
+        {
+            var playerInfo = GetPlayer(playerId);
+
+            return playerInfo == null ? null : GetPlayerAs<T>(playerInfo);
+        }
+
+        public T GetPlayerAs<T>(PlayerInfo playerInfo) where T : MonoBehaviour
+        {
+            var dualPlayer = playerInfo.actualPlayer;
             if(dualPlayer == null)
             {
                 Log.Error("Player not registered");
-                return default(T);
+                return default;
             }
 
             return GetPlayerAs<T>(dualPlayer);
@@ -177,67 +158,8 @@ namespace Julo.Network
             return player;
         }
 
+        // TODO need RemovePlayer
+
     } // class ConnectionsAndPlayers
-
-    public class ConnectionData
-    {
-        public int connectionId;
-        public List<PlayerData> players;
-        
-        // if hosted
-        public ConnectionToClient connectionToClient;
-
-        // in server
-        public ConnectionData(int connectionId, ConnectionToClient connection)
-        {
-            this.connectionId = connectionId;
-            connectionToClient = connection;
-
-            this.players = new List<PlayerData>();
-        }
-
-        // in remote client
-        public ConnectionData(int connectionId)
-        {
-            this.connectionId = connectionId;
-            connectionToClient = null;
-            this.players = new List<PlayerData>();
-        }
-
-        // in server
-        public void AddPlayer(IDualPlayer player)
-        {
-            players.Add(new PlayerData(player));
-        }
-
-        /// <summary>
-        ///     In client.
-        ///     actualPlayer could be null if not started yet
-        /// </summary>
-        public void AddPlayer(IDualPlayer actualPlayer, DualPlayerMessage dualPlayerData)
-        {
-            players.Add(new PlayerData(actualPlayer, dualPlayerData));
-        }
-    }
     
-    public class PlayerData
-    {
-        public IDualPlayer actualPlayer;
-        public DualPlayerMessage playerData;
-
-        // in server
-        public PlayerData(IDualPlayer player)
-        {
-            this.actualPlayer = player;
-            playerData = new DualPlayerMessage(player);
-        }
-
-        // in client
-        public PlayerData(IDualPlayer actualPlayer, DualPlayerMessage playerData)
-        {
-            this.actualPlayer = actualPlayer;
-            this.playerData = playerData;
-        }
-    }
-
 } // namespace Julo.Network

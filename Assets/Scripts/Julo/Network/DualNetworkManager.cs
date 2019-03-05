@@ -85,14 +85,14 @@ namespace Julo.Network
 
         Dictionary<NetworkConnection, bool> acceptedConnections = new Dictionary<NetworkConnection, bool>();
 
-        ConnectionToClient serverToLocalClientConnection = null;
+        NetworkConnection serverToLocalClientConnection = null;
 
         ////////////////////////////////////////////////////////////
 
         // only offline mode
 
         int lastOfflineIdUsed = 0;
-
+        
         ////////////////////////////////////////////////////////////
 
         List<IDualListener> listeners = new List<IDualListener>();
@@ -150,8 +150,8 @@ namespace Julo.Network
             
             dualClient = hostedClientDelegate(Mode.OfflineMode, dualServer);
 
-            serverToLocalClientConnection = new ConnectionToClient(null);
-            dualServer.AddLocalClient(dualClient, serverToLocalClientConnection);
+            serverToLocalClientConnection = null;
+            dualServer.AddLocalClient(dualClient, null);
 
             AddOfflinePlayer(0);
             if(sceneToggle.isOn) // TODO remove this!!!
@@ -285,7 +285,7 @@ namespace Julo.Network
                 {
                     // this is just the local connection when starting as host
 
-                    serverToLocalClientConnection = new ConnectionToClient(conn);
+                    serverToLocalClientConnection = conn;
                 }
                 else
                 {
@@ -372,6 +372,7 @@ namespace Julo.Network
 
             // spawned to get player.netId set
             NetworkServer.AddPlayerForConnection(conn, player.gameObject, playerControllerId);
+
             var netId = player.netId.Value;
             if(netId == 0)
             {
@@ -499,7 +500,40 @@ namespace Julo.Network
             }
         }
 
-        // TODO move
+        public void AddPlayerCommand()
+        {
+            AddPlayerCommand(NextControllerId());
+        }
+
+        short NextControllerId()
+        {
+            short ret = 0;
+
+            while(true)
+            {
+                if(!LocalPlayerWithControllerId(ret))
+                {
+                    return ret;
+                }
+                else
+                {
+                    ret++;
+                }
+            }
+        }
+
+        bool LocalPlayerWithControllerId(short controllerId)
+        {
+            foreach(var p in ClientScene.localPlayers)
+            {
+                if(p.playerControllerId == controllerId)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public void AddPlayerCommand(short playerControllerId)
         {
             var extraMessage = new StringMessage("Carlitos2"); // TODO ask player request data to client to send as extra message
@@ -628,7 +662,7 @@ namespace Julo.Network
             }
             acceptedConnections.Remove(conn);
 
-            dualServer.AddRemoteClient(new ConnectionToClient(messageReader.conn));
+            dualServer.AddRemoteClient(messageReader.conn);
 
             SendStatusToRemoteClient(conn);
         }
@@ -636,6 +670,7 @@ namespace Julo.Network
         void SendStatusToRemoteClient(NetworkConnection conn)
         {
             var initialMessages = new List<MessageBase>();
+            initialMessages.Add(new IntegerMessage(conn.connectionId));
             dualServer.WriteRemoteClientData(initialMessages);
 
             conn.Send(MsgType.InitialState, new MessageStackMessage(initialMessages));
@@ -665,7 +700,7 @@ namespace Julo.Network
             }
 
             // creates non-hosted client
-            dualClient = remoteClientDelegate();
+            //dualClient = remoteClientDelegate();
 
             var username = "Carlitos"; // TODO
 
@@ -683,9 +718,16 @@ namespace Julo.Network
 
             SetState(DNMState.Client);
 
+
             var msg = messageReader.ReadMessage<MessageStackMessage>();
 
-            dualClient.InitializeState(msg);
+            var connectionNumberMsg = msg.ReadMessage<IntegerMessage>();
+            var connectionNumber = connectionNumberMsg.value;
+
+            // creates non-hosted client
+            dualClient = remoteClientDelegate();
+
+            dualClient.InitializeState(connectionNumber, msg);
 
             AddInitialPlayer();
         }
@@ -754,11 +796,11 @@ namespace Julo.Network
         {
             CheckState(DNMState.Host);
             
-            foreach(var c in dualServer.connections.AllConnections().Values) // TODO encapsulamiento
+            foreach(var c in dualServer.connections.AllConnections()) // TODO encapsulamiento...
             {
                 int id = c.connectionId;
 
-                if(id != who && c.connectionToClient.networkConnection.isReady) // TODO necessary, right?
+                if(id != who && c.networkConnection.isReady) // TODO necessary, right?
                 {
                     NetworkServer.SendToClient(id, MsgType.GameServerToClient, new WrappedMessage(msgType, gameMessage));
                 }

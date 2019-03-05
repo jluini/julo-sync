@@ -96,11 +96,11 @@ namespace SyncGame
             // TODO ...
         }
 
-        public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
+        protected override void OnPlayerResolved(OnlineDualPlayer player, DualPlayerMessage playerScreenshot)
         {
-            base.ResolvePlayer(player, dualPlayerData);
+            base.OnPlayerResolved(player, playerScreenshot);
 
-            // TODO ...
+            // noop
         }
 
         protected override void OnPrepareToStart(MessageStackMessage messageStack)

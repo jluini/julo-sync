@@ -27,9 +27,9 @@ namespace Julo.Game
             this.sceneName = "";
         }
 
-        public sealed override void InitializeState(MessageStackMessage messageStack)
+        public sealed override void InitializeState(int connectionNumber, MessageStackMessage messageStack)
         {
-            base.InitializeState(messageStack);
+            base.InitializeState(connectionNumber, messageStack);
 
             var message = messageStack.ReadMessage<GameStatusMessage>();
 
@@ -65,11 +65,11 @@ namespace Julo.Game
             pendingPlayers.Add(dualPlayerData.playerId, gamePlayerData);
         }
 
-        public override void ResolvePlayer(OnlineDualPlayer player, DualPlayerMessage dualPlayerData)
+        protected override void OnPlayerResolved(OnlineDualPlayer player, DualPlayerMessage playerScreenshot)
         {
-            base.ResolvePlayer(player, dualPlayerData);
+            base.OnPlayerResolved(player, playerScreenshot);
 
-            var netId = dualPlayerData.playerId;
+            var netId = playerScreenshot.PlayerId();
 
             if(player.PlayerId() != netId)
             {
@@ -108,7 +108,7 @@ namespace Julo.Game
         
         public void OnReadyChanged(bool newReady)
         {
-            SendToServer(MsgType.ChangeReady, new ChangeReadyMessage(-5, newReady));
+            SendToServer(MsgType.ChangeReady, new ChangeReadyMessage(connections.localConnectionNumber, newReady));
         }
         
         // //////////////////////
@@ -140,9 +140,10 @@ namespace Julo.Game
 
         protected virtual void OnGameStarted()
         {
-            // TODO cache GamePlayers...
-            foreach(var gamePlayer in connections.AllPlayers<GamePlayer>())
+            // TODO cache GamePlayers!!!
+            foreach(var playerInfo in connections.AllPlayers())
             {
+                var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
                 gamePlayer.GameStarted();
             }
         }
@@ -155,17 +156,21 @@ namespace Julo.Game
             switch(message.messageType)
             {
                 case MsgType.ChangeReady:
-                    var changeReadyMessage = message.ReadInternalMessage<ChangeReadyMessage>();
-
-                    var connectionId = changeReadyMessage.connectionId;
-                    var newReady = changeReadyMessage.newReady;
-
-                    var players = connections.GetConnection(connectionId).players;
-
-                    foreach(var playerData in players)
+                    if(!isHosted)
                     {
-                        var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerData.playerData.playerId);
-                        gamePlayer.SetReady(newReady);
+                        var changeReadyMessage = message.ReadInternalMessage<ChangeReadyMessage>();
+
+                        var connectionId = changeReadyMessage.connectionId;
+                        var newReady = changeReadyMessage.newReady;
+
+                        var players = connections.GetConnection(connectionId).players;
+
+                        foreach(var playerInfo in players)
+                        {
+                            // TODO cache game players!!!
+                            var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
+                            gamePlayer.SetReady(newReady);
+                        }
                     }
 
                     break;

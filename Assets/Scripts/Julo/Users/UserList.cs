@@ -2,8 +2,10 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
 using Julo.Logging;
+using Julo.Network;
 
 namespace Julo.Users
 {
@@ -67,7 +69,9 @@ namespace Julo.Users
         
         public void OnAddNewUserClicked()
         {
-            Log.Debug("OnAddNewUserClicked: adding user");
+            DualNetworkManager.instance.AddPlayerCommand();
+
+            //Log.Debug("OnAddNewUserClicked: adding user");
 
             AddNewUser();
         }

@@ -140,7 +140,9 @@ namespace Julo.Network
 
     ////////////
 
-    public class DualPlayerMessage : MessageBase
+    // TODO rename to DualPlayerScreenshot
+    // implement IDualPlayer?
+    public class DualPlayerMessage : MessageBase, IDualPlayer
     {
         public uint playerId;
         public int connectionId;
@@ -170,7 +172,32 @@ namespace Julo.Network
             connectionId = reader.ReadInt32();
             controllerId = reader.ReadInt16();
         }
-        
+
+        public uint PlayerId()
+        {
+            return playerId;
+        }
+
+        public int ConnectionId()
+        {
+            return controllerId;
+        }
+
+        public short ControllerId()
+        {
+            return controllerId;
+        }
+
+        public bool IsLocal()
+        {
+            throw new System.Exception();
+        }
+
+        public void AddListener(IDualPlayerListener listener)
+        {
+            throw new System.Exception();
+        }
+
     } // class DualPlayerMessage
 
 } // namespace Julo.Network

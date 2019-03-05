@@ -184,12 +184,13 @@ namespace Julo.Game
 
             var players = connections.GetConnection(connectionId).players;
 
-            foreach(var playerData in players)
+            foreach(var playerInfo in players)
             {
-                var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerData.playerData.playerId);
-                //gamePlayer.SetReady(newReady);
+                var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
+                gamePlayer.SetReady(newReady);
             }
 
+            // TODO send to remote
             SendToAll(MsgType.ChangeReady, new ChangeReadyMessage(connectionId, newReady));
         }
 
@@ -257,11 +258,12 @@ namespace Julo.Game
 
             int ret = 0;
 
-            foreach(var c in connections.AllConnections().Values)
+            foreach(var c in connections.AllConnections())
             {
-                foreach(var player in c.players)
+                foreach(var playerInfo in c.players)
                 {
-                    var playerId = player.playerData.playerId;
+                    var playerId = playerInfo.PlayerId();
+                    // TODO cache GamePlayers !!!
                     var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerId);
 
                     if(gamePlayer.role == role)
@@ -282,7 +284,7 @@ namespace Julo.Game
 
             clientsAreReadyToStart = new Dictionary<int, bool>();
 
-            foreach(var c in connections.AllConnections().Values)
+            foreach(var c in connections.AllConnections())
             {
                 clientsAreReadyToStart[c.connectionId] = false;
 
@@ -326,9 +328,12 @@ namespace Julo.Game
 
         bool PlayersAreReady()
         {
-            foreach(var p in connections.AllPlayers<GamePlayer>())
+            // TODO cache GamePlayers !!!
+            foreach(var playerInfo in connections.AllPlayers())
             {
-                if(!p.IsSpectator() && !p.isReady)
+                var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
+
+                if(!gamePlayer.IsSpectator() && !gamePlayer.isReady)
                 {
                     return false;
                 }
@@ -396,6 +401,11 @@ namespace Julo.Game
 
                     var changeReadyMsg = message.ReadInternalMessage<ChangeReadyMessage>();
                     var newReady = changeReadyMsg.newReady;
+
+                    if(changeReadyMsg.connectionId != from)
+                    {
+                        Log.Warn("Unmatching connection here {0}!={1}", changeReadyMsg.connectionId, from);
+                    }
 
                     ChangeReady(from, newReady);
 

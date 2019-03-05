@@ -4,7 +4,7 @@ using UnityEngine.Networking;
 
 namespace Julo.Network
 {
-
+    /*
     public class ConnectionToClient
     {
 
@@ -36,4 +36,6 @@ namespace Julo.Network
         }
 
     } // class ConnectionToClient
+    */
+
 } // namespace Julo.Network

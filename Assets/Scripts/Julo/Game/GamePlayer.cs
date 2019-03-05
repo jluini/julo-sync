@@ -36,16 +36,6 @@ namespace Julo.Game
             }
         }
 
-        public uint PlayerId()
-        {
-            return dualPlayer.PlayerId();
-        }
-
-        public bool IsLocal()
-        {
-            return dualPlayer.IsLocal();
-        }
-
         public void OnClickChangeRole()
         {
             if(GameServer.instance != null)
@@ -116,6 +106,27 @@ namespace Julo.Game
         public void AddListener(IGamePlayerListener listener)
         {
             listeners.Add(listener);
+        }
+
+
+        public uint PlayerId()
+        {
+            return dualPlayer.PlayerId();
+        }
+
+        public bool IsLocal()
+        {
+            return dualPlayer.IsLocal();
+        }
+
+        public int ConnectionId()
+        {
+            return dualPlayer.ConnectionId();
+        }
+
+        public short ControllerId()
+        {
+            return dualPlayer.ControllerId();
         }
 
     } // class GamePlayer

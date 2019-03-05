@@ -3,10 +3,15 @@
     // TODO unificate with IDualPlayer?
     public interface IPlayer
     {
+
         uint PlayerId();
+
+        int ConnectionId();
+
+        short ControllerId();
 
         bool IsLocal();
 
-    } // interface Player
+    } // interface IPlayer
 
 } // namespace Julo.Network

@@ -150,6 +150,8 @@ namespace SyncGame
 
         void UpdateInputs()
         {
+            var playerId = dualPlayer.PlayerId();
+
             roleButton.interactable = isHosted && gameState == GameState.NoGame;
             nameInput.interactable = isLocal && gameState == GameState.NoGame;
         }
