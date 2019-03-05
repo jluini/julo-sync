@@ -58,7 +58,7 @@ namespace Julo.Game
             }
         }
 
-        public void Init(int newRole, bool isReady, string username)
+        public void Init(GameState gameState, int newRole, bool isReady, string username)
         {
             this.role = newRole;
             this.isReady = isReady;
@@ -66,7 +66,7 @@ namespace Julo.Game
 
             foreach(var l in listeners)
             {
-                l.InitGamePlayer(role, isReady, username);
+                l.InitGamePlayer(gameState, role, isReady, username);
             }
         }
 
@@ -101,6 +101,14 @@ namespace Julo.Game
         public bool IsSpectator()
         {
             return role == DNM.SpecRole;
+        }
+
+        public void GameStarted()
+        {
+            foreach(var l in listeners)
+            {
+                l.OnGameStarted();
+            }
         }
 
         //  ///////////////////

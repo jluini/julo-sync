@@ -42,8 +42,6 @@ namespace Julo.Network
             }
         }
 
-        public LevelData levelData;
-
         public enum GameState
         {
 
@@ -445,7 +443,7 @@ namespace Julo.Network
                 // it was host and was stopped
                 // it will be stopped OnStopHost
             }
-            else if(state == DNMState.WaitingAcceptanceAsClient)
+            else if(state == DNMState.StartingAsClient || state == DNMState.WaitingAcceptanceAsClient)
             {
                 // it was trying to connect as client and failed
                 SetState(DNMState.Off);
@@ -457,7 +455,9 @@ namespace Julo.Network
             }
             else
             {
-                Log.Warn("    with state {0}", state);
+                //Log.Warn("    with state {0}", state);
+                Log.Warn("Unexpected call of OnStopClient: state {0}", state);
+                SetState(DNMState.Off);
             }
         }
 

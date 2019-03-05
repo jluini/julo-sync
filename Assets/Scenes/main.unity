@@ -475,7 +475,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -7.5000153, y: -0.5}
+  m_AnchoredPosition: {x: -7.5, y: -0.5}
   m_SizeDelta: {x: -35, y: -13}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &63679309
@@ -5638,8 +5638,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   userManager: {fileID: 2087382075}
   dnm: {fileID: 2101215941}
-  offlineTurtleModel: {fileID: 90, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
-  onlineTurtleModel: {fileID: 90, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
+  unitModel: {fileID: 90, guid: 0504edf429139ef4eb80ce84985e32a1, type: 3}
   panels: {fileID: 1808581277}
   mainMenuPanel: {fileID: 1709616375}
   connectingPanel: {fileID: 955805273}
@@ -8627,9 +8626,6 @@ MonoBehaviour:
   matchSize: 4
   isNetworkActive: 0
   matchMaker: {fileID: 0}
-  levelData:
-    MaxPlayers: 2
-    SceneName: beach
   offlinePlayerModel: {fileID: 111, guid: c6045b627610dc448a7bbc89153c39ba, type: 3}
   onlinePlayerModel: {fileID: 84, guid: b93562e206f63ad43bd392663aff0db6, type: 3}
   playerContainer: {fileID: 648092877}

@@ -59,7 +59,7 @@ namespace Julo.Game
             bool ready = mode == Mode.OfflineMode;
             string username = System.String.Format("Player {0}", player.PlayerId()); // TODO
 
-            gamePlayer.Init(role, ready, username);
+            gamePlayer.Init(gameState, role, ready, username);
         }
 
         public override void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)

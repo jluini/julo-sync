@@ -100,7 +100,7 @@ namespace Julo.Game
             if(gamePlayer.username == username)
                 Log.Warn("Username already set to {0}", username);
 
-            gamePlayer.Init(role, ready, username);
+            gamePlayer.Init(gameState, role, ready, username);
 
             // Log.Debug("Resolved {0} to {1}:{2}", player.PlayerId(), role, username);
         }
@@ -137,7 +137,18 @@ namespace Julo.Game
         // //////////////////////
 
         protected abstract void OnPrepareToStart(MessageStackMessage messageStack);
-        protected abstract void OnGameStarted();
+
+
+        protected virtual void OnGameStarted()
+        {
+            // TODO cache GamePlayers...
+            foreach(var gamePlayer in connections.AllPlayers<GamePlayer>())
+            {
+                gamePlayer.GameStarted();
+            }
+        }
+
+
         protected abstract void OnLateJoin(MessageStackMessage messageStack);
 
         protected override void OnMessage(WrappedMessage message)

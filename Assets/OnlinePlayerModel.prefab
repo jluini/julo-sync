@@ -274,7 +274,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 19}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ecc2552cf3756144d8e839533e133470, type: 3}
+  m_Script: {fileID: 11500000, guid: a96450d17eb24c947a6ec7c80cd1180b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   connectionId: -1
@@ -315,13 +315,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 19}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: be5c91b186d08844181a6894f05304e3, type: 3}
+  m_Script: {fileID: 11500000, guid: 0280fe64c6e344841a09a1f7c6a2709c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  localColor: {r: 1, g: 0.99607843, b: 0.6, a: 1}
-  remoteColor: {r: 1, g: 1, b: 1, a: 0.49803922}
-  localPlayingColor: {r: 1, g: 0.6313726, b: 0.1764706, a: 1}
-  remotePlayingColor: {r: 1, g: 0.6313726, b: 0.1764706, a: 0.5019608}
+  localColor: {r: 0, g: 0, b: 0, a: 1}
+  remoteColor: {r: 0, g: 0, b: 0, a: 1}
+  localPlayingColor: {r: 0, g: 1, b: 0, a: 1}
+  remotePlayingColor: {r: 0, g: 1, b: 0, a: 1}
   nameDisplay: {fileID: 86}
   roleDisplay: {fileID: 92}
   roleButton: {fileID: 89}
