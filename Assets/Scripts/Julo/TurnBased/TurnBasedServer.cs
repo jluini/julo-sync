@@ -24,7 +24,7 @@ namespace Julo.TurnBased
         TBPlayer playingPlayer = null;
         List<TBPlayer>[] playersPerRole;
 
-        public TurnBasedServer(Mode mode) : base(mode)
+        public TurnBasedServer(Mode mode, DualPlayer playerModel) : base(mode, playerModel)
         {
             instance = this;
         }
@@ -36,20 +36,12 @@ namespace Julo.TurnBased
 
             if(gameState == GameState.Playing)
             {
-                messages.Add(new PlayerMessage(playingPlayer.PlayerId()));
+                messages.Add(new PlayerMessage(playingPlayer));
             }
         }
 
         ////////// Player //////////
 
-        public override void OnPlayerAdded(IDualPlayer player)
-        {
-            base.OnPlayerAdded(player);
-        }
-        public override void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
-        {
-            base.WritePlayer(player, messageStack); 
-        }
 
         ////////// Messaging //////////
 
@@ -178,7 +170,7 @@ namespace Julo.TurnBased
 
                     playingPlayer.lastUse = DateTime.Now;
 
-                    SendToAll(MsgType.StartTurn, new PlayerMessage(playingPlayer.PlayerId()));
+                    SendToAll(MsgType.StartTurn, new PlayerMessage(playingPlayer));
 
                     do
                     {

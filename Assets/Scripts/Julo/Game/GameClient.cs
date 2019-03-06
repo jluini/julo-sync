@@ -11,14 +11,14 @@ namespace Julo.Game
     {
         public new static GameClient instance = null;
 
-        protected GameState gameState;
+        public GameState gameState;
         protected int numRoles;
         protected string sceneName;
 
         // only remote client
-        Dictionary<uint, GamePlayerMessage> pendingPlayers = new Dictionary<uint, GamePlayerMessage>();
+        //Dictionary<uint, GamePlayerMessage> pendingPlayers = new Dictionary<uint, GamePlayerMessage>();
 
-        public GameClient(Mode mode, DualServer server = null) : base(mode, server)
+        public GameClient(Mode mode, DualServer server, DualPlayer playerModel) : base(mode, server, playerModel)
         {
             instance = this;
 
@@ -41,7 +41,7 @@ namespace Julo.Game
             {
                 case GameState.NoGame:
                 case GameState.WillStart:
-                    Log.Debug("I joined but no game yet");
+                    // I joined but no game yet
                     break;
 
                 case GameState.Preparing:
@@ -56,40 +56,15 @@ namespace Julo.Game
             }
         }
 
-        public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage messageStack)
+        protected override void OnPlayerAdded(DualPlayer player, MessageStackMessage messageStack)
         {
-            base.ReadPlayer(dualPlayerData, messageStack);
+            base.OnPlayerAdded(player, messageStack);
 
             var gamePlayerData = messageStack.ReadMessage<GamePlayerMessage>();
 
-            pendingPlayers.Add(dualPlayerData.playerId, gamePlayerData);
-        }
-
-        protected override void OnPlayerResolved(OnlineDualPlayer player, DualPlayerMessage playerScreenshot)
-        {
-            base.OnPlayerResolved(player, playerScreenshot);
-
-            var netId = playerScreenshot.PlayerId();
-
-            if(player.PlayerId() != netId)
-            {
-                Log.Error("Not resolved! {0} != {1}", player.PlayerId(), netId);
-                return;
-            }
-
-            if(!pendingPlayers.ContainsKey(netId))
-            {
-                Log.Error("Player {0} not registered", netId);
-                return;
-            }
-
-            var gamePlayerMessage = pendingPlayers[netId];
-            pendingPlayers.Remove(netId);
-
-            int role = gamePlayerMessage.role;
-            bool ready = gamePlayerMessage.isReady;
-
-            string username = gamePlayerMessage.username;
+            int role = gamePlayerData.role;
+            bool ready = gamePlayerData.isReady;
+            string username = gamePlayerData.username;
 
             var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
 
@@ -99,13 +74,11 @@ namespace Julo.Game
             if(gamePlayer.username == username)
                 Log.Warn("Username already set to {0}", username);
 
-            gamePlayer.Init(gameState, role, ready, username);
-
-            // Log.Debug("Resolved {0} to {1}:{2}", player.PlayerId(), role, username);
+            gamePlayer.Init(/*gameState, */role, ready, username);
         }
 
         // //////////////////////
-        
+
         public void OnReadyChanged(bool newReady)
         {
             SendToServer(MsgType.ChangeReady, new ChangeReadyMessage(connections.localConnectionNumber, newReady));
@@ -140,12 +113,7 @@ namespace Julo.Game
 
         protected virtual void OnGameStarted()
         {
-            // TODO cache GamePlayers!!!
-            foreach(var playerInfo in connections.AllPlayers())
-            {
-                var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
-                gamePlayer.GameStarted();
-            }
+            // TODO
         }
 
 
@@ -163,13 +131,13 @@ namespace Julo.Game
                         var connectionId = changeReadyMessage.connectionId;
                         var newReady = changeReadyMessage.newReady;
 
-                        var players = connections.GetConnection(connectionId).players;
+                        var players = connections.GetPlayersAs<GamePlayer>(connectionId);
 
-                        foreach(var playerInfo in players)
+                        foreach(var player in players)
                         {
                             // TODO cache game players!!!
-                            var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
-                            gamePlayer.SetReady(newReady);
+                            //var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
+                            player.SetReady(newReady);
                         }
                     }
 
@@ -180,10 +148,12 @@ namespace Julo.Game
                     if(!isHosted)
                     {
                         var changeRoleMsg = message.ReadInternalMessage<ChangeRoleMessage>();
-                        var playerId = changeRoleMsg.playerId;
+                        //var playerId = changeRoleMsg.playerId;
+                        var connId = changeRoleMsg.controllerId;
+                        var controllerId = changeRoleMsg.controllerId;
                         var newRole = changeRoleMsg.newRole;
 
-                        connections.GetPlayerAs<GamePlayer>(playerId).SetRole(newRole);
+                         connections.GetPlayerAs<GamePlayer>(connId, controllerId).SetRole(newRole);
                     }
 
                     break;
@@ -193,10 +163,12 @@ namespace Julo.Game
                     if(!isHosted)
                     {
                         var usernameMsg = message.ReadInternalMessage<ChangeUsernameMessage>();
-                        var playerId = usernameMsg.playerId;
+                        //var playerId = usernameMsg.playerId;
+                        var connId = usernameMsg.connectionId;
+                        var controllerId = usernameMsg.controllerId;
                         var newName = usernameMsg.newName;
 
-                        connections.GetPlayerAs<GamePlayer>(playerId).SetUsername(newName);
+                        connections.GetPlayerAs<GamePlayer>(connId, controllerId).SetUsername(newName);
                     }
 
                     break;
@@ -283,7 +255,7 @@ namespace Julo.Game
                 return false;
             }
 
-            SendToServer(MsgType.ChangeUsername, new ChangeUsernameMessage(gamePlayer.PlayerId(), newName));
+            SendToServer(MsgType.ChangeUsername, new ChangeUsernameMessage(gamePlayer.ConnectionId(), gamePlayer.ControllerId(), newName));
 
             return true;
         }

@@ -143,93 +143,42 @@ namespace Julo.Network
 
     public class PlayerMessage : MessageBase
     {
-        public uint playerId;
+        public int connectionId;
+        public short controllerId;
 
         public PlayerMessage()
         {
         }
 
-        public PlayerMessage(uint playerId)
+        public PlayerMessage(int connectionId, short controllerId)
         {
-            this.playerId = playerId;
-        }
-        /*
-        public PlayerMessage(IDualPlayer player)
-        {
-            playerId = player == null ? 0 : player.PlayerId();
-        }
-        */
-        public override void Serialize(NetworkWriter writer)
-        {
-            writer.Write(playerId);
+            this.connectionId = connectionId;
+            this.controllerId = controllerId;
         }
 
-        public override void Deserialize(NetworkReader reader)
+        public PlayerMessage(IPlayer player)
         {
-            playerId = reader.ReadUInt32();
-        }
-
-    } // class PlayerMessage
-
-
-    // TODO rename to DualPlayerScreenshot
-    // implement IDualPlayer?
-    public class DualPlayerMessage : MessageBase, IDualPlayer
-    {
-        public uint playerId;
-        public int connectionId;
-        public short controllerId;
-
-        public DualPlayerMessage()
-        {
-        }
-
-        public DualPlayerMessage(IDualPlayer player)
-        {
-            this.playerId = player.PlayerId();
+            if(player == null)
+            {
+                this.connectionId = -1;
+                this.controllerId = -1;
+            }
             this.connectionId = player.ConnectionId();
             this.controllerId = player.ControllerId();
         }
-
+        
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write(playerId);
             writer.Write(connectionId);
             writer.Write(controllerId);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
-            playerId = reader.ReadUInt32();
             connectionId = reader.ReadInt32();
             controllerId = reader.ReadInt16();
         }
 
-        public uint PlayerId()
-        {
-            return playerId;
-        }
-
-        public int ConnectionId()
-        {
-            return controllerId;
-        }
-
-        public short ControllerId()
-        {
-            return controllerId;
-        }
-
-        public bool IsLocal()
-        {
-            throw new System.Exception();
-        }
-
-        public void AddListener(IDualPlayerListener listener)
-        {
-            throw new System.Exception();
-        }
-
-    } // class DualPlayerMessage
+    } // class PlayerMessage
 
 } // namespace Julo.Network

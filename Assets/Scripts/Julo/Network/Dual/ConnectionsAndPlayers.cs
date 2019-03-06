@@ -10,7 +10,8 @@ namespace Julo.Network
     public class ConnectionsAndPlayers
     {
         Dictionary<int, ConnectionInfo> connections;
-        Dictionary<uint, PlayerInfo> players;
+        //Dictionary<uint, PlayerInfo> players;
+        //Dictionary<uint, PlayerInfo> players;
         public int localConnectionNumber;
 
         bool isServer;
@@ -26,7 +27,7 @@ namespace Julo.Network
             }
 
             connections = new Dictionary<int, ConnectionInfo>();
-            players = new Dictionary<uint, PlayerInfo>();
+            //players = new Dictionary<uint, PlayerInfo>();
         }
 
         // ///////// Connections
@@ -68,6 +69,8 @@ namespace Julo.Network
             
             foreach(var p in connectionInfo.players)
             {
+                // TODO remove players
+                /*
                 var playerId = p.PlayerId();
                 if(!players.ContainsKey(playerId))
                 {
@@ -77,6 +80,7 @@ namespace Julo.Network
                 {
                     players.Remove(playerId);
                 }
+                */
             }
 
             connections.Remove(id);
@@ -84,122 +88,95 @@ namespace Julo.Network
 
         // ///////// Players
 
-        public IEnumerable<PlayerInfo> AllPlayers()
+        public IEnumerable<DualPlayer> AllPlayers()
         {
-            return players.Values;
-        }
-        
-        public PlayerInfo GetPlayerInfo(uint playerId)
-        {
-            if(players.ContainsKey(playerId))
+            var ret = new List<DualPlayer>();
+
+            foreach(var c in connections.Values)
             {
-                return players[playerId];
+                foreach(var p in c.players.Values)
+                {
+                    ret.Add(p);
+                }
             }
 
-            Log.Warn("PlayerInfo not found");
-
-            return null;
+            return ret;
         }
 
-        public IDualPlayer GetPlayer(uint playerId)
+        public DualPlayer GetPlayer(int connectionId, short controllerId)
         {
-            return GetPlayerInfo(playerId)?.actualPlayer;
-        }
-
-        public List<PlayerInfo> GetPlayersOfConnection(int connId)
-        {
-            if(!connections.ContainsKey(connId))
+            if(!connections.ContainsKey(connectionId))
             {
-                Log.Error("Connection not found");
-                return new List<PlayerInfo>();
+                Log.Error("No connection {0}", connectionId);
+                return default;
             }
+            var connection = connections[connectionId];
 
-            var c = connections[connId];
-            return c.players;
-        }
-
-        public void AddPlayer(int connectionId, PlayerInfo playerInfo)
-        {
-            if(!HasConnection(connectionId))
+            if(!connection.players.ContainsKey(controllerId))
             {
-                AddConnection(new ConnectionInfo(connectionId));
-            }
-
-            GetConnection(connectionId).AddPlayer(playerInfo);
-
-            var playerId = playerInfo.PlayerId();
-
-            players.Add(playerId, playerInfo);
-        }
-
-        // only remote client
-        public void RemovePlayer(uint playerId)
-        {
-            if(!players.ContainsKey(playerId))
-            {
-                Log.Error("Player not found");
-                return;
-            }
-
-            var playerInfo = players[playerId];
-
-            if(playerInfo.PlayerId() != playerId)
-            {
-                Log.Error("Wrong data 27");
-            }
-
-            Log.Debug("Removing while actualPlayer={0}", playerInfo.actualPlayer);
-
-            players.Remove(playerId);
-
-            var connId = playerInfo.ConnectionId();
-
-            if(!connections.ContainsKey(connId))
-            {
-                Log.Error("Player connection not found");
-            }
-
-            var connection = connections[connId];
-
-            connection.RemovePlayer(playerInfo);
-        }
-
-        // TODO don't use every frame; cache in higher leves instead
-        public T GetPlayerAs<T>(uint playerId) where T : MonoBehaviour
-        {
-            var playerInfo = GetPlayer(playerId);
-
-            return playerInfo == null ? null : GetPlayerAs<T>(playerInfo);
-        }
-
-        public T GetPlayerAs<T>(PlayerInfo playerInfo) where T : MonoBehaviour
-        {
-            var dualPlayer = playerInfo.actualPlayer;
-            if(dualPlayer == null)
-            {
-                Log.Error("Player not registered");
+                Log.Error("No player {1} in connection {0}", connectionId, controllerId);
                 return default;
             }
 
-            return GetPlayerAs<T>(dualPlayer);
+            var ret = connection.players[controllerId];
+            return ret;
         }
 
-        public T GetPlayerAs<T>(IDualPlayer dualPlayer) where T : MonoBehaviour
+        public T GetPlayerAs<T>(int connectionId, short controllerId) where T : MonoBehaviour
         {
-            var mb = (MonoBehaviour)dualPlayer;
+            var dualPlayer = GetPlayer(connectionId, controllerId);
 
-            T player = mb.GetComponent<T>();
-
-            if(player == null)
+            if(dualPlayer == null)
             {
-                Log.Error("Component {0} not found", typeof(T));
-                return default(T);
+                Log.Debug("Returning null here");
+                return default; 
             }
 
-            return player;
+            return DNM.GetPlayerAs<T>(dualPlayer);
         }
 
-        // TODO need RemovePlayer
+        public IEnumerable<DualPlayer> GetPlayers(int connectionId)
+        {
+            if(!connections.ContainsKey(connectionId))
+            {
+                Log.Error("No connection {0}", connectionId);
+                return new List<DualPlayer>();
+            }
+
+            var connection = connections[connectionId];
+
+            return connection.GetPlayers();
+        }
+
+        public List<T> GetPlayersAs<T>(int connectionId) where T : MonoBehaviour
+        {
+            if(!connections.ContainsKey(connectionId))
+            {
+                Log.Error("No connection {0}", connectionId);
+                return default;
+            }
+
+            var connection = connections[connectionId];
+
+            return connection.GetPlayersAs<T>();
+        }
+
+        public void AddPlayer(DualPlayer player)
+        {
+            var connectionId = player.ConnectionId();
+            var controllerId = player.ControllerId();
+
+            if(!HasConnection(connectionId))
+            {
+                if(isServer)
+                {
+                    Log.Warn("I'm server and connection was not added before player??");
+                }
+                AddConnection(new ConnectionInfo(connectionId));
+            }
+
+            GetConnection(connectionId).AddPlayer(player);
+        }
 
     } // class ConnectionsAndPlayers
     

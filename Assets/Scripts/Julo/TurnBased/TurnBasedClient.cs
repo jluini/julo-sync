@@ -13,7 +13,7 @@ namespace Julo.TurnBased
     {
         TBPlayer playingPlayer = null;
 
-        public TurnBasedClient(Mode mode, DualServer server = null) : base(mode, server)
+        public TurnBasedClient(Mode mode, DualServer server, DualPlayer playerModel) : base(mode, server, playerModel)
         {
             // noop
         }
@@ -23,11 +23,13 @@ namespace Julo.TurnBased
             if(gameState == GameState.Playing)
             {
                 var currentPlayerMessage = messageStack.ReadMessage<PlayerMessage>();
-                var currentPlayerId = currentPlayerMessage.playerId;
 
-                if(currentPlayerId > 0)
+                var currentPlayerConnId = currentPlayerMessage.connectionId;
+                var currentPlayerContId = currentPlayerMessage.controllerId;
+
+                if(currentPlayerConnId >= 0)
                 {
-                    playingPlayer = connections.GetPlayerAs<TBPlayer>(currentPlayerId);
+                    playingPlayer = connections.GetPlayerAs<TBPlayer>(currentPlayerConnId, currentPlayerContId);
 
                     if(playingPlayer == null)
                     {
@@ -37,23 +39,13 @@ namespace Julo.TurnBased
 
                     playingPlayer.SetPlaying(true);
                 }
+                else
+                {
+                    // nobody is playing
+                }
             }
         }
-
-        public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage stack)
-        {
-            base.ReadPlayer(dualPlayerData, stack);
-
-            // noop
-        }
-
-        protected override void OnPlayerResolved(OnlineDualPlayer player, DualPlayerMessage playerScreenshot)
-        {
-            base.OnPlayerResolved(player, playerScreenshot);
-
-            // noop
-        }
-
+        
         protected override void OnPrepareToStart(MessageStackMessage messageStack)
         {
             // noop
@@ -67,26 +59,12 @@ namespace Julo.TurnBased
 
                     var turnMsg = message.ReadInternalMessage<PlayerMessage>();
 
-                    var playerId = turnMsg.playerId;
+                    var connId = turnMsg.connectionId;
+                    var controllerId = turnMsg.controllerId;
 
-                    if(playerId == 0)
-                    {
-                        Log.Error("Unexpected StartTurn message with playerId=0");
-                        return;
-                    }
-                    /*
-                    var player = connections.GetPlayerIfAny(playerId);
+                    // TODO cache players?
 
-                    if(player == null)
-                    {
-                        Log.Error("Playing player not found id={0}", playerId);
-                        return;
-                    }
-                    */
-
-                    // TODO cache the TBPlayers!!!
-
-                    IsMyTurn(connections.GetPlayerAs<TBPlayer>(playerId));
+                    IsMyTurn(connections.GetPlayerAs<TBPlayer>(connId, controllerId));
 
                     break;
 

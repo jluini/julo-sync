@@ -1,10 +1,7 @@
 ﻿namespace Julo.Network
 {
-    // TODO unificate with IDualPlayer?
     public interface IPlayer
     {
-
-        uint PlayerId();
 
         int ConnectionId();
 

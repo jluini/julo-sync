@@ -10,7 +10,7 @@ using Julo.Game;
 namespace Julo.TurnBased
 {
     
-    // TODO should implement IDualPlayer?
+    // TODO should implement DualPlayer?
     [RequireComponent(typeof(GamePlayer))]
     public class TBPlayer : MonoBehaviour, IPlayer
     {
@@ -19,18 +19,18 @@ namespace Julo.TurnBased
 
         List<ITurnBasedPlayerListener> listeners = new List<ITurnBasedPlayerListener>();
 
-        IDualPlayer _dualPlayer;
-        IDualPlayer dualPlayer
+        DualPlayer _dualPlayer;
+        DualPlayer dualPlayer
         {
             get
             {
                 if(_dualPlayer == null)
                 {
-                    _dualPlayer = GetComponent<IDualPlayer>();
+                    _dualPlayer = GetComponent<DualPlayer>();
 
                     if(_dualPlayer == null)
                     {
-                        Log.Error("Component IDualPlayer not found!");
+                        Log.Error("Component DualPlayer not found!");
                     }
                 }
 
@@ -74,12 +74,12 @@ namespace Julo.TurnBased
                 l.SetPlaying(isPlaying);
             }
         }
-
+        /*
         public uint PlayerId()
         {
             return dualPlayer.PlayerId();
         }
-
+        */
         public int ConnectionId()
         {
             return dualPlayer.ConnectionId();

@@ -8,7 +8,7 @@ using Julo.TurnBased;
 
 namespace SyncGame
 {
-    [RequireComponent(typeof(IDualPlayer), typeof(GamePlayer), typeof(TBPlayer))]
+    [RequireComponent(typeof(DualPlayer), typeof(GamePlayer), typeof(TBPlayer))]
     public class SyncPlayerDisplay : MonoBehaviour, IDualPlayerListener, IGamePlayerListener, ITurnBasedPlayerListener
     {
         [Header("Colors")]
@@ -37,22 +37,22 @@ namespace SyncGame
 
         //// Game
 
-        GameState gameState;
+        GameState gameState = GameState.Unknown;
         int role;
         string name;
         bool isReady;
 
-        IDualPlayer _dualPlayer;
-        IDualPlayer dualPlayer
+        DualPlayer _dualPlayer;
+        DualPlayer dualPlayer
         {
             get
             {
                 if(_dualPlayer == null)
                 {
-                    _dualPlayer = GetComponent<IDualPlayer>();
+                    _dualPlayer = GetComponent<DualPlayer>();
                     if(_dualPlayer == null)
                     {
-                        Log.Error("Component IDualPlayer not found!");
+                        Log.Error("Component DualPlayer not found!");
                     }
                 }
                 return _dualPlayer;
@@ -104,6 +104,8 @@ namespace SyncGame
 
         public void InitDualPlayer(Mode mode, bool isHosted = true, bool isLocal = true)
         {
+            // Log.Debug("InitDualPlayer {0} {1} {2}", mode, isHosted, isLocal);
+
             this.mode = mode;
             this.isHosted = isHosted;
             this.isLocal = isLocal;
@@ -111,9 +113,11 @@ namespace SyncGame
         
         ////// IGamePlayerListener
 
-        public void InitGamePlayer(GameState gameState, int role, bool isReady, string name)
+        public void InitGamePlayer(/*GameState gameState, */int role, bool isReady, string name)
         {
-            this.gameState = gameState;
+            // Log.Debug("InitGamePlayer {0} {1} {2}", role, isReady, name);
+
+            //this.gameState = gameState;
             this.role = role;
             this.isReady = isReady;
             this.name = name;
@@ -150,10 +154,24 @@ namespace SyncGame
 
         void UpdateInputs()
         {
-            var playerId = dualPlayer.PlayerId();
+            /*
+            GameState gameState = GameState.Unknown;
 
-            roleButton.interactable = isHosted && gameState == GameState.NoGame;
-            nameInput.interactable = isLocal && gameState == GameState.NoGame;
+            var gameServer = GameServer.instance;
+
+            if(gameServer != null)
+            {
+                gameState = gameServer.gameState;
+            }
+            else
+            {
+                gameState = GameClient.instance.gameState;
+            }
+            */
+            // Log.Debug("Updating inputs: {0} {1}", isHosted/*, gameState*/);
+
+            roleButton.interactable = isHosted/* && gameState == GameState.NoGame*/;
+            nameInput.interactable = isLocal/* && gameState == GameState.NoGame*/;
         }
 
         public void OnRoleChanged(int newRole)
@@ -176,7 +194,7 @@ namespace SyncGame
 
         public void OnGameStarted()
         {
-            gameState = GameState.Playing;
+            //gameState = GameState.Playing;
             UpdateInputs();
         }
 

@@ -26,28 +26,31 @@ namespace Julo.Game
 
     public class ChangeRoleMessage : MessageBase
     {
-        public uint playerId;
+        public int connectionId;
+        public short controllerId;
         public int newRole;
 
         public ChangeRoleMessage()
         {
         }
 
-        public ChangeRoleMessage(uint playerId, int newRole)
+        public ChangeRoleMessage(int connectionId, short controllerId, int newRole)
         {
-            this.playerId = playerId;
-            this.newRole = newRole;
+            this.connectionId = connectionId;
+            this.controllerId = controllerId;
         }
 
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write(playerId);
+            writer.Write(connectionId);
+            writer.Write(controllerId);
             writer.Write(newRole);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
-            playerId = reader.ReadUInt32();
+            connectionId = reader.ReadInt32();
+            controllerId = reader.ReadInt16();
             newRole = reader.ReadInt32();
         }
 
@@ -55,28 +58,32 @@ namespace Julo.Game
 
     public class ChangeUsernameMessage : MessageBase
     {
-        public uint playerId;
+        public int connectionId;
+        public short controllerId;
         public string newName;
 
         public ChangeUsernameMessage()
         {
         }
 
-        public ChangeUsernameMessage(uint playerId, string newName)
+        public ChangeUsernameMessage(int connectionId, short controllerId, string newName)
         {
-            this.playerId = playerId;
+            this.connectionId = connectionId;
+            this.controllerId = controllerId;
             this.newName = newName;
         }
 
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write(playerId);
+            writer.Write(connectionId);
+            writer.Write(controllerId);
             writer.Write(newName);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
-            playerId = reader.ReadUInt32();
+            connectionId = reader.ReadInt32();
+            controllerId = reader.ReadInt16();
             newName = reader.ReadString();
         }
 

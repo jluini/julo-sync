@@ -21,12 +21,12 @@ namespace Julo.Game
         private List<GamePlayer>[] playersPerRole;
 
         protected int numRoles;
-        protected GameState gameState;
+        public GameState gameState;
         protected string sceneName;
 
         int willStartCountDown = 1;
 
-        public GameServer(Mode mode) : base(mode)
+        public GameServer(Mode mode, DualPlayer playerModel) : base(mode, playerModel)
         {
             instance = this;
 
@@ -41,13 +41,14 @@ namespace Julo.Game
             base.WriteRemoteClientData(messages);
 
             // TODO pass role data to clients?
+            Log.Debug("Writing {0}, {1}, '{2}'", gameState, numRoles, sceneName);
             messages.Add(new GameStatusMessage(gameState, numRoles, sceneName));
         }
 
         ////////// Player //////////
 
         // server
-        public override void OnPlayerAdded(IDualPlayer player)
+        public override void OnPlayerAdded(DualPlayer player)
         {
             base.OnPlayerAdded(player);
 
@@ -58,12 +59,12 @@ namespace Julo.Game
 
             int role = gameState == GameState.NoGame ? GetNextRole() : DNM.SpecRole;
             bool ready = mode == Mode.OfflineMode;
-            string username = System.String.Format("Player {0}", player.PlayerId()); // TODO
+            string username = System.String.Format("Player {0}", player.ControllerId()); // TODO
 
-            gamePlayer.Init(gameState, role, ready, username);
+            gamePlayer.Init(/*gameState, */role, ready, username);
         }
 
-        public override void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
+        public override void WritePlayer(DualPlayer player, List<MessageBase> messageStack)
         {
             base.WritePlayer(player, messageStack);
 
@@ -183,11 +184,12 @@ namespace Julo.Game
                 gameState = GameState.CancelingStart;
             }
 
-            var players = connections.GetConnection(connectionId).players;
+            //var players = connections.GetConnection(connectionId).players;
+            var players = connections.GetPlayersAs<GamePlayer>(connectionId);
 
-            foreach(var playerInfo in players)
+            foreach(var gamePlayer in players)
             {
-                var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
+                //var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
                 gamePlayer.SetReady(newReady);
             }
 
@@ -225,7 +227,7 @@ namespace Julo.Game
                 // sets role in server
                 player.SetRole(newRole);
 
-                SendToAll(MsgType.ChangeRole, new ChangeRoleMessage(player.PlayerId(), newRole));
+                SendToAll(MsgType.ChangeRole, new ChangeRoleMessage(player.ConnectionId(), player.ControllerId(), newRole));
             }
             else
             {
@@ -261,12 +263,14 @@ namespace Julo.Game
 
             foreach(var c in connections.AllConnections())
             {
-                foreach(var playerInfo in c.players)
+                var players = c.GetPlayersAs<GamePlayer>();
+                foreach(var gamePlayer in players)
                 {
+                    /*
                     var playerId = playerInfo.PlayerId();
                     // TODO cache GamePlayers !!!
                     var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerId);
-
+                    */
                     if(gamePlayer.role == role)
                     {
                         ret++;
@@ -289,13 +293,12 @@ namespace Julo.Game
             {
                 clientsAreReadyToStart[c.connectionId] = false;
 
-                foreach(var p in c.players)
+                foreach(var gamePlayer in c.GetPlayersAs<GamePlayer>())
                 {
-                    var gamePlayer = connections.GetPlayerAs<GamePlayer>(p);
+                    //var gamePlayer = connections.GetPlayerAs<GamePlayer>(p);
 
                     if(!gamePlayer.IsSpectator())
                     {
-
                         int role = gamePlayer.role;
 
                         if(role < 1 || role > numRoles)
@@ -330,9 +333,9 @@ namespace Julo.Game
         bool PlayersAreReady()
         {
             // TODO cache GamePlayers !!!
-            foreach(var playerInfo in connections.AllPlayers())
+            foreach(var dualPlayer in connections.AllPlayers())
             {
-                var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
+                var gamePlayer = DNM.GetPlayerAs<GamePlayer>(dualPlayer);
 
                 if(!gamePlayer.IsSpectator() && !gamePlayer.isReady)
                 {
@@ -381,10 +384,12 @@ namespace Julo.Game
 
                     // TODO validate name
 
-                    var playerId = usernameMsg.playerId;
+                    //var playerId = usernameMsg.playerId;
+                    var connId = usernameMsg.connectionId;
+                    var controllerId = usernameMsg.controllerId;
                     var newName = usernameMsg.newName;
 
-                    var player = connections.GetPlayerAs<GamePlayer>(playerId);
+                    var player = connections.GetPlayerAs<GamePlayer>(connId, controllerId);
 
                     if(player == null)
                     {

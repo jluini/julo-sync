@@ -16,6 +16,9 @@ namespace SyncGame
         public UserManager userManager;
         public DualNetworkManager dnm;
 
+        [Header("Player")]
+        public DualPlayer playerModel;
+
         [Header("Units")]
         public Unit unitModel;
 
@@ -31,19 +34,19 @@ namespace SyncGame
 
         DualServer CreateServer(Mode mode)
         {
-            gameServer = new SyncServer(mode, unitModel);
+            gameServer = new SyncServer(mode, playerModel, unitModel);
             return gameServer;
         }
 
         DualClient CreateHostedClient(Mode mode, DualServer server)
         {
-            gameClient = new SyncClient(mode, OnGameStarted, server);
+            gameClient = new SyncClient(mode, server, playerModel, unitModel, OnGameStarted);
             return gameClient;
         }
 
         DualClient CreateRemoteClient()
         {
-            gameClient = new SyncClient(OnGameStarted, unitModel);
+            gameClient = new SyncClient(Mode.OnlineMode, null, playerModel, unitModel, OnGameStarted);
             return gameClient;
         }
 

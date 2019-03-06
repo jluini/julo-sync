@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 
+using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 
@@ -17,8 +18,8 @@ namespace Julo.Network
         // only hosted
         protected DualServer server;
 
-        // only remote
-        Dictionary<uint, OnlineDualPlayer> pendingPlayers = new Dictionary<uint, OnlineDualPlayer>();
+        // only remote?
+        DualPlayer playerModel;
 
         // only remote
         ConnectionsAndPlayers clientConnections;
@@ -46,11 +47,14 @@ namespace Julo.Network
         ///     If server == null, it's a remote client and mode must be online.
         ///     If server != null it's a hosted client in either offline or online mode.
         /// </param>
-        public DualClient(Mode mode, DualServer server = null)
+        public DualClient(Mode mode, DualServer server, DualPlayer playerModel)
         {
             instance = this;
+
             this.mode = mode;
             this.server = server;
+            this.playerModel = playerModel;
+
             isHosted = server != null;
 
             if(!isHosted && mode == Mode.OfflineMode)
@@ -69,146 +73,51 @@ namespace Julo.Network
 
             for(int i = 0; i < numPlayers; i++)
             {
-                var playerScreenshot = messageStack.ReadMessage<DualPlayerMessage>();
+                var playerScreenshot = messageStack.ReadMessage<PlayerMessage>();
 
-                ReadPlayer(playerScreenshot, messageStack);
-
-                var netId = playerScreenshot.playerId;
                 var connId = playerScreenshot.connectionId;
                 var controllerId = playerScreenshot.controllerId;
 
-                OnlineDualPlayer registeredPlayer = null;
+                bool isLocal = connId == connectionNumber;
 
-                if(pendingPlayers.ContainsKey(netId))
+                if(isLocal)
                 {
-                    registeredPlayer = pendingPlayers[netId];
-                    pendingPlayers.Remove(netId);
+                    Log.Warn("Already a local client??");
                 }
 
-                //clientConnections.AddPlayer(connId, registeredPlayer, dualPlayerMsg);
-                //clientConnections.AddPlayer(connId, registeredPlayer, playerScreenshot);
-
-                var playerInfo = new PlayerInfo(registeredPlayer, playerScreenshot);
-                clientConnections.AddPlayer(connId, playerInfo);
-
-                if(registeredPlayer != null)
-                {
-                    ResolvePlayer(registeredPlayer, playerInfo);
-                }
+                AddPlayer(connId, controllerId, isLocal, messageStack);
             }
         }
 
-        public void OnNewPlayerMessage(MessageStackMessage messageStack)
+        void AddPlayer(int connId, short controllerId, bool isLocal, MessageStackMessage messageStack)
         {
-            if(!isHosted)
-            {
-                var playerScreenshot = messageStack.ReadMessage<DualPlayerMessage>();
-                var netId = playerScreenshot.playerId;
-
-                ReadPlayer(playerScreenshot, messageStack);
-
-                OnlineDualPlayer registeredPlayer = null;
-                if(pendingPlayers.ContainsKey(netId))
-                {
-                    registeredPlayer = pendingPlayers[netId];
-                    pendingPlayers.Remove(netId);
-                }
-
-                //clientConnections.AddPlayer(playerScreenshot.connectionId, registeredPlayer, playerScreenshot);
-
-                var playerInfo = new PlayerInfo(registeredPlayer, playerScreenshot);
-                clientConnections.AddPlayer(playerScreenshot.connectionId, playerInfo);
-
-                if(registeredPlayer != null)
-                {
-                    ResolvePlayer(registeredPlayer, playerInfo);
-                }
-            }
+            var newPlayer = GameObject.Instantiate<DualPlayer>(playerModel);
+            newPlayer.Init(mode, connId, controllerId, isLocal);
+            clientConnections.AddPlayer(newPlayer);
+            OnPlayerAdded(newPlayer, messageStack);
         }
 
-        public void StartOnlinePlayer(OnlineDualPlayer player)
-        {
-            if(!isHosted)
-            {
-                uint netId = player.netId.Value;
-
-                PlayerInfo playerInfo = connections.GetPlayerInfo(netId);
-
-                bool isRegistered = playerInfo != null;
-
-                if(isRegistered)
-                {
-                    ResolvePlayer(player, playerInfo);
-                }
-                else
-                {
-                    pendingPlayers.Add(netId, player);
-                }
-            }
-        }
-
-        public virtual void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage messageStack)
+        protected virtual void OnPlayerAdded(DualPlayer player, MessageStackMessage messageStack)
         {
             // noop
         }
 
-        void ResolvePlayer(OnlineDualPlayer player, PlayerInfo playerInfo)
+        // only remote client
+        public void OnNewPlayerMessage(MessageStackMessage messageStack)
         {
-            /*var playerId = player.PlayerId();
-            var p = connections.GetPlayerIfAny(playerId);
+            if(!isHosted)
+            {
+                var playerScreenshot = messageStack.ReadMessage<PlayerMessage>();
 
-            if(p == null)
-            {
-                Log.Error("Unregistered player {0}", playerId);
-                return;
-            }
-            
-            if(p.actualPlayer == null)
-            {
-                p.actualPlayer = player;
-            }
-            else
-            {
-                Log.Warn("Actual player already was set");
-                if(player != p.actualPlayer)
-                {
-                    Log.Warn("    and to something different!!!");
-                }
-            }
-            */
+                var connId = playerScreenshot.connectionId;
+                var controllerId = playerScreenshot.controllerId;
 
-            if(playerInfo.actualPlayer == null)
-            {
-                playerInfo.actualPlayer = player;
-            }
-            else
-            {
-                Log.Error("Actual player already was set");
-                if(player != playerInfo.actualPlayer)
-                {
-                    Log.Error("    and to something different!!!");
-                }
-            }
+                var isLocal = connId == clientConnections.localConnectionNumber;
 
-            OnPlayerResolved(player, playerInfo.playerScreenshot);
+                AddPlayer(connId, controllerId, isLocal, messageStack);
+            }
         }
-
-        protected virtual void OnPlayerResolved(OnlineDualPlayer player, DualPlayerMessage playerScreenshot)
-        {
-            var netId = playerScreenshot.PlayerId();
-            var connId = playerScreenshot.ConnectionId();
-            var controllerId = playerScreenshot.ControllerId();
-
-            if(player.ConnectionId() == connId)
-                Log.Warn("Connection id already set to {0}", connId);
-            if(player.ControllerId() == controllerId)
-                Log.Warn("Controller id already set to {0}", controllerId);
-
-            // Init directo a partir de screenshot?
-
-            player.Init(connId, controllerId);
-        }
-
+        
         // only remote
         public void RemovePlayer(uint playerId)
         {
@@ -217,8 +126,8 @@ namespace Julo.Network
                 Log.Error("I'm hosted");
                 return;
             }
-
-            clientConnections.RemovePlayer(playerId);
+            // TODO 
+            //clientConnections.RemovePlayer(playerId);
         }
 
         // sending messages to server

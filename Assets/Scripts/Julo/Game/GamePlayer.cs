@@ -8,7 +8,7 @@ using Julo.Network;
 namespace Julo.Game
 {
 
-    [RequireComponent(typeof(IDualPlayer))]
+    [RequireComponent(typeof(DualPlayer))]
     public class GamePlayer : MonoBehaviour, IPlayer
     {
         public int role = -1;
@@ -17,18 +17,18 @@ namespace Julo.Game
 
         List<IGamePlayerListener> listeners = new List<IGamePlayerListener>();
 
-        IDualPlayer _dualPlayer;
-        IDualPlayer dualPlayer
+        DualPlayer _dualPlayer;
+        DualPlayer dualPlayer
         {
             get
             {
                 if(_dualPlayer == null)
                 {
-                    _dualPlayer = GetComponent<IDualPlayer>();
+                    _dualPlayer = GetComponent<DualPlayer>();
 
                     if(_dualPlayer == null)
                     {
-                        Log.Error("Component IDualPlayer not found!");
+                        Log.Error("Component DualPlayer not found!");
                     }
                 }
 
@@ -48,15 +48,15 @@ namespace Julo.Game
             }
         }
 
-        public void Init(GameState gameState, int newRole, bool isReady, string username)
+        public void Init(/*GameState gameState, */int role, bool isReady, string username)
         {
-            this.role = newRole;
+            this.role = role;
             this.isReady = isReady;
             this.username = username;
 
             foreach(var l in listeners)
             {
-                l.InitGamePlayer(gameState, role, isReady, username);
+                l.InitGamePlayer(/*gameState, */role, isReady, username);
             }
         }
 
@@ -108,12 +108,12 @@ namespace Julo.Game
             listeners.Add(listener);
         }
 
-
+        /*
         public uint PlayerId()
         {
             return dualPlayer.PlayerId();
         }
-
+        */
         public bool IsLocal()
         {
             return dualPlayer.IsLocal();

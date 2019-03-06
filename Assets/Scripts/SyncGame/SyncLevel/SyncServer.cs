@@ -19,7 +19,7 @@ namespace SyncGame
 
         SyncMatch match;
 
-        public SyncServer(Mode mode, Unit unitModel) : base(mode)
+        public SyncServer(Mode mode, DualPlayer playerModel, Unit unitModel) : base(mode, playerModel)
         {
             instance = this;
 
@@ -39,16 +39,6 @@ namespace SyncGame
         }
 
         ////////// Player //////////
-
-        public override void OnPlayerAdded(IDualPlayer player)
-        {
-            base.OnPlayerAdded(player);
-        }
-
-        public override void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
-        {
-            base.WritePlayer(player, messageStack);
-        }
 
         protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack)
         {

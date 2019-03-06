@@ -112,6 +112,11 @@ namespace SyncGame
 
         public List<Unit> GetUnitsForRole(int role)
         {
+            if(role < 1 || role > unitsPerRole.Length)
+            {
+                Log.Error("Role {0} not found", role);
+                return new List<Unit>();
+            }
             // TODO check
             return unitsPerRole[role - 1];
         }

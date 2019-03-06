@@ -4,7 +4,7 @@ namespace Julo.Game
 {
     public interface IGamePlayerListener
     {
-        void InitGamePlayer(GameState gameState, int role, bool isReady, string name);
+        void InitGamePlayer(/*GameState gameState, */int role, bool isReady, string name);
 
         void OnRoleChanged(int newRole);
         void OnReadyChanged(bool isReady);

@@ -61,10 +61,6 @@ namespace Julo.Network
             GameOver
         }
 
-        [Header("Players")]
-        public OfflineDualPlayer offlinePlayerModel;
-        public OnlineDualPlayer onlinePlayerModel;
-
         [Header("Hooks")]
         public Transform playerContainer;
         public Toggle sceneToggle; // TODO remove 
@@ -153,21 +149,14 @@ namespace Julo.Network
             serverToLocalClientConnection = null;
             dualServer.AddLocalClient(dualClient, null);
 
-            AddOfflinePlayer(0);
+            dualServer.AddPlayer(0, 0); //AddOfflinePlayer(0);
             if(sceneToggle.isOn) // TODO remove this!!!
             {
-                AddOfflinePlayer(1);
+                dualServer.AddPlayer(0, 1); // AddOfflinePlayer(1);
             }
 
         }
-
-        void AddOfflinePlayer(int controllerId)
-        {
-            var player = GameObject.Instantiate(offlinePlayerModel, playerContainer) as OfflineDualPlayer;
-            player.Init(++lastOfflineIdUsed);
-            dualServer.AddPlayer(player);
-        }
-
+        
         public void StartAsHost()
         {
             if(state != DNMState.Off)
@@ -216,10 +205,9 @@ namespace Julo.Network
 
                 var conn = dualServer.connections.GetConnection(DNM.LocalConnectionId);
 
-                foreach(var p in conn.players)
+                foreach(var p in conn.players.Values)
                 {
-                    OfflineDualPlayer op = (OfflineDualPlayer)p.actualPlayer;
-                    Destroy(op.gameObject);
+                    Destroy(p.gameObject);
                 }
                 
                 // TODO cleanup
@@ -334,12 +322,12 @@ namespace Julo.Network
 
             var id = conn.connectionId;
 
-            foreach(var playerInfo in dualServer.connections.GetConnection(id).players)
+            foreach(var player in dualServer.connections.GetPlayers(id))
             {
                 //dualServer.connections.RemovePlayer
 
                 // TODO send to remote only
-                NetworkServer.SendToAll(MsgType.RemovePlayer, new PlayerMessage(playerInfo.PlayerId()));
+                NetworkServer.SendToAll(MsgType.RemovePlayer, new PlayerMessage(player));
             }
                 
             dualServer.RemoveClient(id);
@@ -358,7 +346,7 @@ namespace Julo.Network
             NetworkServer.SetClientReady(conn);
         }
 
-        public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId, NetworkReader messageReader)
+        public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId/*, NetworkReader messageReader*/)
         {
             if(state != DNMState.Host)
             {
@@ -366,34 +354,16 @@ namespace Julo.Network
                 return;
             }
 
-            StringMessage msg = messageReader.ReadMessage<StringMessage>();
+            // TODO custom addPlayer message
 
-
-            var player = GameObject.Instantiate(onlinePlayerModel) as OnlineDualPlayer;
-
-            // spawned to get player.netId set
-            NetworkServer.AddPlayerForConnection(conn, player.gameObject, playerControllerId);
-
-            var netId = player.netId.Value;
-            if(netId == 0)
-            {
-                Log.Error("netId not set");
-                return;
-            }
-
-            // initted to get updated in server
-            var connId = conn.connectionId;
-            player.Init(connId, playerControllerId);
-
-            // added to server to get message stack initialization for remote clients
-            var messageStack = dualServer.AddPlayer(player);
+            var messageStack = dualServer.AddPlayer(conn.connectionId, playerControllerId);
 
             NetworkServer.SendToAll(MsgType.NewPlayer, new MessageStackMessage(messageStack));
         }
-
+        /*
         public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId) {
             Log.Error("OnServerAddPlayer should not be called without extra message");
-        }
+        }*/
 
         public override void OnServerRemovePlayer(NetworkConnection conn, PlayerController player) {
             if(player.gameObject != null)
@@ -525,9 +495,9 @@ namespace Julo.Network
 
         bool LocalPlayerWithControllerId(short controllerId)
         {
-            foreach(var p in ClientScene.localPlayers)
+            foreach(var playerControllerId in dualServer.connections.GetConnection(DNM.LocalConnectionId).players.Keys)
             {
-                if(p.playerControllerId == controllerId)
+                if(playerControllerId == controllerId)
                 {
                     return true;
                 }
@@ -537,8 +507,19 @@ namespace Julo.Network
 
         public void AddPlayerCommand(short playerControllerId)
         {
-            var extraMessage = new StringMessage("Carlitos2"); // TODO ask player request data to client to send as extra message
-            ClientScene.AddPlayer(null, playerControllerId, extraMessage);
+            if(state == DNMState.Offline)
+            {
+                dualServer.AddPlayer(DNM.LocalConnectionId, NextControllerId());
+            }
+            else if(state == DNMState.Host || state == DNMState.Client)
+            {
+                // TODO extra message?
+                ClientScene.AddPlayer(null, playerControllerId, null);
+            }
+            else
+            {
+                Log.Error("Unexpected call of AddPlayerCommand: {0}", state);
+            }
         }
 
         public override void OnClientDisconnect(NetworkConnection conn) {
@@ -761,7 +742,8 @@ namespace Julo.Network
 
             if(!NetworkServer.active)
             {
-                dualClient.RemovePlayer(msg.playerId);
+                // TODO
+                //dualClient.RemovePlayer(msg.playerId);
             }
         }
         

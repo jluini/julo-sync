@@ -34,7 +34,7 @@ namespace SyncGame
         SyncServer syncServer;
 
         // only if remote
-        Unit onlineUnitModel;
+        Unit unitModel;
         SyncMatch remoteMatch;
 
         SyncMatch match
@@ -45,36 +45,35 @@ namespace SyncGame
             }
         }
 
-        // starts hosted client
-        public SyncClient(Mode mode, GameStartedDelegate gameStartedDelegate, DualServer server) : base(mode, server)
+        // starts client (remote if server==null)
+        public SyncClient(
+            Mode mode,
+            DualServer server,
+            DualPlayer playerModel,
+            Unit unitModel,
+            GameStartedDelegate gameStartedDelegate
+        ) : base(mode, server, playerModel)
         {
             instance = this;
-            this.gameStartedDelegate = gameStartedDelegate;
 
-            if(server == null)
+            if(isHosted != (server != null))
             {
-                Log.Error("No server");
+                Log.Error("Wrong: {0} != {1}", isHosted, server != null);
+            }
+
+            if(server != null)
+            {
+                // hosted client
+                this.syncServer = (SyncServer)server;
             }
             else
             {
-                syncServer = (SyncServer)server;
+                // remote client
+                remoteMatch = new SyncMatch();
             }
-        }
 
-        // starts remote client
-        public SyncClient(GameStartedDelegate gameStartedDelegate, Unit onlineUnitModel) : base(Mode.OnlineMode, null)
-        {
-            instance = this;
-
+            this.unitModel = unitModel;
             this.gameStartedDelegate = gameStartedDelegate;
-            this.onlineUnitModel = onlineUnitModel;
-
-            if(onlineUnitModel == null)
-            {
-                Log.Error("No unit model");
-            }
-
-            remoteMatch = new SyncMatch();
         }
 
         protected override void OnLateJoin(MessageStackMessage messageStack)
@@ -84,24 +83,10 @@ namespace SyncGame
             if(gameState == GameState.Playing || gameState == GameState.GameOver)
             {
                 var stateMessage = messageStack.ReadMessage<SyncGameState>();
-                remoteMatch.CreateFromInitialState(numRoles, onlineUnitModel, stateMessage);
+                remoteMatch.CreateFromInitialState(numRoles, unitModel, stateMessage);
 
                 OnGameStarted();
             }
-        }
-
-        public override void ReadPlayer(DualPlayerMessage dualPlayerData, MessageStackMessage stack)
-        {
-            base.ReadPlayer(dualPlayerData, stack);
-
-            // TODO ...
-        }
-
-        protected override void OnPlayerResolved(OnlineDualPlayer player, DualPlayerMessage playerScreenshot)
-        {
-            base.OnPlayerResolved(player, playerScreenshot);
-
-            // noop
         }
 
         protected override void OnPrepareToStart(MessageStackMessage messageStack)
@@ -110,7 +95,7 @@ namespace SyncGame
 
             var stateMessage = messageStack.ReadMessage<SyncGameState>();
 
-            remoteMatch.CreateFromInitialState(numRoles, onlineUnitModel, stateMessage);
+            remoteMatch.CreateFromInitialState(numRoles, unitModel, stateMessage);
         }
 
         protected override void OnGameStarted()
