@@ -40,8 +40,6 @@ namespace Julo.Game
         {
             base.WriteRemoteClientData(messages);
 
-            // TODO pass role data to clients?
-            Log.Debug("Writing {0}, {1}, '{2}'", gameState, numRoles, sceneName);
             messages.Add(new GameStatusMessage(gameState, numRoles, sceneName));
         }
 
@@ -61,7 +59,7 @@ namespace Julo.Game
             bool ready = mode == Mode.OfflineMode;
             string username = System.String.Format("Player {0}", player.ControllerId()); // TODO
 
-            gamePlayer.Init(/*gameState, */role, ready, username);
+            gamePlayer.Init(role, ready, username);
         }
 
         public override void WritePlayer(DualPlayer player, List<MessageBase> messageStack)

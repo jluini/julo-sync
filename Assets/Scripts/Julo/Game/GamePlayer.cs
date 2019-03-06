@@ -8,61 +8,30 @@ using Julo.Network;
 namespace Julo.Game
 {
 
-    [RequireComponent(typeof(DualPlayer))]
-    public class GamePlayer : MonoBehaviour, IPlayer
+    public class GamePlayer : DualPlayer
     {
         public int role = -1;
         public bool isReady = false;
         public string username = "-";
 
         List<IGamePlayerListener> listeners = new List<IGamePlayerListener>();
-
-        DualPlayer _dualPlayer;
-        DualPlayer dualPlayer
-        {
-            get
-            {
-                if(_dualPlayer == null)
-                {
-                    _dualPlayer = GetComponent<DualPlayer>();
-
-                    if(_dualPlayer == null)
-                    {
-                        Log.Error("Component DualPlayer not found!");
-                    }
-                }
-
-                return _dualPlayer;
-            }
-        }
-
-        public void OnClickChangeRole()
-        {
-            if(GameServer.instance != null)
-            {
-                GameServer.instance.ChangeRole(this);
-            }
-            else
-            {
-                Log.Warn("Clicking change role but no server");
-            }
-        }
-
-        public void Init(/*GameState gameState, */int role, bool isReady, string username)
+        
+        public void Init(int role, bool isReady, string username)
         {
             this.role = role;
             this.isReady = isReady;
             this.username = username;
-
+            
             foreach(var l in listeners)
             {
-                l.InitGamePlayer(/*gameState, */role, isReady, username);
+                l.InitGamePlayer(role, isReady, username);
             }
         }
 
         public void SetRole(int newRole)
         {
             this.role = newRole;
+            
             foreach(var l in listeners)
             {
                 l.OnRoleChanged(newRole);
@@ -72,7 +41,7 @@ namespace Julo.Game
         public void SetReady(bool newReady)
         {
             this.isReady = newReady;
-
+            
             foreach(var l in listeners)
             {
                 l.OnReadyChanged(newReady);
@@ -92,7 +61,7 @@ namespace Julo.Game
         {
             return role == DNM.SpecRole;
         }
-
+        
         public void GameStarted()
         {
             foreach(var l in listeners)
@@ -100,33 +69,46 @@ namespace Julo.Game
                 l.OnGameStarted();
             }
         }
-
+        
         //  ///////////////////
-
-        public void AddListener(IGamePlayerListener listener)
+        
+        public void AddGameListener(IGamePlayerListener listener)
         {
             listeners.Add(listener);
         }
 
-        /*
-        public uint PlayerId()
+        //  ///////////////////
+
+        public void OnClickChangeRole()
         {
-            return dualPlayer.PlayerId();
-        }
-        */
-        public bool IsLocal()
-        {
-            return dualPlayer.IsLocal();
+            if(GameServer.instance != null)
+            {
+                GameServer.instance.ChangeRole(this);
+            }
+            else
+            {
+                Log.Warn("Clicking change role but no server");
+            }
         }
 
-        public int ConnectionId()
+        public void OnNameEntered(string newName)
         {
-            return dualPlayer.ConnectionId();
-        }
+            if(GameClient.instance != null)
+            {
+                var changed = GameClient.instance.ChangeName(this, newName);
 
-        public short ControllerId()
-        {
-            return dualPlayer.ControllerId();
+                if(!changed)
+                {
+                    foreach(var l in listeners)
+                    {
+                        l.OnNameRejected();
+                    }
+                }
+            }
+            else
+            {
+                Log.Warn("Changing name but no client");
+            }
         }
 
     } // class GamePlayer

@@ -10,63 +10,13 @@ using Julo.Game;
 namespace Julo.TurnBased
 {
     
-    // TODO should implement DualPlayer?
-    [RequireComponent(typeof(GamePlayer))]
-    public class TBPlayer : MonoBehaviour, IPlayer
+    public class TBPlayer : GamePlayer
     {
         // only in server
         public DateTime lastUse;
 
         List<ITurnBasedPlayerListener> listeners = new List<ITurnBasedPlayerListener>();
-
-        DualPlayer _dualPlayer;
-        DualPlayer dualPlayer
-        {
-            get
-            {
-                if(_dualPlayer == null)
-                {
-                    _dualPlayer = GetComponent<DualPlayer>();
-
-                    if(_dualPlayer == null)
-                    {
-                        Log.Error("Component DualPlayer not found!");
-                    }
-                }
-
-                return _dualPlayer;
-            }
-        }
-
-        GamePlayer _gamePlayer;
-        GamePlayer gamePlayer
-        {
-            get
-            {
-                if(_gamePlayer == null)
-                {
-                    _gamePlayer = GetComponent<GamePlayer>();
-
-                    if(_gamePlayer == null)
-                    {
-                        Log.Error("Component GamePlayer not found!");
-                    }
-                }
-
-                return _gamePlayer;
-            }
-        }
-
-        public int GetRole()
-        {
-            return gamePlayer.role;
-        }
-
-        public void AddListener(ITurnBasedPlayerListener listener)
-        {
-            listeners.Add(listener);
-        }
-
+        
         public void SetPlaying(bool isPlaying)
         {
             foreach(var l in listeners)
@@ -74,27 +24,12 @@ namespace Julo.TurnBased
                 l.SetPlaying(isPlaying);
             }
         }
-        /*
-        public uint PlayerId()
-        {
-            return dualPlayer.PlayerId();
-        }
-        */
-        public int ConnectionId()
-        {
-            return dualPlayer.ConnectionId();
-        }
 
-        public short ControllerId()
+        public void AddTBListener(ITurnBasedPlayerListener listener)
         {
-            return dualPlayer.ControllerId();
+            listeners.Add(listener);
         }
-
-        public bool IsLocal()
-        {
-            return dualPlayer.IsLocal();
-        }
-
+        
     } // class TBPlayer
 
 } // namespace Julo.TurnBased

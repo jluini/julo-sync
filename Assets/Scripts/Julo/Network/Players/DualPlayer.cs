@@ -9,11 +9,11 @@ namespace Julo.Network
 {
     public class DualPlayer : MonoBehaviour, IPlayer
     {
-        List<IDualPlayerListener> listeners = new List<IDualPlayerListener>();
-
         int connectionId = -1;
         short controllerId = -1;
         bool isLocal;
+
+        List<IDualPlayerListener> listeners = new List<IDualPlayerListener>();
 
         public void Start()
         {
@@ -39,12 +39,6 @@ namespace Julo.Network
             }
         }
         
-        // TODO delete this?
-        public uint PlayerId()
-        {
-            return (uint)(connectionId * 1000 + controllerId);
-        }
-
         public int ConnectionId()
         {
             return connectionId;
@@ -61,8 +55,8 @@ namespace Julo.Network
         }
 
         /////////////// Listening ///////////////
-
-        public void AddListener(IDualPlayerListener listener)
+        
+        public void AddDualListener(IDualPlayerListener listener)
         {
             listeners.Add(listener);
         }

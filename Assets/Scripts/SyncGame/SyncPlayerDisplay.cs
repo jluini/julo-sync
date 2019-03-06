@@ -8,7 +8,7 @@ using Julo.TurnBased;
 
 namespace SyncGame
 {
-    [RequireComponent(typeof(DualPlayer), typeof(GamePlayer), typeof(TBPlayer))]
+    //[RequireComponent(typeof(DualPlayer), typeof(GamePlayer), typeof(TBPlayer))]
     public class SyncPlayerDisplay : MonoBehaviour, IDualPlayerListener, IGamePlayerListener, ITurnBasedPlayerListener
     {
         [Header("Colors")]
@@ -29,10 +29,12 @@ namespace SyncGame
 
         public Toggle readyToggle;
 
-        //// Dual
-
         Mode mode;
         bool isHosted = false;
+        
+        //// Dual
+
+        /*
         bool isLocal = false;
 
         //// Game
@@ -41,63 +43,30 @@ namespace SyncGame
         int role;
         string name;
         bool isReady;
+        */
 
-        DualPlayer _dualPlayer;
-        DualPlayer dualPlayer
+        SyncPlayer _syncPlayer;
+        SyncPlayer syncPlayer
         {
             get
             {
-                if(_dualPlayer == null)
+                if(_syncPlayer == null)
                 {
-                    _dualPlayer = GetComponent<DualPlayer>();
-                    if(_dualPlayer == null)
-                    {
-                        Log.Error("Component DualPlayer not found!");
-                    }
-                }
-                return _dualPlayer;
-            }
-        }
-
-        GamePlayer _gamePlayer;
-        GamePlayer gamePlayer
-        {
-            get
-            {
-                if(_gamePlayer == null)
-                {
-                    _gamePlayer = GetComponent<GamePlayer>();
-                    if(_gamePlayer == null)
-                    {
-                        Log.Error("Component GamePlayer not found!");
-                    }
-                }
-                return _gamePlayer;
-            }
-        }
-
-        TBPlayer _tbPlayer;
-        TBPlayer tbPlayer
-        {
-            get
-            {
-                if(_tbPlayer == null)
-                {
-                    _tbPlayer = GetComponent<TBPlayer>();
-                    if(_tbPlayer == null)
+                    _syncPlayer = GetComponent<SyncPlayer>();
+                    if(_syncPlayer == null)
                     {
                         Log.Error("Component TBPlayer not found!");
                     }
                 }
-                return _tbPlayer;
+                return _syncPlayer;
             }
         }
 
         void Awake()
         {
-            dualPlayer.AddListener(this);
-            gamePlayer.AddListener(this);
-            tbPlayer.AddListener(this);
+            syncPlayer.AddDualListener(this);
+            syncPlayer.AddGameListener(this);
+            syncPlayer.AddTBListener(this);
         }
         
         ////// IDualPlayerListener
@@ -108,23 +77,54 @@ namespace SyncGame
 
             this.mode = mode;
             this.isHosted = isHosted;
-            this.isLocal = isLocal;
         }
         
         ////// IGamePlayerListener
 
-        public void InitGamePlayer(/*GameState gameState, */int role, bool isReady, string name)
+        public void InitGamePlayer(int role, bool isReady, string username)
         {
-            // Log.Debug("InitGamePlayer {0} {1} {2}", role, isReady, name);
-
-            //this.gameState = gameState;
-            this.role = role;
-            this.isReady = isReady;
-            this.name = name;
-
             UpdateViews();
             UpdateInputs();
         }
+
+        public void OnRoleChanged(int newRole)
+        {
+            UpdateRoleView();
+        }
+
+        public void OnReadyChanged(bool isReady)
+        {
+            UpdateReadyView();
+        }
+
+        public void OnNameChanged(string newName)
+        {
+            UpdateNameView();
+        }
+
+        public void OnNameRejected()
+        {
+            UpdateNameView();
+            Log.Debug("Restoring name");
+        }
+
+        public void OnGameStarted()
+        {
+            //gameState = GameState.Playing;
+            UpdateInputs();
+        }
+
+        ////// ITurnBasedPlayerListener
+
+        public void SetPlaying(bool isPlaying)
+        {
+            // TODO implement
+            SetColor(GetColor(isPlaying));
+        }
+
+        //////////////////////////////////////////
+
+        //////
 
         void UpdateViews()
         {
@@ -136,15 +136,15 @@ namespace SyncGame
 
         void UpdateNameView()
         {
-            nameInput.text = name;
+            nameInput.text = syncPlayer.username;
         }
         void UpdateRoleView()
         {
-            roleDisplay.text = GetRoleText(role);
+            roleDisplay.text = GetRoleText(syncPlayer.role);
         }
         void UpdateReadyView()
         {
-            readyToggle.isOn = isReady;
+            readyToggle.isOn = syncPlayer.isReady;
         }
 
         void UpdateColor()
@@ -170,44 +170,15 @@ namespace SyncGame
             */
             // Log.Debug("Updating inputs: {0} {1}", isHosted/*, gameState*/);
 
-            roleButton.interactable = isHosted/* && gameState == GameState.NoGame*/;
-            nameInput.interactable = isLocal/* && gameState == GameState.NoGame*/;
-        }
+            roleButton.interactable = isHosted;
+            nameInput.interactable = syncPlayer.IsLocal();
 
-        public void OnRoleChanged(int newRole)
-        {
-            this.role = newRole;
-            UpdateRoleView();
-        }
-
-        public void OnReadyChanged(bool isReady)
-        {
-            this.isReady = isReady;
-            UpdateReadyView();
-        }
-
-        public void OnNameChanged(string newName)
-        {
-            this.name = newName;
-            UpdateNameView();
-        }
-
-        public void OnGameStarted()
-        {
-            //gameState = GameState.Playing;
-            UpdateInputs();
-        }
-
-        ////// ITurnBasedPlayerListener
-
-        public void SetPlaying(bool isPlaying)
-        {
-            // TODO implement
-            SetColor(GetColor(isPlaying));
+            //roleButton.interactable = isHosted/* && gameState == GameState.NoGame*/;
+            //nameInput.interactable = isLocal/* && gameState == GameState.NoGame*/;
         }
 
         //////////////////////////////////////////
-        
+
         void SetColor(Color newColor)
         {
             colorDisplay.color = newColor;
@@ -217,7 +188,7 @@ namespace SyncGame
 
         Color GetColor(bool isPlaying)
         {
-            if(isLocal)
+            if(syncPlayer.IsLocal())
             {
                 return isPlaying ? localPlayingColor : localColor;
             }
@@ -230,18 +201,6 @@ namespace SyncGame
         string GetRoleText(int role)
         {
             return role == DNM.SpecRole ? "spec" : role.ToString();
-        }
-
-        //////////////////////////////////////////
-        
-        public void OnNameEntered(string newName)
-        {
-            var changed = GameClient.instance.ChangeName(gamePlayer, newName);
-
-            if(!changed)
-            {
-                nameInput.text = name;
-            }
         }
 
     } // class SyncPlayerDisplay

@@ -131,7 +131,7 @@ namespace SyncGame
                 Log.Warn("Unexpected TurnType {0} (A)", currentTurn);
             }
 
-            int role = player.GetRole();
+            int role = player.role;
 
             var units = match.GetUnitsForRole(role);
             var aliveUnits = units.FindAll(t => !t.dead);
