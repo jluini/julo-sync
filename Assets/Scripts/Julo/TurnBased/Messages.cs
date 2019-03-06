@@ -1,7 +1,3 @@
-using UnityEngine.Networking;
-
-using Julo.Game;
-
 namespace Julo.TurnBased
 {
     public class MsgType

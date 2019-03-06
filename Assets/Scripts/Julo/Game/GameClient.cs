@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-using UnityEngine.Networking.NetworkSystem;
+﻿using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
 using Julo.Network;

@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Julo.Network
+﻿namespace Julo.Network
 {
 
     public delegate DualServer CreateServerDelegate(Mode mode);

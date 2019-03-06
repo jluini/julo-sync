@@ -1,10 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.Networking;
 
-using Julo.Logging;
 using Julo.Network;
 using Julo.Game;
 using Julo.TurnBased;

@@ -8,7 +8,6 @@ using Julo.TurnBased;
 
 namespace SyncGame
 {
-    //[RequireComponent(typeof(DualPlayer), typeof(GamePlayer), typeof(TBPlayer))]
     public class SyncPlayerDisplay : MonoBehaviour, IDualPlayerListener, IGamePlayerListener, ITurnBasedPlayerListener
     {
         [Header("Colors")]
@@ -20,8 +19,6 @@ namespace SyncGame
 
         [Header("Hooks")]
 
-        // public Text nameDisplay;
-
         public Graphic colorDisplay;
         public InputField nameInput;
         public Text roleDisplay;
@@ -29,22 +26,11 @@ namespace SyncGame
 
         public Toggle readyToggle;
 
+        //// Dual basic data
+
         Mode mode;
         bool isHosted = false;
         
-        //// Dual
-
-        /*
-        bool isLocal = false;
-
-        //// Game
-
-        GameState gameState = GameState.Unknown;
-        int role;
-        string name;
-        bool isReady;
-        */
-
         SyncPlayer _syncPlayer;
         SyncPlayer syncPlayer
         {
@@ -73,8 +59,6 @@ namespace SyncGame
 
         public void InitDualPlayer(Mode mode, bool isHosted = true, bool isLocal = true)
         {
-            // Log.Debug("InitDualPlayer {0} {1} {2}", mode, isHosted, isLocal);
-
             this.mode = mode;
             this.isHosted = isHosted;
         }
@@ -110,7 +94,6 @@ namespace SyncGame
 
         public void OnGameStarted()
         {
-            //gameState = GameState.Playing;
             UpdateInputs();
         }
 
@@ -118,13 +101,10 @@ namespace SyncGame
 
         public void SetPlaying(bool isPlaying)
         {
-            // TODO implement
             SetColor(GetColor(isPlaying));
         }
 
         //////////////////////////////////////////
-
-        //////
 
         void UpdateViews()
         {
@@ -154,27 +134,8 @@ namespace SyncGame
 
         void UpdateInputs()
         {
-            /*
-            GameState gameState = GameState.Unknown;
-
-            var gameServer = GameServer.instance;
-
-            if(gameServer != null)
-            {
-                gameState = gameServer.gameState;
-            }
-            else
-            {
-                gameState = GameClient.instance.gameState;
-            }
-            */
-            // Log.Debug("Updating inputs: {0} {1}", isHosted/*, gameState*/);
-
             roleButton.interactable = isHosted;
             nameInput.interactable = syncPlayer.IsLocal();
-
-            //roleButton.interactable = isHosted/* && gameState == GameState.NoGame*/;
-            //nameInput.interactable = isLocal/* && gameState == GameState.NoGame*/;
         }
 
         //////////////////////////////////////////

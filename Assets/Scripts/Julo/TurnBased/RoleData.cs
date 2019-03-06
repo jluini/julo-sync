@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-
-using Julo.Network;
-
-namespace Julo.TurnBased
+﻿namespace Julo.TurnBased
 {
     // only in server
     public class RoleData
