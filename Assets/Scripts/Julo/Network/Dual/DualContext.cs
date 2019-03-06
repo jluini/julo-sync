@@ -6,17 +6,14 @@ using Julo.Logging;
 
 namespace Julo.Network
 {
-    // TODO change name
-    public class ConnectionsAndPlayers
+    public class DualContext
     {
         Dictionary<int, ConnectionInfo> connections;
-        //Dictionary<uint, PlayerInfo> players;
-        //Dictionary<uint, PlayerInfo> players;
         public int localConnectionNumber;
 
         bool isServer;
 
-        public ConnectionsAndPlayers(bool isServer, int localConnectionNumber)
+        public DualContext(bool isServer, int localConnectionNumber)
         {
             this.isServer = isServer;
             this.localConnectionNumber = localConnectionNumber;
@@ -27,7 +24,6 @@ namespace Julo.Network
             }
 
             connections = new Dictionary<int, ConnectionInfo>();
-            //players = new Dictionary<uint, PlayerInfo>();
         }
 
         // ///////// Connections
@@ -178,6 +174,6 @@ namespace Julo.Network
             GetConnection(connectionId).AddPlayer(player);
         }
 
-    } // class ConnectionsAndPlayers
+    } // class DualContext
     
 } // namespace Julo.Network

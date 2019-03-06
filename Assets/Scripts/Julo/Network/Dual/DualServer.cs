@@ -13,9 +13,7 @@ namespace Julo.Network
     {
         public static DualServer instance = null;
 
-        // TODO rename class
-        // TODO rename instance
-        public ConnectionsAndPlayers connections;
+        public DualContext dualContext;
 
         protected Mode mode;
         private DualPlayer playerModel;
@@ -29,7 +27,7 @@ namespace Julo.Network
             this.mode = mode;
             this.playerModel = playerModel;
 
-            connections = new ConnectionsAndPlayers(true, 0);
+            dualContext = new DualContext(true, 0);
         }
 
         public void AddLocalClient(DualClient client, NetworkConnection networkConnection)
@@ -60,8 +58,9 @@ namespace Julo.Network
                 }
             }
 
-            this.localClient = client;
-            this.connections.AddConnection(new ConnectionInfo(DNM.LocalConnectionId, networkConnection));
+            localClient = client;
+
+            dualContext.AddConnection(new ConnectionInfo(DNM.LocalConnectionId, networkConnection));
         }
 
         public void AddRemoteClient(NetworkConnection networkConnection)
@@ -74,7 +73,7 @@ namespace Julo.Network
             }
 
             var id = networkConnection.connectionId;
-            this.connections.AddConnection(new ConnectionInfo(id, networkConnection));
+            dualContext.AddConnection(new ConnectionInfo(id, networkConnection));
         }
         
         public void RemoveClient(int connectionId)
@@ -83,14 +82,16 @@ namespace Julo.Network
             {
                 Log.Warn("Removing local connection");
             }
+            
             // TODO
-
-            foreach(var player in connections.GetConnection(connectionId).players.Values)
+            /*
+            foreach(var player in dualContext.GetConnection(connectionId).players.Values)
             {
                 //OnPlayerRemoved(player);
             }
+            */
 
-            connections.RemoveConnection(connectionId);
+            dualContext.RemoveConnection(connectionId);
         }
         
         ///////////////////////
@@ -98,7 +99,7 @@ namespace Julo.Network
         // only online mode
         public virtual void WriteRemoteClientData(List<MessageBase> messageStack)
         {
-            var allPlayers = new List<DualPlayer>(connections.AllPlayers()); //new List<DualPlayer>();
+            var allPlayers = new List<DualPlayer>(dualContext.AllPlayers());
 
             messageStack.Add(new IntegerMessage(allPlayers.Count));
 
@@ -115,13 +116,11 @@ namespace Julo.Network
         {
             var player = GameObject.Instantiate<DualPlayer>(playerModel);
 
-            bool isLocal = connectionId == connections.localConnectionNumber;
+            bool isLocal = connectionId == dualContext.localConnectionNumber;
 
             player.Init(mode, connectionId, controllerId, isLocal);
 
-            //var playerInfo = new PlayerInfo(player);
-
-            connections.AddPlayer(player);
+            dualContext.AddPlayer(player);
             
             // setup initial data in server
             var messageStack = new List<MessageBase>();

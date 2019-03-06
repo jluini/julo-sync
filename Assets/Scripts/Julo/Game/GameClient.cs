@@ -56,6 +56,7 @@ namespace Julo.Game
             }
         }
 
+        // only remote
         protected override void OnPlayerAdded(DualPlayer player, MessageStackMessage messageStack)
         {
             base.OnPlayerAdded(player, messageStack);
@@ -81,7 +82,7 @@ namespace Julo.Game
 
         public void OnReadyChanged(bool newReady)
         {
-            SendToServer(MsgType.ChangeReady, new ChangeReadyMessage(connections.localConnectionNumber, newReady));
+            SendToServer(MsgType.ChangeReady, new ChangeReadyMessage(dualContext.localConnectionNumber, newReady));
         }
         
         // //////////////////////
@@ -131,7 +132,7 @@ namespace Julo.Game
                         var connectionId = changeReadyMessage.connectionId;
                         var newReady = changeReadyMessage.newReady;
 
-                        var players = connections.GetPlayersAs<GamePlayer>(connectionId);
+                        var players = dualContext.GetPlayersAs<GamePlayer>(connectionId);
 
                         foreach(var player in players)
                         {
@@ -153,7 +154,7 @@ namespace Julo.Game
                         var controllerId = changeRoleMsg.controllerId;
                         var newRole = changeRoleMsg.newRole;
 
-                         connections.GetPlayerAs<GamePlayer>(connId, controllerId).SetRole(newRole);
+                         dualContext.GetPlayerAs<GamePlayer>(connId, controllerId).SetRole(newRole);
                     }
 
                     break;
@@ -168,7 +169,7 @@ namespace Julo.Game
                         var controllerId = usernameMsg.controllerId;
                         var newName = usernameMsg.newName;
 
-                        connections.GetPlayerAs<GamePlayer>(connId, controllerId).SetUsername(newName);
+                        dualContext.GetPlayerAs<GamePlayer>(connId, controllerId).SetUsername(newName);
                     }
 
                     break;

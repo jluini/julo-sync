@@ -203,7 +203,7 @@ namespace Julo.Network
             {
                 SetState(DNMState.Off);
 
-                var conn = dualServer.connections.GetConnection(DNM.LocalConnectionId);
+                var conn = dualServer.dualContext.GetConnection(DNM.LocalConnectionId);
 
                 foreach(var p in conn.players.Values)
                 {
@@ -261,7 +261,7 @@ namespace Julo.Network
             CheckState(new DNMState[] { DNMState.CreatingHost, DNMState.Host });
 
             int id = conn.connectionId;
-            if(dualServer.connections.HasConnection(id))
+            if(dualServer.dualContext.HasConnection(id))
             {
                 Log.Error("Client already registered");
                 return;
@@ -322,7 +322,7 @@ namespace Julo.Network
 
             var id = conn.connectionId;
 
-            foreach(var player in dualServer.connections.GetPlayers(id))
+            foreach(var player in dualServer.dualContext.GetPlayers(id))
             {
                 //dualServer.connections.RemovePlayer
 
@@ -495,7 +495,7 @@ namespace Julo.Network
 
         bool LocalPlayerWithControllerId(short controllerId)
         {
-            foreach(var playerControllerId in dualServer.connections.GetConnection(DNM.LocalConnectionId).players.Keys)
+            foreach(var playerControllerId in dualServer.dualContext.GetConnection(DNM.LocalConnectionId).players.Keys)
             {
                 if(playerControllerId == controllerId)
                 {
@@ -729,6 +729,7 @@ namespace Julo.Network
             dualClient.SendMessage(msg);
         }
 
+        // only client
         void OnNewPlayerMessage(NetworkMessage messageReader)
         {
             var msg = messageReader.ReadMessage<MessageStackMessage>();
@@ -790,7 +791,7 @@ namespace Julo.Network
         {
             CheckState(DNMState.Host);
             
-            foreach(var c in dualServer.connections.AllConnections()) // TODO encapsulamiento...
+            foreach(var c in dualServer.dualContext.AllConnections()) // TODO encapsulamiento...
             {
                 int id = c.connectionId;
 

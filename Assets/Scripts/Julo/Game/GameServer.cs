@@ -184,12 +184,10 @@ namespace Julo.Game
                 gameState = GameState.CancelingStart;
             }
 
-            //var players = connections.GetConnection(connectionId).players;
-            var players = connections.GetPlayersAs<GamePlayer>(connectionId);
+            var players = dualContext.GetPlayersAs<GamePlayer>(connectionId);
 
             foreach(var gamePlayer in players)
             {
-                //var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerInfo);
                 gamePlayer.SetReady(newReady);
             }
 
@@ -261,16 +259,12 @@ namespace Julo.Game
 
             int ret = 0;
 
-            foreach(var c in connections.AllConnections())
+            foreach(var c in dualContext.AllConnections())
             {
                 var players = c.GetPlayersAs<GamePlayer>();
                 foreach(var gamePlayer in players)
                 {
-                    /*
-                    var playerId = playerInfo.PlayerId();
                     // TODO cache GamePlayers !!!
-                    var gamePlayer = connections.GetPlayerAs<GamePlayer>(playerId);
-                    */
                     if(gamePlayer.role == role)
                     {
                         ret++;
@@ -289,14 +283,12 @@ namespace Julo.Game
 
             clientsAreReadyToStart = new Dictionary<int, bool>();
 
-            foreach(var c in connections.AllConnections())
+            foreach(var c in dualContext.AllConnections())
             {
                 clientsAreReadyToStart[c.connectionId] = false;
 
                 foreach(var gamePlayer in c.GetPlayersAs<GamePlayer>())
                 {
-                    //var gamePlayer = connections.GetPlayerAs<GamePlayer>(p);
-
                     if(!gamePlayer.IsSpectator())
                     {
                         int role = gamePlayer.role;
@@ -333,7 +325,7 @@ namespace Julo.Game
         bool PlayersAreReady()
         {
             // TODO cache GamePlayers !!!
-            foreach(var dualPlayer in connections.AllPlayers())
+            foreach(var dualPlayer in dualContext.AllPlayers())
             {
                 var gamePlayer = DNM.GetPlayerAs<GamePlayer>(dualPlayer);
 
@@ -389,7 +381,7 @@ namespace Julo.Game
                     var controllerId = usernameMsg.controllerId;
                     var newName = usernameMsg.newName;
 
-                    var player = connections.GetPlayerAs<GamePlayer>(connId, controllerId);
+                    var player = dualContext.GetPlayerAs<GamePlayer>(connId, controllerId);
 
                     if(player == null)
                     {

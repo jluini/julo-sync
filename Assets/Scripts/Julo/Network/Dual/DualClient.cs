@@ -22,19 +22,19 @@ namespace Julo.Network
         DualPlayer playerModel;
 
         // only remote
-        ConnectionsAndPlayers clientConnections;
+        DualContext clientContext;
 
-        protected ConnectionsAndPlayers connections
+        protected DualContext dualContext
         {
             get
             {
                 if(isHosted)
                 {
-                    return DualServer.instance.connections;
+                    return server.dualContext;
                 }
                 else
                 {
-                    return clientConnections;
+                    return clientContext;
                 }
             }
         }
@@ -66,7 +66,7 @@ namespace Julo.Network
         // only remote
         public virtual void InitializeState(int connectionNumber, MessageStackMessage messageStack)
         {
-            clientConnections = new ConnectionsAndPlayers(false, connectionNumber);
+            clientContext = new DualContext(false, connectionNumber);
             
             var numPlayersMessage = messageStack.ReadMessage<IntegerMessage>();
             var numPlayers = numPlayersMessage.value;
@@ -89,19 +89,6 @@ namespace Julo.Network
             }
         }
 
-        void AddPlayer(int connId, short controllerId, bool isLocal, MessageStackMessage messageStack)
-        {
-            var newPlayer = GameObject.Instantiate<DualPlayer>(playerModel);
-            newPlayer.Init(mode, connId, controllerId, isLocal);
-            clientConnections.AddPlayer(newPlayer);
-            OnPlayerAdded(newPlayer, messageStack);
-        }
-
-        protected virtual void OnPlayerAdded(DualPlayer player, MessageStackMessage messageStack)
-        {
-            // noop
-        }
-
         // only remote client
         public void OnNewPlayerMessage(MessageStackMessage messageStack)
         {
@@ -112,12 +99,27 @@ namespace Julo.Network
                 var connId = playerScreenshot.connectionId;
                 var controllerId = playerScreenshot.controllerId;
 
-                var isLocal = connId == clientConnections.localConnectionNumber;
+                var isLocal = connId == clientContext.localConnectionNumber;
 
                 AddPlayer(connId, controllerId, isLocal, messageStack);
             }
         }
         
+        // onyl remote
+        void AddPlayer(int connId, short controllerId, bool isLocal, MessageStackMessage messageStack)
+        {
+            var newPlayer = GameObject.Instantiate<DualPlayer>(playerModel);
+            newPlayer.Init(mode, connId, controllerId, isLocal);
+            clientContext.AddPlayer(newPlayer);
+            OnPlayerAdded(newPlayer, messageStack);
+        }
+
+        // only remote
+        protected virtual void OnPlayerAdded(DualPlayer player, MessageStackMessage messageStack)
+        {
+            // noop
+        }
+
         // only remote
         public void RemovePlayer(uint playerId)
         {
