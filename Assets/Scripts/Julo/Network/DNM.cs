@@ -14,12 +14,6 @@ namespace Julo.Network
         public const short SpecRole = 0;
         public const short FirstPlayerRole = 1;
 
-        public static T GetPlayerAs<T>(DualPlayer player) where T : MonoBehaviour
-        {
-            //var b = (MonoBehaviour)player;
-            var ret = player.GetComponent<T>();
-            return ret;
-        }
     }
 
 }

@@ -17,30 +17,21 @@ namespace Julo.Network
         // only server in online mode
         public NetworkConnection networkConnection;
 
-        //public List<PlayerInfo> players;
-        //public List<DualPlayer> players;
         public Dictionary<short, DualPlayer> players;
 
-
-        // in server in online mode
+        // in server
         public ConnectionInfo(int connectionId, NetworkConnection networkConnection)
         {
             this.connectionId = connectionId;
-            //this.isLocal = connectionId == 0;
             this.networkConnection = networkConnection;
             this.players = new Dictionary<short, DualPlayer>();
         }
 
-        // TODO what about offline mode
-
         // in remote client
-        public ConnectionInfo(int connectionId/*, bool isLocal*/)
+        public ConnectionInfo(int connectionId)
         {
             this.connectionId = connectionId;
-            //this.isLocal = isLocal;
-
-            networkConnection = null;
-
+            this.networkConnection = null;
             this.players = new Dictionary<short, DualPlayer>();
         }
 
@@ -76,18 +67,6 @@ namespace Julo.Network
             return players.Values;
         }
 
-        public List<T> GetPlayersAs<T>() where T : MonoBehaviour
-        {
-            var ret = new List<T>();
-
-            foreach(var p in players.Values)
-            {
-                ret.Add(DNM.GetPlayerAs<T>(p));
-            }
-
-            return ret;
-        }
-
-    }
+    } // class ConnectionInfo
 
 } // namespace Julo.Network

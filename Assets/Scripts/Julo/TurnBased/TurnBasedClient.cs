@@ -29,8 +29,9 @@ namespace Julo.TurnBased
 
                 if(currentPlayerConnId >= 0)
                 {
-                    // Use TBContext directly?
-                    playingPlayer = dualContext.GetPlayerAs<TBPlayer>(currentPlayerConnId, currentPlayerContId);
+                    // TODO cast or cache TBPlayers?
+                    
+                    playingPlayer = (TBPlayer)dualContext.GetPlayer(currentPlayerConnId, currentPlayerContId);
 
                     if(playingPlayer == null)
                     {
@@ -65,7 +66,10 @@ namespace Julo.TurnBased
 
                     // TODO cache players?
 
-                    IsMyTurn(dualContext.GetPlayerAs<TBPlayer>(connId, controllerId));
+                    // TODO cast or cache TBPlayer?
+                    var turnPlayer = (TBPlayer)dualContext.GetPlayer(connId, controllerId);
+
+                    IsMyTurn(turnPlayer);
 
                     break;
 

@@ -50,8 +50,8 @@ namespace Julo.Game
         {
             base.OnPlayerAdded(player);
 
-            // TODO cache GamePlayer
-            var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
+            // TODO cast or cache GamePlayer?
+            var gamePlayer = (GamePlayer)player;
 
             // start as spec if game already started
 
@@ -66,7 +66,7 @@ namespace Julo.Game
         {
             base.WritePlayer(player, messageStack);
 
-            var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
+            var gamePlayer = (GamePlayer)player;
             messageStack.Add(new GamePlayerMessage(gamePlayer.role, gamePlayer.isReady, gamePlayer.username));
         }
 
@@ -182,10 +182,11 @@ namespace Julo.Game
                 gameState = GameState.CancelingStart;
             }
 
-            var players = dualContext.GetPlayersAs<GamePlayer>(connectionId);
+            var players = dualContext.GetPlayers(connectionId);
 
-            foreach(var gamePlayer in players)
+            foreach(var player in players)
             {
+                var gamePlayer = (GamePlayer)player;
                 gamePlayer.SetReady(newReady);
             }
 
@@ -259,10 +260,12 @@ namespace Julo.Game
 
             foreach(var c in dualContext.AllConnections())
             {
-                var players = c.GetPlayersAs<GamePlayer>();
-                foreach(var gamePlayer in players)
+                var players = c.GetPlayers();
+                foreach(var player in players)
                 {
                     // TODO cache GamePlayers !!!
+                    var gamePlayer = (GamePlayer)player;
+
                     if(gamePlayer.role == role)
                     {
                         ret++;
@@ -285,8 +288,9 @@ namespace Julo.Game
             {
                 clientsAreReadyToStart[c.connectionId] = false;
 
-                foreach(var gamePlayer in c.GetPlayersAs<GamePlayer>())
+                foreach(var player in c.GetPlayers())
                 {
+                    var gamePlayer = (GamePlayer)player;
                     if(!gamePlayer.IsSpectator())
                     {
                         int role = gamePlayer.role;
@@ -325,7 +329,8 @@ namespace Julo.Game
             // TODO cache GamePlayers !!!
             foreach(var dualPlayer in dualContext.AllPlayers())
             {
-                var gamePlayer = DNM.GetPlayerAs<GamePlayer>(dualPlayer);
+                // TODO cast or cache?
+                var gamePlayer = (GamePlayer)dualPlayer;
 
                 if(!gamePlayer.IsSpectator() && !gamePlayer.isReady)
                 {
@@ -379,15 +384,16 @@ namespace Julo.Game
                     var controllerId = usernameMsg.controllerId;
                     var newName = usernameMsg.newName;
 
-                    var player = dualContext.GetPlayerAs<GamePlayer>(connId, controllerId);
+                    var player = dualContext.GetPlayer(connId, controllerId);
+                    var gamePlayer = (GamePlayer)player;
 
-                    if(player == null)
+                    if(gamePlayer == null)
                     {
                         Log.Error("Player to change name not found");
                         return;
                     }
 
-                    player.SetUsername(newName);
+                    gamePlayer.SetUsername(newName);
 
                     SendToAll(MsgType.ChangeUsername, usernameMsg);
 

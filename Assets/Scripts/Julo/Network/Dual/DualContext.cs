@@ -9,6 +9,7 @@ namespace Julo.Network
     public class DualContext
     {
         Dictionary<int, ConnectionInfo> connections;
+
         public int localConnectionNumber;
 
         bool isServer;
@@ -62,22 +63,10 @@ namespace Julo.Network
             }
 
             var connectionInfo = connections[id];
-            
-            foreach(var p in connectionInfo.players)
-            {
-                // TODO remove players
-                /*
-                var playerId = p.PlayerId();
-                if(!players.ContainsKey(playerId))
-                {
-                    Log.Error("Player not found here");
-                }
-                else
-                {
-                    players.Remove(playerId);
-                }
-                */
-            }
+
+            /* TODO remove players
+            foreach(var p in connectionInfo.players) { }
+            */
 
             connections.Remove(id);
         }
@@ -117,20 +106,7 @@ namespace Julo.Network
             var ret = connection.players[controllerId];
             return ret;
         }
-
-        public T GetPlayerAs<T>(int connectionId, short controllerId) where T : MonoBehaviour
-        {
-            var dualPlayer = GetPlayer(connectionId, controllerId);
-
-            if(dualPlayer == null)
-            {
-                Log.Debug("Returning null here");
-                return default; 
-            }
-
-            return DNM.GetPlayerAs<T>(dualPlayer);
-        }
-
+        
         public IEnumerable<DualPlayer> GetPlayers(int connectionId)
         {
             if(!connections.ContainsKey(connectionId))
@@ -142,19 +118,6 @@ namespace Julo.Network
             var connection = connections[connectionId];
 
             return connection.GetPlayers();
-        }
-
-        public List<T> GetPlayersAs<T>(int connectionId) where T : MonoBehaviour
-        {
-            if(!connections.ContainsKey(connectionId))
-            {
-                Log.Error("No connection {0}", connectionId);
-                return default;
-            }
-
-            var connection = connections[connectionId];
-
-            return connection.GetPlayersAs<T>();
         }
 
         public void AddPlayer(DualPlayer player)

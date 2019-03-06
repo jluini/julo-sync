@@ -15,9 +15,6 @@ namespace Julo.Game
         protected int numRoles;
         protected string sceneName;
 
-        // only remote client
-        //Dictionary<uint, GamePlayerMessage> pendingPlayers = new Dictionary<uint, GamePlayerMessage>();
-
         public GameClient(Mode mode, DualServer server, DualPlayer playerModel) : base(mode, server, playerModel)
         {
             instance = this;
@@ -67,7 +64,8 @@ namespace Julo.Game
             bool ready = gamePlayerData.isReady;
             string username = gamePlayerData.username;
 
-            var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
+            // TODO cast or cache GamePlayer?
+            var gamePlayer = (GamePlayer)player;
 
             if(gamePlayer.role == role)
                 Log.Warn("Role already set to {0}", role);
@@ -132,13 +130,13 @@ namespace Julo.Game
                         var connectionId = changeReadyMessage.connectionId;
                         var newReady = changeReadyMessage.newReady;
 
-                        var players = dualContext.GetPlayersAs<GamePlayer>(connectionId);
+                        var players = dualContext.GetPlayers(connectionId);
 
                         foreach(var player in players)
                         {
-                            // TODO cache game players!!!
-                            //var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
-                            player.SetReady(newReady);
+                            // TODO cast or cache game players?
+                            var gamePlayer = (GamePlayer)player;
+                            gamePlayer.SetReady(newReady);
                         }
                     }
 
@@ -149,12 +147,13 @@ namespace Julo.Game
                     if(!isHosted)
                     {
                         var changeRoleMsg = message.ReadInternalMessage<ChangeRoleMessage>();
-                        //var playerId = changeRoleMsg.playerId;
                         var connId = changeRoleMsg.controllerId;
                         var controllerId = changeRoleMsg.controllerId;
                         var newRole = changeRoleMsg.newRole;
 
-                         dualContext.GetPlayerAs<GamePlayer>(connId, controllerId).SetRole(newRole);
+                        // TODO cast or cache?
+                        var gamePlayer = (GamePlayer)dualContext.GetPlayer(connId, controllerId);
+                        gamePlayer.SetRole(newRole);
                     }
 
                     break;
@@ -164,12 +163,13 @@ namespace Julo.Game
                     if(!isHosted)
                     {
                         var usernameMsg = message.ReadInternalMessage<ChangeUsernameMessage>();
-                        //var playerId = usernameMsg.playerId;
                         var connId = usernameMsg.connectionId;
                         var controllerId = usernameMsg.controllerId;
                         var newName = usernameMsg.newName;
 
-                        dualContext.GetPlayerAs<GamePlayer>(connId, controllerId).SetUsername(newName);
+                        // TODO cast or cache?
+                        var gamePlayer = (GamePlayer)dualContext.GetPlayer(connId, controllerId);
+                        gamePlayer.SetUsername(newName);
                     }
 
                     break;
@@ -268,7 +268,6 @@ namespace Julo.Game
             // TODO mostrar cambio?
             this.gameState = newState;
         }
-
 
     } // class GameClient
 
