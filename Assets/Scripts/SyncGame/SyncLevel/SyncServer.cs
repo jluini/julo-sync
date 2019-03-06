@@ -29,7 +29,7 @@ namespace SyncGame
         {
             base.WriteRemoteClientData(messages);
 
-            if(gameState == GameState.Playing || gameState == GameState.GameOver)
+            if(gameContext.gameState == GameState.Playing || gameContext.gameState == GameState.GameOver)
             {
                 messages.Add(match.GetState());
             }
@@ -45,7 +45,7 @@ namespace SyncGame
             match = new SyncMatch();
 
             match.CreateFromSpawnPoints(
-                numRoles,
+                gameContext.numRoles,
                 unitModel,
                 Object.FindObjectsOfType<SpawnPoint>()
             );

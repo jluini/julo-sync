@@ -20,7 +20,7 @@ namespace Julo.TurnBased
 
         protected override void OnLateJoin(MessageStackMessage messageStack)
         {
-            if(gameState == GameState.Playing)
+            if(gameContext.gameState == GameState.Playing)
             {
                 var currentPlayerMessage = messageStack.ReadMessage<PlayerMessage>();
 

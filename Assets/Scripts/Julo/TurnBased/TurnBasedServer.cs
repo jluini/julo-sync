@@ -34,7 +34,7 @@ namespace Julo.TurnBased
         {
             base.WriteRemoteClientData(messages);
 
-            if(gameState == GameState.Playing)
+            if(gameContext.gameState == GameState.Playing)
             {
                 messages.Add(new PlayerMessage(playingPlayer));
             }
@@ -63,14 +63,14 @@ namespace Julo.TurnBased
 
         protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack)
         {
-            if(numRoles != playersPerRole.Length)
+            if(gameContext.numRoles != playersPerRole.Length)
             {
-                Log.Error("Unmatching {0} != {1}", numRoles, playersPerRole.Length);
+                Log.Error("Unmatching {0} != {1}", gameContext.numRoles, playersPerRole.Length);
             }
 
-            this.playersPerRole = new List<TBPlayer>[numRoles];
+            this.playersPerRole = new List<TBPlayer>[gameContext.numRoles];
 
-            for(int r = 1; r <= numRoles; r++)
+            for(int r = 1; r <= gameContext.numRoles; r++)
             {
                 this.playersPerRole[r - 1] = new List<TBPlayer>();
                 foreach(var p in playersPerRole[r - 1])
@@ -79,8 +79,8 @@ namespace Julo.TurnBased
                 }
             }
 
-            roleData = new RoleData[numRoles];
-            for(int r = 1; r <= numRoles; r++)
+            roleData = new RoleData[gameContext.numRoles];
+            for(int r = 1; r <= gameContext.numRoles; r++)
             {
                 roleData[r - 1] = new RoleData();
             }
@@ -101,7 +101,7 @@ namespace Julo.TurnBased
                 int someAliveRole = -1;
                 int aliveRoles = 0;
 
-                for(int r = 1; r <= numRoles; r++)
+                for(int r = 1; r <= gameContext.numRoles; r++)
                 {
                     bool roleWasAlive = roleData[r - 1].isAlive;
                     bool roleIsAlive = RoleIsAlive(r);
@@ -146,7 +146,7 @@ namespace Julo.TurnBased
                     while(true)
                     {
                         nextRoleToPlay++;
-                        if(nextRoleToPlay > numRoles)
+                        if(nextRoleToPlay > gameContext.numRoles)
                         {
                             nextRoleToPlay = 1;
                         }

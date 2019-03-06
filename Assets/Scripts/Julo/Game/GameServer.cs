@@ -16,13 +16,11 @@ namespace Julo.Game
     {
         public new static GameServer instance = null;
 
+        public GameContext gameContext;
+        
         Dictionary<int, bool> clientsAreReadyToStart;
 
-        private List<GamePlayer>[] playersPerRole;
-
-        protected int numRoles;
-        public GameState gameState;
-        protected string sceneName;
+        List<GamePlayer>[] playersPerRole;
 
         int willStartCountDown = 1;
 
@@ -30,9 +28,7 @@ namespace Julo.Game
         {
             instance = this;
 
-            gameState = GameState.NoGame;
-            numRoles = 2;
-            sceneName = "beach";
+            gameContext = new GameContext();
         }
 
         // only online mode
@@ -40,7 +36,7 @@ namespace Julo.Game
         {
             base.WriteRemoteClientData(messages);
 
-            messages.Add(new GameStatusMessage(gameState, numRoles, sceneName));
+            messages.Add(new GameStatusMessage(gameContext.gameState, gameContext.numRoles, gameContext.sceneName));
         }
 
         ////////// Player //////////
@@ -55,7 +51,7 @@ namespace Julo.Game
 
             // start as spec if game already started
 
-            int role = gameState == GameState.NoGame ? GetNextRole() : DNM.SpecRole;
+            int role = gameContext.gameState == GameState.NoGame ? GetNextRole() : DNM.SpecRole;
             bool ready = mode == Mode.OfflineMode;
             string username = System.String.Format("Player {0}", player.ControllerId()); // TODO
 
@@ -74,9 +70,9 @@ namespace Julo.Game
 
         public void TryToStartGame()
         {
-            if(gameState != GameState.NoGame)
+            if(gameContext.gameState != GameState.NoGame)
             {
-                Log.Error("Unexpected call of TryToStartGame: {0}", gameState);
+                Log.Error("Unexpected call of TryToStartGame: {0}", gameContext.gameState);
                 return;
             }
             if(!PlayersAreReady())
@@ -91,10 +87,7 @@ namespace Julo.Game
                 return;
             }
 
-            gameState = GameState.WillStart;
-
-            numRoles = 2; // TODO 
-            sceneName = "beach"; // TODO 
+            gameContext.gameState = GameState.WillStart;
 
             CollectPlayersPerRole();
 
@@ -109,16 +102,16 @@ namespace Julo.Game
 
                 yield return new WaitForSeconds(1f);
 
-                if(gameState != GameState.WillStart)
+                if(gameContext.gameState != GameState.WillStart)
                 {
-                    if(gameState != GameState.CancelingStart)
+                    if(gameContext.gameState != GameState.CancelingStart)
                     {
-                        Log.Warn("WillStartCoroutine: unexpected state {0}", gameState);
+                        Log.Warn("WillStartCoroutine: unexpected state {0}", gameContext.gameState);
                     }
 
                     SendToAll(MsgType.GameCanceled, new EmptyMessage());
 
-                    gameState = GameState.NoGame;
+                    gameContext.gameState = GameState.NoGame;
 
                     yield break;
                 }
@@ -132,18 +125,18 @@ namespace Julo.Game
 
         void PrepareToStartGame()
         {
-            if(gameState != GameState.WillStart && gameState != GameState.CancelingStart)
+            if(gameContext.gameState != GameState.WillStart && gameContext.gameState != GameState.CancelingStart)
             {
-                Log.Error("Unexpected call of PrepareToStartGame: {0}", gameState);
+                Log.Error("Unexpected call of PrepareToStartGame: {0}", gameContext.gameState);
                 return;
             }
 
-            gameState = GameState.Preparing;
+            gameContext.gameState = GameState.Preparing;
 
-            DualNetworkManager.instance.LoadSceneAsync(sceneName, () =>
+            DualNetworkManager.instance.LoadSceneAsync(gameContext.sceneName, () =>
             {
                 var messageStack = new List<MessageBase>();
-                messageStack.Add(new PrepareToStartMessage(numRoles, sceneName));
+                messageStack.Add(new PrepareToStartMessage(gameContext.numRoles, gameContext.sceneName));
 
                 OnPrepareToStart(playersPerRole, messageStack);
 
@@ -155,31 +148,29 @@ namespace Julo.Game
 
         public void StartGame()
         {
-            gameState = GameState.Playing;
+            gameContext.gameState = GameState.Playing;
 
             OnStartGame();
 
-            SendToAll(MsgType.StartGame, new EmptyMessage()); //  MessageStackMessage(messageStack)); // TODO send initial game data
+            SendToAll(MsgType.StartGame, new EmptyMessage());
         }
 
         protected abstract void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack);
         protected abstract void OnStartGame();
 
-        ////////// * //////////
-
         ////////// Roles //////////
 
         public void ChangeReady(int connectionId, bool newReady)
         {
-            if(gameState != GameState.NoGame && gameState != GameState.WillStart)
+            if(gameContext.gameState != GameState.NoGame && gameContext.gameState != GameState.WillStart)
             {
                 Log.Error("Cannot change ready now");
             }
 
-            if(gameState == GameState.WillStart)
+            if(gameContext.gameState == GameState.WillStart)
             {
                 // cancel WillStart
-                gameState = GameState.CancelingStart;
+                gameContext.gameState = GameState.CancelingStart;
             }
 
             var players = dualContext.GetPlayers(connectionId);
@@ -196,7 +187,7 @@ namespace Julo.Game
 
         public void ChangeRole(GamePlayer player)
         {
-            if(gameState != GameState.NoGame)
+            if(gameContext.gameState != GameState.NoGame)
             {
                 Log.Error("Unexpected call of ChangeRole");
                 return;
@@ -280,7 +271,7 @@ namespace Julo.Game
 
         void CollectPlayersPerRole()
         {
-            playersPerRole = new List<GamePlayer>[numRoles];
+            playersPerRole = new List<GamePlayer>[gameContext.numRoles];
 
             clientsAreReadyToStart = new Dictionary<int, bool>();
 
@@ -295,7 +286,7 @@ namespace Julo.Game
                     {
                         int role = gamePlayer.role;
 
-                        if(role < 1 || role > numRoles)
+                        if(role < 1 || role > gameContext.numRoles)
                         {
                             Log.Error("Unexpected role {0}", role);
                             return;
@@ -311,15 +302,10 @@ namespace Julo.Game
                 }
             }
         }
-        /*
-        protected List<GamePlayer> GetPlayersForRole(int role)
-        {
-            return playersPerRole[role - 1];
-        }
-        */
+        
         int GetMaxPlayers()
         {
-            return numRoles;
+            return gameContext.numRoles;
         }
 
         // //////////////
@@ -379,7 +365,6 @@ namespace Julo.Game
 
                     // TODO validate name
 
-                    //var playerId = usernameMsg.playerId;
                     var connId = usernameMsg.connectionId;
                     var controllerId = usernameMsg.controllerId;
                     var newName = usernameMsg.newName;
@@ -414,9 +399,9 @@ namespace Julo.Game
                     break;
 
                 case MsgType.ReadyToStart:
-                    if(gameState != GameState.Preparing)
+                    if(gameContext.gameState != GameState.Preparing)
                     {
-                        Log.Warn("Unexpected ReadyToStart in state {0}", gameState);
+                        Log.Warn("Unexpected ReadyToStart in state {0}", gameContext.gameState);
                         return;
                     }
                     if(!clientsAreReadyToStart.ContainsKey(from))
@@ -444,14 +429,6 @@ namespace Julo.Game
                     base.OnMessage(message, from);
                     break;
             }
-        }
-
-        ///
-
-        void SetState(GameState newState)
-        {
-            // TODO mostrar cambio?
-            this.gameState = newState;
         }
 
     } // class GameServer

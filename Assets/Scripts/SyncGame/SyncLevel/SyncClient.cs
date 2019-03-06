@@ -80,10 +80,10 @@ namespace SyncGame
         {
             base.OnLateJoin(messageStack);
 
-            if(gameState == GameState.Playing || gameState == GameState.GameOver)
+            if(gameContext.gameState == GameState.Playing || gameContext.gameState == GameState.GameOver)
             {
                 var stateMessage = messageStack.ReadMessage<SyncGameState>();
-                remoteMatch.CreateFromInitialState(numRoles, unitModel, stateMessage);
+                remoteMatch.CreateFromInitialState(gameContext.numRoles, unitModel, stateMessage);
 
                 OnGameStarted();
             }
@@ -95,7 +95,7 @@ namespace SyncGame
 
             var stateMessage = messageStack.ReadMessage<SyncGameState>();
 
-            remoteMatch.CreateFromInitialState(numRoles, unitModel, stateMessage);
+            remoteMatch.CreateFromInitialState(gameContext.numRoles, unitModel, stateMessage);
         }
 
         protected override void OnGameStarted()

@@ -9,17 +9,34 @@ namespace Julo.Game
     {
         public new static GameClient instance = null;
 
-        public GameState gameState;
-        protected int numRoles;
-        protected string sceneName;
+        // only hosted
+        protected GameServer gameServer;
 
-        public GameClient(Mode mode, DualServer server, DualPlayer playerModel) : base(mode, server, playerModel)
+        // only remote
+        GameContext clientContext;
+
+        protected GameContext gameContext
+        {
+            get
+            {
+                if(isHosted)
+                {
+                    return gameServer.gameContext;
+                }
+                else
+                {
+                    return clientContext;
+                }
+            }
+        }
+
+        public GameClient(Mode mode, DualServer dualServer, DualPlayer playerModel) : base(mode, dualServer, playerModel)
         {
             instance = this;
-
-            this.gameState = GameState.Unknown;
-            this.numRoles = 0;
-            this.sceneName = "";
+            if(dualServer != null)
+            {
+                gameServer = (GameServer)dualServer;
+            }
         }
 
         public sealed override void InitializeState(int connectionNumber, MessageStackMessage messageStack)
@@ -28,9 +45,11 @@ namespace Julo.Game
 
             var message = messageStack.ReadMessage<GameStatusMessage>();
 
-            gameState = message.state;
-            numRoles = message.numRoles;
-            sceneName = message.sceneName;
+            var gameState = message.state;
+            var numRoles = message.numRoles;
+            var sceneName = message.sceneName;
+
+            clientContext = new GameContext(gameState, numRoles, sceneName);
 
             switch(gameState)
             {
@@ -87,8 +106,8 @@ namespace Julo.Game
         {
             var prepareMessage = messageStack.ReadMessage<PrepareToStartMessage>();
 
-            numRoles = prepareMessage.numRoles;
-            sceneName = prepareMessage.sceneName;
+            gameContext.numRoles = prepareMessage.numRoles;
+            gameContext.sceneName = prepareMessage.sceneName;
 
             if(isHosted)
             {
@@ -96,7 +115,7 @@ namespace Julo.Game
                 return;
             }
 
-            DualNetworkManager.instance.LoadSceneAsync(sceneName, () =>
+            DualNetworkManager.instance.LoadSceneAsync(gameContext.sceneName, () =>
             {
                 OnPrepareToStart(messageStack);
                 SendToServer(MsgType.ReadyToStart, new EmptyMessage());
@@ -179,17 +198,17 @@ namespace Julo.Game
 
                     Log.Debug("Game will start in {0} secs...", secs);
 
-                    gameState = GameState.WillStart;
+                    gameContext.gameState = GameState.WillStart;
 
                     break;
 
                 case MsgType.GameCanceled:
-                    gameState = GameState.NoGame;
+                    gameContext.gameState = GameState.NoGame;
                     Log.Debug("Game canceled");
                     break;
 
                 case MsgType.PrepareToStart:
-                    gameState = GameState.Preparing;
+                    gameContext.gameState = GameState.Preparing;
 
                     var messageStack = message.ReadInternalMessage<MessageStackMessage>();
 
@@ -213,17 +232,17 @@ namespace Julo.Game
 
         void CheckState(GameState expectedState)
         {
-            if(gameState != expectedState)
+            if(gameContext.gameState != expectedState)
             {
-                WrongState(gameState.ToString());
+                WrongState(gameContext.gameState.ToString());
             }
         }
 
         void CheckState(GameState[] expectedStates)
         {
-            if(!System.Array.Exists<GameState>(expectedStates, s => s == gameState))
+            if(!System.Array.Exists<GameState>(expectedStates, s => s == gameContext.gameState))
             {
-                WrongState(gameState.ToString());
+                WrongState(gameContext.gameState.ToString());
             }
         }
 
@@ -259,14 +278,6 @@ namespace Julo.Game
             return true;
         }
         
-        /// 
-
-        void SetState(GameState newState)
-        {
-            // TODO mostrar cambio?
-            this.gameState = newState;
-        }
-
     } // class GameClient
 
 } // namespace Julo.Game
