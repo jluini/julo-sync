@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -15,11 +16,13 @@ namespace Julo.TurnBased
     {
         public new static TurnBasedServer instance;
         
+        
+        // only server
         float preturnWaitTime = 1f;
         RoleData[] roleData;
         int lastRolePlayed = 0;
-
-        GamePlayer playingPlayer = null;
+        TBPlayer playingPlayer = null;
+        List<TBPlayer>[] playersPerRole;
 
         public TurnBasedServer(Mode mode) : base(mode)
         {
@@ -33,7 +36,7 @@ namespace Julo.TurnBased
 
             if(gameState == GameState.Playing)
             {
-                messages.Add(new PlayerMessage(playingPlayer));
+                messages.Add(new PlayerMessage(playingPlayer.PlayerId()));
             }
         }
 
@@ -66,8 +69,24 @@ namespace Julo.TurnBased
             }
         }
 
-        protected override void OnPrepareToStart(List<MessageBase> messageStack)
+        protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack)
         {
+            if(numRoles != playersPerRole.Length)
+            {
+                Log.Error("Unmatching {0} != {1}", numRoles, playersPerRole.Length);
+            }
+
+            this.playersPerRole = new List<TBPlayer>[numRoles];
+
+            for(int r = 1; r <= numRoles; r++)
+            {
+                this.playersPerRole[r - 1] = new List<TBPlayer>();
+                foreach(var p in playersPerRole[r - 1])
+                {
+                    this.playersPerRole[r - 1].Add(p.GetComponent<TBPlayer>());
+                }
+            }
+
             roleData = new RoleData[numRoles];
             for(int r = 1; r <= numRoles; r++)
             {
@@ -152,12 +171,14 @@ namespace Julo.TurnBased
 
                     // it's turn for nextRoleToPlay
 
-                    var players = GetPlayersForRole(nextRoleToPlay);
+                    var players = playersPerRole[nextRoleToPlay - 1];
 
                     // TODO it's picking always the first player of the role
-                    playingPlayer = players[0];
+                    playingPlayer = GetNextPlayer(players);
 
-                    SendToAll(MsgType.StartTurn, new PlayerMessage(playingPlayer));
+                    playingPlayer.lastUse = DateTime.Now;
+
+                    SendToAll(MsgType.StartTurn, new PlayerMessage(playingPlayer.PlayerId()));
 
                     do
                     {
@@ -165,6 +186,26 @@ namespace Julo.TurnBased
                     } while(playingPlayer != null);
                 }
             } while(true);
+        }
+
+        TBPlayer GetNextPlayer(List<TBPlayer> players)
+        {
+            if(players.Count > 0)
+            {
+                var t = players[0];
+                for(int i = 1; i < players.Count; i++)
+                {
+                    var t2 = players[i];
+                    if(t2.lastUse < t.lastUse)
+                    {
+                        t = t2;
+                    }
+                }
+
+                return t;
+            }
+            Log.Error("No players");
+            return null;
         }
 
         protected abstract void OnStartTurn(int role);

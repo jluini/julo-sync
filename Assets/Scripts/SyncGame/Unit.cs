@@ -12,6 +12,7 @@ namespace SyncGame
         public int index = 0;
         public bool dead = false;
 
+        // only in client playing with this unit
         public DateTime lastUse;
 
         public static Color[] playerColors =
@@ -91,7 +92,6 @@ namespace SyncGame
             {
                 SetMyColor();
             }
-            lastUse = DateTime.Now;
         }
 
         public void SetColor(Color color)

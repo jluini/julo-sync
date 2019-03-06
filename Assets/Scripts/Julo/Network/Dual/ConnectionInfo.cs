@@ -43,9 +43,9 @@ namespace Julo.Network
             players.Add(newPlayer);
         }
 
-        public void RemovePlayer(short controllerId)
+        public void RemovePlayer(PlayerInfo playerInfo)
         {
-            // TODO implement remove
+            players.Remove(playerInfo);
         }
 
     }

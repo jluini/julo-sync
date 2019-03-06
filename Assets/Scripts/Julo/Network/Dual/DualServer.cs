@@ -70,12 +70,22 @@ namespace Julo.Network
             var id = networkConnection.connectionId;
             this.connections.AddConnection(new ConnectionInfo(id, networkConnection));
         }
-
+        
         public void RemoveClient(int connectionId)
         {
+            if(connectionId == DNM.LocalConnectionId)
+            {
+                Log.Warn("Removing local connection");
+            }
+
+            foreach(var playerInfo in connections.GetPlayersOfConnection(connectionId))
+            {
+                OnPlayerRemoved(playerInfo);
+            }
+
             connections.RemoveConnection(connectionId);
         }
-
+        
         ///////////////////////
 
         // only online mode
@@ -123,13 +133,16 @@ namespace Julo.Network
             return messageStack;
         }
 
-        // only server
         public virtual void OnPlayerAdded(IDualPlayer player)
         {
             // noop
         }
 
-        // only server
+        public virtual void OnPlayerRemoved(PlayerInfo playerInfo)
+        {
+            // noop
+        }
+
         public virtual void WritePlayer(IDualPlayer player, List<MessageBase> messageStack)
         {
             messageStack.Add(new DualPlayerMessage(player));

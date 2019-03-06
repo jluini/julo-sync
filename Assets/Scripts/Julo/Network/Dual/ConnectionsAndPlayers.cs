@@ -54,7 +54,8 @@ namespace Julo.Network
         {
             return connections.Values;
         }
-
+        
+        // only server
         public void RemoveConnection(int id)
         {
             if(!connections.ContainsKey(id))
@@ -64,10 +65,9 @@ namespace Julo.Network
             }
 
             var connectionInfo = connections[id];
-
+            
             foreach(var p in connectionInfo.players)
             {
-                // TODO remove players?
                 var playerId = p.PlayerId();
                 if(!players.ContainsKey(playerId))
                 {
@@ -75,7 +75,6 @@ namespace Julo.Network
                 }
                 else
                 {
-                    // TODO do something with actual player?
                     players.Remove(playerId);
                 }
             }
@@ -107,20 +106,62 @@ namespace Julo.Network
             return GetPlayerInfo(playerId)?.actualPlayer;
         }
 
-        // player can be null
-        public void AddPlayer(int connectionId, PlayerInfo playerInfo/*IDualPlayer player, DualPlayerMessage playerScreenshot*/)
+        public List<PlayerInfo> GetPlayersOfConnection(int connId)
+        {
+            if(!connections.ContainsKey(connId))
+            {
+                Log.Error("Connection not found");
+                return new List<PlayerInfo>();
+            }
+
+            var c = connections[connId];
+            return c.players;
+        }
+
+        public void AddPlayer(int connectionId, PlayerInfo playerInfo)
         {
             if(!HasConnection(connectionId))
             {
                 AddConnection(new ConnectionInfo(connectionId));
             }
-            //GetConnection(connectionId).AddPlayer(player, playerScreenshot);
 
             GetConnection(connectionId).AddPlayer(playerInfo);
 
             var playerId = playerInfo.PlayerId();
 
             players.Add(playerId, playerInfo);
+        }
+
+        // only remote client
+        public void RemovePlayer(uint playerId)
+        {
+            if(!players.ContainsKey(playerId))
+            {
+                Log.Error("Player not found");
+                return;
+            }
+
+            var playerInfo = players[playerId];
+
+            if(playerInfo.PlayerId() != playerId)
+            {
+                Log.Error("Wrong data 27");
+            }
+
+            Log.Debug("Removing while actualPlayer={0}", playerInfo.actualPlayer);
+
+            players.Remove(playerId);
+
+            var connId = playerInfo.ConnectionId();
+
+            if(!connections.ContainsKey(connId))
+            {
+                Log.Error("Player connection not found");
+            }
+
+            var connection = connections[connId];
+
+            connection.RemovePlayer(playerInfo);
         }
 
         // TODO don't use every frame; cache in higher leves instead

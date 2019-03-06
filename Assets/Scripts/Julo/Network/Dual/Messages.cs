@@ -21,10 +21,11 @@ namespace Julo.Network
 
         // Players
         public const short NewPlayer = MsgTypeBase + 5;
+        public const short RemovePlayer = MsgTypeBase + 6;
 
         // Messaging
-        public const short GameServerToClient = MsgTypeBase + 6;
-        public const short GameClientToServer = MsgTypeBase + 7;
+        public const short GameServerToClient = MsgTypeBase + 7;
+        public const short GameClientToServer = MsgTypeBase + 8;
 
         public const short Highest = GameClientToServer;
     }
@@ -139,6 +140,37 @@ namespace Julo.Network
     } // class WrappedMessage
 
     ////////////
+
+    public class PlayerMessage : MessageBase
+    {
+        public uint playerId;
+
+        public PlayerMessage()
+        {
+        }
+
+        public PlayerMessage(uint playerId)
+        {
+            this.playerId = playerId;
+        }
+        /*
+        public PlayerMessage(IDualPlayer player)
+        {
+            playerId = player == null ? 0 : player.PlayerId();
+        }
+        */
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(playerId);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            playerId = reader.ReadUInt32();
+        }
+
+    } // class PlayerMessage
+
 
     // TODO rename to DualPlayerScreenshot
     // implement IDualPlayer?

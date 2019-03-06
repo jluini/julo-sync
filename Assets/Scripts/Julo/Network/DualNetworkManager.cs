@@ -334,14 +334,15 @@ namespace Julo.Network
 
             var id = conn.connectionId;
 
-            if(dualServer.connections.HasConnection(id))
+            foreach(var playerInfo in dualServer.connections.GetConnection(id).players)
             {
-                dualServer.RemoveClient(id);
+                //dualServer.connections.RemovePlayer
+
+                // TODO send to remote only
+                NetworkServer.SendToAll(MsgType.RemovePlayer, new PlayerMessage(playerInfo.PlayerId()));
             }
-            else
-            {
-                Log.Warn("Could not delete from dict");
-            }
+                
+            dualServer.RemoveClient(id);
 
             if(conn.lastError != NetworkError.Ok)
             {
@@ -641,6 +642,7 @@ namespace Julo.Network
 
             // Players
             conn.RegisterHandler(MsgType.NewPlayer, OnNewPlayerMessage);
+            conn.RegisterHandler(MsgType.RemovePlayer, OnRemovePlayerMessage);
         }
         
         // server handlers
@@ -751,6 +753,16 @@ namespace Julo.Network
             var msg = messageReader.ReadMessage<MessageStackMessage>();
 
             dualClient.OnNewPlayerMessage(msg);
+        }
+
+        void OnRemovePlayerMessage(NetworkMessage messageReader)
+        {
+            var msg = messageReader.ReadMessage<PlayerMessage>();
+
+            if(!NetworkServer.active)
+            {
+                dualClient.RemovePlayer(msg.playerId);
+            }
         }
         
         //// IDualListener

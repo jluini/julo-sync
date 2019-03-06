@@ -126,7 +126,6 @@ namespace Julo.Network
             }
         }
 
-
         public void StartOnlinePlayer(OnlineDualPlayer player)
         {
             if(!isHosted)
@@ -192,7 +191,6 @@ namespace Julo.Network
             }
 
             OnPlayerResolved(player, playerInfo.playerScreenshot);
-
         }
 
         protected virtual void OnPlayerResolved(OnlineDualPlayer player, DualPlayerMessage playerScreenshot)
@@ -209,6 +207,18 @@ namespace Julo.Network
             // Init directo a partir de screenshot?
 
             player.Init(connId, controllerId);
+        }
+
+        // only remote
+        public void RemovePlayer(uint playerId)
+        {
+            if(isHosted)
+            {
+                Log.Error("I'm hosted");
+                return;
+            }
+
+            clientConnections.RemovePlayer(playerId);
         }
 
         // sending messages to server

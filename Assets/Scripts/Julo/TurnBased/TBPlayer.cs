@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using UnityEngine;
 
@@ -8,10 +9,14 @@ using Julo.Game;
 
 namespace Julo.TurnBased
 {
+    
     // TODO should implement IDualPlayer?
     [RequireComponent(typeof(GamePlayer))]
     public class TBPlayer : MonoBehaviour, IPlayer
     {
+        // only in server
+        public DateTime lastUse;
+
         List<ITurnBasedPlayerListener> listeners = new List<ITurnBasedPlayerListener>();
 
         IDualPlayer _dualPlayer;

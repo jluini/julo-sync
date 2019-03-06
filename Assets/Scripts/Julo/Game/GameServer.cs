@@ -18,7 +18,7 @@ namespace Julo.Game
 
         Dictionary<int, bool> clientsAreReadyToStart;
 
-        List<GamePlayer>[] playersPerRole;
+        private List<GamePlayer>[] playersPerRole;
 
         protected int numRoles;
         protected GameState gameState;
@@ -51,6 +51,7 @@ namespace Julo.Game
         {
             base.OnPlayerAdded(player);
 
+            // TODO cache GamePlayer
             var gamePlayer = DNM.GetPlayerAs<GamePlayer>(player);
 
             // start as spec if game already started
@@ -145,7 +146,7 @@ namespace Julo.Game
                 var messageStack = new List<MessageBase>();
                 messageStack.Add(new PrepareToStartMessage(numRoles, sceneName));
 
-                OnPrepareToStart(messageStack);
+                OnPrepareToStart(playersPerRole, messageStack);
 
                 SendToAll(MsgType.PrepareToStart, new MessageStackMessage(messageStack));
 
@@ -162,7 +163,7 @@ namespace Julo.Game
             SendToAll(MsgType.StartGame, new EmptyMessage()); //  MessageStackMessage(messageStack)); // TODO send initial game data
         }
 
-        protected abstract void OnPrepareToStart(List<MessageBase> messageStack);
+        protected abstract void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack);
         protected abstract void OnStartGame();
 
         ////////// * //////////
@@ -313,12 +314,12 @@ namespace Julo.Game
                 }
             }
         }
-
+        /*
         protected List<GamePlayer> GetPlayersForRole(int role)
         {
             return playersPerRole[role - 1];
         }
-
+        */
         int GetMaxPlayers()
         {
             return numRoles;

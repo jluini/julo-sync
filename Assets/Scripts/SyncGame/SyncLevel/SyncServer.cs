@@ -50,9 +50,9 @@ namespace SyncGame
             base.WritePlayer(player, messageStack);
         }
 
-        protected override void OnPrepareToStart(List<MessageBase> messageStack)
+        protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack)
         {
-            base.OnPrepareToStart(messageStack);
+            base.OnPrepareToStart(playersPerRole, messageStack);
 
             match = new SyncMatch();
 

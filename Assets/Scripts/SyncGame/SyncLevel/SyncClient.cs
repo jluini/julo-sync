@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -162,7 +163,7 @@ namespace SyncGame
             currentTurn = TurnType.Keyboard;
 
             targetUnit = GetNextUnit(aliveUnits);
-
+            targetUnit.lastUse = DateTime.Now;
             targetUnit.SetPlaying(true);
         }
 
