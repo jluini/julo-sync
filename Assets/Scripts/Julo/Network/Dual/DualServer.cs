@@ -75,8 +75,15 @@ namespace Julo.Network
             var id = networkConnection.connectionId;
             dualContext.AddConnection(new ConnectionInfo(id, networkConnection));
         }
+
+
+        public virtual void OnClientDisconnected(int connectionId)
+        {
+            RemoveClient(connectionId);
+        }
+
         
-        public void RemoveClient(int connectionId)
+        protected void RemoveClient(int connectionId)
         {
             if(!dualContext.HasConnection(connectionId))
             {
@@ -86,14 +93,36 @@ namespace Julo.Network
 
             var conn = dualContext.GetConnection(connectionId);
 
+            RemoveAllPlayers(conn);
+
+            /*
             // TODO this is traversing players and removing them simultaneously, could cause problems
             foreach(var controllerAndPlayer in conn.players)
             {
                 SendToAll(MsgType.RemovePlayer, new DualPlayerSnapshot(controllerAndPlayer.Value));
                 dualContext.RemovePlayer(connectionId, controllerAndPlayer.Key);
             }
+            */
 
             dualContext.RemoveConnection(connectionId);
+        }
+
+        protected void RemoveAllPlayers(ConnectionInfo conn)
+        {
+            var nextPlayer = conn.GetSomePlayer();
+
+            while(nextPlayer != null)
+            {
+                RemovePlayer(nextPlayer);
+                nextPlayer = conn.GetSomePlayer();
+            }
+        }
+
+        protected void RemovePlayer(DualPlayer player)
+        {
+            SendToAll(MsgType.RemovePlayer, new DualPlayerSnapshot(player));
+            OnPlayerRemoved(player);
+            dualContext.RemovePlayer(player.ConnectionId(), player.ControllerId());
         }
         
         ///////////////////////
@@ -133,10 +162,8 @@ namespace Julo.Network
             return listOfMessages;
         }
 
-        public virtual void OnPlayerAdded(DualPlayer player)
-        {
-            // noop
-        }
+        protected virtual void OnPlayerAdded(DualPlayer player) { /* noop */ }
+        protected virtual void OnPlayerRemoved(DualPlayer player) { /* noop */ }
         
         public virtual void WritePlayer(DualPlayer player, ListOfMessages listOfMessages)
         {

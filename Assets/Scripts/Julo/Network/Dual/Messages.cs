@@ -146,7 +146,8 @@ namespace Julo.Network
     } // class WrappedMessage
 
     ////////////
-    
+
+    // TODO rename to DualPlayerIdentity?
     public class DualPlayerSnapshot : MessageBase
     {
         public int connectionId;

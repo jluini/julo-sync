@@ -54,6 +54,17 @@ namespace Julo.Network
             players.Add(controllerId, newPlayer);
         }
 
+        public DualPlayer GetSomePlayer()
+        {
+            if(players.Count == 0)
+            {
+                return null;
+            }
+            var playersEnum = players.GetEnumerator();
+            playersEnum.MoveNext();
+            return playersEnum.Current.Value;
+        }
+
         public void RemovePlayer(DualPlayer dualPlayer)
         {
             if(!players.Remove(dualPlayer.ControllerId()))

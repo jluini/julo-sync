@@ -210,6 +210,22 @@ namespace Julo.Game
                     OnGameStarted();
                     break;
 
+                case MsgType.PlayerDisconnected:
+                    if(!isHosted)
+                    {
+                        var playerDisconnectedMsg = message.ReadInternalMessage<DualPlayerSnapshot>();
+
+                        var connId = playerDisconnectedMsg.connectionId;
+                        var controllerId = playerDisconnectedMsg.controllerId;
+
+                        // TODO cast or cache?
+                        var gamePlayer = (GamePlayer)dualContext.GetPlayer(connId, controllerId);
+
+                        gamePlayer.SetState(GamePlayerState.Disconnected);
+                    }
+
+                    break;
+
                 default:
                     base.OnMessage(message);
                     break;

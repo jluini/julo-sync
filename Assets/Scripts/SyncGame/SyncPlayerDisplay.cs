@@ -72,6 +72,11 @@ namespace SyncGame
             UpdateInputs();
         }
 
+        public void OnPlayerStateChanged(GamePlayerState newState)
+        {
+            Log.Debug("Player {0}:{1} now is {2}", syncPlayer.ConnectionId(), syncPlayer.ControllerId(), newState);
+        }
+
         public void OnRoleChanged(int newRole)
         {
             UpdateRoleView();
@@ -163,7 +168,7 @@ namespace SyncGame
 
         string GetRoleText(int role)
         {
-            return role == DNM.SpecRole ? "spec" : role.ToString();
+            return role == GameServer.SpecRole ? "spec" : role.ToString();
         }
 
     } // class SyncPlayerDisplay

@@ -51,6 +51,15 @@ namespace Julo.Game
             }
         }
 
+        public void SetState(GamePlayerState newState)
+        {
+            this.playerState = newState;
+            foreach(var l in listeners)
+            {
+                l.OnPlayerStateChanged(newState);
+            }
+        }
+
         public void SetRole(int newRole)
         {
             this.role = newRole;
@@ -82,7 +91,7 @@ namespace Julo.Game
 
         public bool IsSpectator()
         {
-            return role == DNM.SpecRole;
+            return role == GameServer.SpecRole;
         }
 
         public void GameStarted()

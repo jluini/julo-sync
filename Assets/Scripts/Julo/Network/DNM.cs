@@ -9,9 +9,6 @@
     {
         public const int LocalConnectionId = 0;
         
-        public const short SpecRole = 0;
-        public const short FirstPlayerRole = 1;
-
     }
 
 }

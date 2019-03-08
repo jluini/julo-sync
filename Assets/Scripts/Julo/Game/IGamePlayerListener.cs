@@ -6,6 +6,7 @@ namespace Julo.Game
     {
         void InitGamePlayer(GamePlayerState playerState, int role, bool isReady, string name);
 
+        void OnPlayerStateChanged(GamePlayerState newState);
         void OnRoleChanged(int newRole);
         void OnReadyChanged(bool isReady);
         void OnNameChanged(string newName);

@@ -134,9 +134,15 @@ namespace Julo.Network
             }
         }
 
-        protected void SendToServer(short msgType, NetworkWriter writer)
+        public void StopClient()
         {
-
+            if(!isHosted)
+            {
+                foreach(var p in clientContext.AllPlayers())
+                {
+                    GameObject.Destroy(p.gameObject);
+                }
+            }
         }
 
         // message handling

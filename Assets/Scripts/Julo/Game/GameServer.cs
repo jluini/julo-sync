@@ -16,6 +16,9 @@ namespace Julo.Game
     {
         public new static GameServer instance = null;
 
+        public const short SpecRole = 0;
+        public const short FirstPlayerRole = 1;
+
         public GameContext gameContext;
         
         Dictionary<int, bool> clientsAreReadyToStart;
@@ -44,14 +47,14 @@ namespace Julo.Game
         ////////// Player //////////
 
         // server
-        public override void OnPlayerAdded(DualPlayer player)
+        protected override void OnPlayerAdded(DualPlayer player)
         {
             base.OnPlayerAdded(player);
 
             var gamePlayer = (GamePlayer)player;
 
             var playerState = GamePlayerState.NoGame;
-            int role = gameContext.gameState == GameState.NoGame ? GetNextRole() : DNM.SpecRole;
+            int role = gameContext.gameState == GameState.NoGame ? GetNextRole() : GameServer.SpecRole;
             bool ready = mode == Mode.OfflineMode;
             string username = System.String.Format("Player {0}", player.ControllerId()); // TODO
 
@@ -62,6 +65,21 @@ namespace Julo.Game
                 playersByRole.Add(role, new List<GamePlayer>());
             }
             playersByRole[role].Add(gamePlayer);
+        }
+
+        protected override void OnPlayerRemoved(DualPlayer player)
+        {
+            var gamePlayer = (GamePlayer)player;
+            if(!playersByRole.ContainsKey(gamePlayer.role))
+            {
+                Log.Error("Role {0} not found", gamePlayer.role);
+                return;
+            }
+
+            if(!playersByRole[gamePlayer.role].Remove(gamePlayer))
+            {
+                Log.Error("Could not remove");
+            }
         }
 
         public override void WritePlayer(DualPlayer player, ListOfMessages listOfMessages)
@@ -129,9 +147,10 @@ namespace Julo.Game
 
         void PrepareToStartGame()
         {
-            if(gameContext.gameState != GameState.WillStart && gameContext.gameState != GameState.CancelingStart)
+            if(gameContext.gameState != GameState.WillStart/* && gameContext.gameState != GameState.CancelingStart*/)
             {
                 Log.Error("Unexpected call of PrepareToStartGame: {0}", gameContext.gameState);
+                gameContext.gameState = GameState.NoGame;
                 return;
             }
 
@@ -191,6 +210,7 @@ namespace Julo.Game
             if(gameContext.gameState != GameState.NoGame && gameContext.gameState != GameState.WillStart)
             {
                 Log.Error("Cannot change ready now");
+                // TODO return?
             }
 
             if(gameContext.gameState == GameState.WillStart)
@@ -222,9 +242,9 @@ namespace Julo.Game
             int currentRole = player.role;
 
             int newRole;
-            if(currentRole == DNM.SpecRole)
+            if(currentRole == GameServer.SpecRole)
             {
-                newRole = DNM.FirstPlayerRole;
+                newRole = GameServer.FirstPlayerRole;
             }
             else
             {
@@ -232,7 +252,7 @@ namespace Julo.Game
                 if(newRole > GetMaxPlayers())
                 {
                     // no spec role in offline mode
-                    newRole = mode == Mode.OfflineMode ? DNM.FirstPlayerRole : DNM.SpecRole;
+                    newRole = mode == Mode.OfflineMode ? GameServer.FirstPlayerRole : GameServer.SpecRole;
                 }
             }
 
@@ -261,7 +281,7 @@ namespace Julo.Game
             }
 
             // no spec role in offline mode
-            return mode == Mode.OfflineMode ? DNM.FirstPlayerRole : DNM.SpecRole;
+            return mode == Mode.OfflineMode ? GameServer.FirstPlayerRole : GameServer.SpecRole;
         }
 
         protected List<GamePlayer> GetPlayersForRole(int role)
@@ -282,7 +302,7 @@ namespace Julo.Game
 
         int NumberOfPlayersForRole(int role)
         {
-            if(role < DNM.FirstPlayerRole || role > GetMaxPlayers())
+            if(role < GameServer.FirstPlayerRole || role > GetMaxPlayers())
             {
                 Log.Error("Invalid role number: {0}", role);
                 return 0;
@@ -423,6 +443,113 @@ namespace Julo.Game
             }
         }
 
-    } // class GameServer
+
+        bool ConnectionIsPlaying(ConnectionInfo connection)
+        {
+            foreach(var p in connection.players.Values)
+            {
+                var gamePlayer = (GamePlayer)p;
+                if(gamePlayer.role != GameServer.SpecRole)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public override void OnClientDisconnected(int connectionId)
+        {
+            if(gameContext.gameState == GameState.NoGame || gameContext.gameState == GameState.CancelingStart)
+            {
+                RemoveClient(connectionId);
+                return;
+            }
+
+            var conn = dualContext.GetConnection(connectionId);
+
+            bool isPlaying = ConnectionIsPlaying(conn);
+
+            if(!isPlaying)
+            {
+                RemoveClient(connectionId);
+                return;
+            }
+
+            if(gameContext.gameState == GameState.WillStart)
+            {
+                // cancel WillStart
+                gameContext.gameState = GameState.CancelingStart;
+
+                RemoveClient(connectionId);
+                return;
+            }
+
+            if(gameContext.gameState == GameState.Preparing || gameContext.gameState == GameState.Playing || gameContext.gameState == GameState.GameOver)
+            {
+
+                var nextPlayer = GetNextPlayerToRemove(conn);
+
+                while(nextPlayer != null)
+                {
+                    if(nextPlayer.role == GameServer.SpecRole)
+                    {
+                        RemovePlayer(nextPlayer);
+                    }
+
+
+                    nextPlayer = GetNextPlayerToRemove(conn);
+                }
+            }
+            else
+            {
+                Log.Error("Unexpected case: {0}", gameContext.gameState);
+                RemoveClient(connectionId);
+            }
+        }
+
+        GamePlayer GetNextPlayerToRemove(ConnectionInfo conn)
+        {
+            foreach(var p in conn.players.Values)
+            {
+                var gamePlayer = (GamePlayer)p;
+
+                if(gamePlayer.role == GameServer.SpecRole)
+                {
+                    return gamePlayer;
+                }
+                switch(gamePlayer.playerState)
+                {
+                    case GamePlayerState.Disconnected:
+                        Log.Debug("Already disconnected");
+                        break;
+
+                    case GamePlayerState.Playing:
+                    case GamePlayerState.Resigned:
+                        DisconnectPlayer(gamePlayer);
+                        break;
+                    case GamePlayerState.NoGame:
+                        Log.Warn("Unexpected case");
+                        break;
+                }
+            }
+
+            return null;
+        }
+
+        void DisconnectPlayer(GamePlayer player)
+        {
+            player.SetState(GamePlayerState.Disconnected);
+            // TODO send to remote only
+            SendToAll(MsgType.PlayerDisconnected, new DualPlayerSnapshot(player));
+            OnPlayerDisconnected(player);
+        }
+
+        protected virtual void OnPlayerDisconnected(GamePlayer player)
+        {
+            // noop
+        }
+
+
+} // class GameServer
 
 } // namespace Julo.Game

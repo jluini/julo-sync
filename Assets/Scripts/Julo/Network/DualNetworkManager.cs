@@ -205,7 +205,10 @@ namespace Julo.Network
                 }
                 */
 
-                dualServer.RemoveClient(DNM.LocalConnectionId);
+                // TODO offline case
+                Log.Debug("TODO implement!!!!");
+
+                //dualServer.RemoveClient(DNM.LocalConnectionId);
                 
                 // TODO cleanup
 
@@ -228,6 +231,7 @@ namespace Julo.Network
             }
             else if(state == DNMState.Client)
             {
+                dualClient.StopClient();
                 // TODO destroy and clear things
 
                 StopClient();
@@ -315,10 +319,11 @@ namespace Julo.Network
             
             CheckState(DNMState.Host);
 
-            NetworkServer.DestroyPlayersForConnection(conn);
-
             var id = conn.connectionId;
 
+            dualServer.OnClientDisconnected(id);
+
+            /*
             foreach(var player in dualServer.dualContext.GetPlayers(id))
             {
                 //dualServer.connections.RemovePlayer
@@ -336,6 +341,7 @@ namespace Julo.Network
             }
 
             // Log.Debug("A client disconnected from the server: " + conn);
+            */
         }
 
         public override void OnServerReady(NetworkConnection conn)
@@ -494,7 +500,14 @@ namespace Julo.Network
 
         bool LocalPlayerWithControllerId(short controllerId)
         {
-            foreach(var playerControllerId in dualServer.dualContext.GetConnection(DNM.LocalConnectionId).players.Keys)
+            var conn = dualServer.dualContext.GetConnection(DNM.LocalConnectionId);
+            if(conn == null)
+            {
+                Log.Error("Local connection not found");
+                return false;
+            }
+             
+            foreach(var playerControllerId in conn.players.Keys)
             {
                 if(playerControllerId == controllerId)
                 {

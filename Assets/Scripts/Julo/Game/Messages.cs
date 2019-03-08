@@ -18,7 +18,13 @@ namespace Julo.Game
         public const short StartGame = MsgTypeBase + 31;
         public const short ReadyToStart = MsgTypeBase + 40;
 
-        public const short Highest = ReadyToStart;
+        // Players
+
+        public const short PlayerDisconnected = MsgTypeBase + 41;
+        public const short PlayerResigns = MsgTypeBase + 42;
+
+
+        public const short Highest = PlayerResigns;
 
     } // class MsgType
 
