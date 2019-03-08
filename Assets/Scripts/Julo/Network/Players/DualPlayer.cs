@@ -27,10 +27,10 @@ namespace Julo.Network
             }
         }
         
-        public void Init(Mode mode, int connectionId, short playerControllerId, bool isLocal)
+        public void Init(Mode mode, bool isLocal, int connectionId, short controllerId)
         {
             this.connectionId = connectionId;
-            this.controllerId = playerControllerId;
+            this.controllerId = controllerId;
             this.isLocal = isLocal;
             
             foreach(var l in listeners)
@@ -54,8 +54,24 @@ namespace Julo.Network
             return isLocal;
         }
 
-        /////////////// Listening ///////////////
+        /////////////// Remove player ///////////////
         
+        
+        public void RemovePlayerCommand()
+        {
+
+            if(DualClient.instance != null)
+            {
+                DualClient.instance.RemovePlayerCommand(this);
+            }
+            else
+            {
+                Log.Warn("RemovePlayer but no client");
+            }
+        }
+
+        /////////////// Listening ///////////////
+
         public void AddDualListener(IDualPlayerListener listener)
         {
             listeners.Add(listener);

@@ -85,12 +85,6 @@ namespace Julo.Network
 
         ////////////////////////////////////////////////////////////
 
-        // only offline mode
-
-        int lastOfflineIdUsed = 0;
-        
-        ////////////////////////////////////////////////////////////
-
         List<IDualListener> listeners = new List<IDualListener>();
 
         ////////////////////////////////////////////////////////////
@@ -203,12 +197,15 @@ namespace Julo.Network
             {
                 SetState(DNMState.Off);
 
-                var conn = dualServer.dualContext.GetConnection(DNM.LocalConnectionId);
+                /*var conn = dualServer.dualContext.GetConnection(DNM.LocalConnectionId);
 
                 foreach(var p in conn.players.Values)
                 {
                     Destroy(p.gameObject);
                 }
+                */
+
+                dualServer.RemoveClient(DNM.LocalConnectionId);
                 
                 // TODO cleanup
 
@@ -327,7 +324,7 @@ namespace Julo.Network
                 //dualServer.connections.RemovePlayer
 
                 // TODO send to remote only
-                NetworkServer.SendToAll(MsgType.RemovePlayer, new PlayerMessage(player));
+                NetworkServer.SendToAll(MsgType.RemovePlayer, new DualPlayerSnapshot(player));
             }
                 
             dualServer.RemoveClient(id);
@@ -356,9 +353,9 @@ namespace Julo.Network
 
             // TODO custom addPlayer message
 
-            var messageStack = dualServer.AddPlayer(conn.connectionId, playerControllerId);
+            var listOfMessages = dualServer.AddPlayer(conn.connectionId, playerControllerId);
 
-            NetworkServer.SendToAll(MsgType.NewPlayer, new MessageStackMessage(messageStack));
+            NetworkServer.SendToAll(MsgType.NewPlayer, listOfMessages);
         }
         /*
         public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId) {
@@ -366,8 +363,10 @@ namespace Julo.Network
         }*/
 
         public override void OnServerRemovePlayer(NetworkConnection conn, PlayerController player) {
+            /* TODO
             if(player.gameObject != null)
                 NetworkServer.Destroy(player.gameObject);
+            */
         }
 
         public override void OnServerError(NetworkConnection conn, int errorCode) {
@@ -652,11 +651,11 @@ namespace Julo.Network
 
         void SendStatusToRemoteClient(NetworkConnection conn)
         {
-            var initialMessages = new List<MessageBase>();
-            initialMessages.Add(new IntegerMessage(conn.connectionId));
-            dualServer.WriteRemoteClientData(initialMessages);
+            var listOfMessages = new ListOfMessages();
+            listOfMessages.Add(new IntegerMessage(conn.connectionId));
+            dualServer.WriteRemoteClientData(listOfMessages);
 
-            conn.Send(MsgType.InitialState, new MessageStackMessage(initialMessages));
+            conn.Send(MsgType.InitialState, listOfMessages);
         }
 
         void OnGameClientToServerMessage(NetworkMessage messageReader)
@@ -701,16 +700,15 @@ namespace Julo.Network
 
             SetState(DNMState.Client);
 
+            var listOfMessages = messageReader.ReadMessage<ListOfMessages>();
 
-            var msg = messageReader.ReadMessage<MessageStackMessage>();
-
-            var connectionNumberMsg = msg.ReadMessage<IntegerMessage>();
+            var connectionNumberMsg = listOfMessages.ReadMessage<IntegerMessage>();
             var connectionNumber = connectionNumberMsg.value;
 
             // creates non-hosted client
             dualClient = remoteClientDelegate();
 
-            dualClient.InitializeState(connectionNumber, msg);
+            dualClient.InitializeState(connectionNumber, listOfMessages);
 
             AddInitialPlayer();
         }
@@ -732,14 +730,14 @@ namespace Julo.Network
         // only client
         void OnNewPlayerMessage(NetworkMessage messageReader)
         {
-            var msg = messageReader.ReadMessage<MessageStackMessage>();
+            var msg = messageReader.ReadMessage<ListOfMessages>();
 
             dualClient.OnNewPlayerMessage(msg);
         }
 
         void OnRemovePlayerMessage(NetworkMessage messageReader)
         {
-            var msg = messageReader.ReadMessage<PlayerMessage>();
+            var msg = messageReader.ReadMessage<DualPlayerSnapshot>();
 
             if(!NetworkServer.active)
             {
@@ -791,11 +789,16 @@ namespace Julo.Network
         {
             CheckState(DNMState.Host);
             
-            foreach(var c in dualServer.dualContext.AllConnections()) // TODO encapsulamiento...
+            foreach(var conn in NetworkServer.connections)
             {
-                int id = c.connectionId;
+                // TODO
+                //foreach(var c in dualServer.dualContext.AllConnections()) // TODO encapsulamiento...
+                //{
+                //int id = c.connectionId;
+                // var conn = c.networkConnection;
+                int id = conn.connectionId;
 
-                if(id != who && c.networkConnection.isReady) // TODO necessary, right?
+                if(id != who && conn.isReady) // TODO necessary, right?
                 {
                     NetworkServer.SendToClient(id, MsgType.GameServerToClient, new WrappedMessage(msgType, gameMessage));
                 }

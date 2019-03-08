@@ -25,22 +25,21 @@ namespace SyncGame
         }
 
         // only online mode
-        public override void WriteRemoteClientData(List<MessageBase> messages)
+        public override void WriteRemoteClientData(ListOfMessages listOfMessages)
         {
-            base.WriteRemoteClientData(messages);
+            base.WriteRemoteClientData(listOfMessages);
 
             if(gameContext.gameState == GameState.Playing || gameContext.gameState == GameState.GameOver)
             {
-                messages.Add(match.GetState());
+                listOfMessages.Add(match.GetSnapshot());
             }
-
         }
 
         ////////// Player //////////
 
-        protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack)
+        protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, ListOfMessages listOfMessages)
         {
-            base.OnPrepareToStart(playersPerRole, messageStack);
+            base.OnPrepareToStart(playersPerRole, listOfMessages);
 
             match = new SyncMatch();
 
@@ -50,12 +49,12 @@ namespace SyncGame
                 Object.FindObjectsOfType<SpawnPoint>()
             );
 
-            messageStack.Add(match.GetState());
+            listOfMessages.Add(match.GetSnapshot());
         }
 
         protected override void OnStartTurn(int role)
         {
-            SendToAll(MsgType.ServerUpdate, match.GetState());
+            SendToAll(MsgType.ServerUpdate, match.GetSnapshot());
         }
 
         public SyncMatch GetMatch()
@@ -78,7 +77,7 @@ namespace SyncGame
                 case MsgType.ClientUpdate:
                     // TODO check he is playing?
 
-                    var msg = message.ReadInternalMessage<SyncGameState>();
+                    var msg = message.ReadInternalMessage<SyncMatchSnapshot>();
 
                     match.UpdateState(msg);
                     

@@ -30,18 +30,19 @@ namespace Julo.Network
         public const short Highest = GameClientToServer;
     }
     
-    public class MessageStackMessage : MessageBase
+    public class ListOfMessages : MessageBase
     {
         public List<MessageBase> data;
         public int count;
 
         public NetworkReader dataReader;
 
-        public MessageStackMessage()
+        public ListOfMessages()
         {
+            this.data = new List<MessageBase>();
         }
 
-        public MessageStackMessage(List<MessageBase> data)
+        public ListOfMessages(List<MessageBase> data)
         {
             this.data = data;
         }
@@ -69,8 +70,13 @@ namespace Julo.Network
             return msg;
         }
 
-    } // class MessageStackMessage
+        public void Add(MessageBase message)
+        {
+            data.Add(message);
+        }
 
+    } // class ListOfMessages
+    
     public class WrappedMessage : MessageBase
     {
         public short messageType;
@@ -140,31 +146,34 @@ namespace Julo.Network
     } // class WrappedMessage
 
     ////////////
-
-    public class PlayerMessage : MessageBase
+    
+    public class DualPlayerSnapshot : MessageBase
     {
         public int connectionId;
         public short controllerId;
 
-        public PlayerMessage()
+        public DualPlayerSnapshot()
         {
         }
 
-        public PlayerMessage(int connectionId, short controllerId)
+        public DualPlayerSnapshot(int connectionId, short controllerId)
         {
             this.connectionId = connectionId;
             this.controllerId = controllerId;
         }
 
-        public PlayerMessage(IPlayer player)
+        public DualPlayerSnapshot(IPlayer player)
         {
             if(player == null)
             {
                 this.connectionId = -1;
                 this.controllerId = -1;
             }
-            this.connectionId = player.ConnectionId();
-            this.controllerId = player.ControllerId();
+            else
+            {
+                this.connectionId = player.ConnectionId();
+                this.controllerId = player.ControllerId();
+            }
         }
         
         public override void Serialize(NetworkWriter writer)
@@ -179,6 +188,6 @@ namespace Julo.Network
             controllerId = reader.ReadInt16();
         }
 
-    } // class PlayerMessage
-
+    } // class DualPlayerSnapshot
+    
 } // namespace Julo.Network

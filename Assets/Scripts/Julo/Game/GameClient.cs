@@ -1,4 +1,5 @@
-﻿using UnityEngine.Networking.NetworkSystem;
+﻿using UnityEngine.Networking;
+using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
 using Julo.Network;
@@ -39,19 +40,15 @@ namespace Julo.Game
             }
         }
 
-        public sealed override void InitializeState(int connectionNumber, MessageStackMessage messageStack)
+        public sealed override void InitializeState(int connectionNumber, ListOfMessages listOfMessages)
         {
-            base.InitializeState(connectionNumber, messageStack);
+            base.InitializeState(connectionNumber, listOfMessages);
+            
+            var message = listOfMessages.ReadMessage<GameContextSnapshot>();
 
-            var message = messageStack.ReadMessage<GameStatusMessage>();
+            clientContext = new GameContext(message);
 
-            var gameState = message.state;
-            var numRoles = message.numRoles;
-            var sceneName = message.sceneName;
-
-            clientContext = new GameContext(gameState, numRoles, sceneName);
-
-            switch(gameState)
+            switch(clientContext.gameState)
             {
                 case GameState.NoGame:
                 case GameState.WillStart:
@@ -61,38 +58,28 @@ namespace Julo.Game
                 case GameState.Preparing:
                 case GameState.Playing:
                 case GameState.GameOver:
-                    DualNetworkManager.instance.LoadSceneAsync(sceneName, () =>
+                    DualNetworkManager.instance.LoadSceneAsync(clientContext.sceneName, () =>
                     {
-                        OnLateJoin(messageStack);
+                        OnLateJoin(listOfMessages);
                     });
 
                     break;
             }
         }
-
+        
         // only remote
-        protected override void OnPlayerAdded(DualPlayer player, MessageStackMessage messageStack)
+        protected override void OnPlayerAdded(DualPlayer player, ListOfMessages listOfMessages)
         {
-            base.OnPlayerAdded(player, messageStack);
+            base.OnPlayerAdded(player, listOfMessages);
 
-            var gamePlayerData = messageStack.ReadMessage<GamePlayerMessage>();
-
-            int role = gamePlayerData.role;
-            bool ready = gamePlayerData.isReady;
-            string username = gamePlayerData.username;
-
+            var gamePlayerSnapshot = listOfMessages.ReadMessage<GamePlayerSnapshot>();
+            
             // TODO cast or cache GamePlayer?
             var gamePlayer = (GamePlayer)player;
 
-            if(gamePlayer.role == role)
-                Log.Warn("Role already set to {0}", role);
-
-            if(gamePlayer.username == username)
-                Log.Warn("Username already set to {0}", username);
-
-            gamePlayer.Init(/*gameState, */role, ready, username);
+            gamePlayer.Init(gamePlayerSnapshot);
         }
-
+        
         // //////////////////////
 
         public void OnReadyChanged(bool newReady)
@@ -102,30 +89,31 @@ namespace Julo.Game
         
         // //////////////////////
         
-        void OnPrepareToStartMessage(MessageStackMessage messageStack)
+        void OnPrepareToStartMessage(ListOfMessages listOfMessages)
         {
-            var prepareMessage = messageStack.ReadMessage<PrepareToStartMessage>();
+            var prepareMessage = listOfMessages.ReadMessage<PrepareToStartMessage>();
 
+            // TODO this is already synchronized?
             gameContext.numRoles = prepareMessage.numRoles;
             gameContext.sceneName = prepareMessage.sceneName;
 
             if(isHosted)
             {
                 SendToServer(MsgType.ReadyToStart, new EmptyMessage());
-                return;
             }
-
-            DualNetworkManager.instance.LoadSceneAsync(gameContext.sceneName, () =>
+            else
             {
-                OnPrepareToStart(messageStack);
-                SendToServer(MsgType.ReadyToStart, new EmptyMessage());
-            });
+                DualNetworkManager.instance.LoadSceneAsync(gameContext.sceneName, () =>
+                {
+                    OnPrepareToStart(listOfMessages);
+                    SendToServer(MsgType.ReadyToStart, new EmptyMessage());
+                });
+            }
         }
 
         // //////////////////////
 
-        protected abstract void OnPrepareToStart(MessageStackMessage messageStack);
-
+        protected abstract void OnPrepareToStart(ListOfMessages listOfMessages);
 
         protected virtual void OnGameStarted()
         {
@@ -133,7 +121,7 @@ namespace Julo.Game
         }
 
 
-        protected abstract void OnLateJoin(MessageStackMessage messageStack);
+        protected abstract void OnLateJoin(ListOfMessages listOfMessages);
 
         protected override void OnMessage(WrappedMessage message)
         {
@@ -210,9 +198,9 @@ namespace Julo.Game
                 case MsgType.PrepareToStart:
                     gameContext.gameState = GameState.Preparing;
 
-                    var messageStack = message.ReadInternalMessage<MessageStackMessage>();
+                    var listOfMessages = message.ReadInternalMessage<ListOfMessages>();
 
-                    OnPrepareToStartMessage(messageStack);
+                    OnPrepareToStartMessage(listOfMessages);
 
                     break;
 

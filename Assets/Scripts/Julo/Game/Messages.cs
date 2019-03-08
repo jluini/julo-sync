@@ -117,26 +117,29 @@ namespace Julo.Game
         }
 
     } // class ChangeReadyMessage
-
-    public class GamePlayerMessage : MessageBase
+    
+    public class GamePlayerSnapshot : MessageBase
     {
+        public GamePlayerState playerState;
         public int role;
         public bool isReady;
         public string username;
 
-        public GamePlayerMessage()
+        public GamePlayerSnapshot()
         {
         }
 
-        public GamePlayerMessage(int role, bool isReady, string username)
+        public GamePlayerSnapshot(GamePlayer gamePlayer)
         {
-            this.role = role;
-            this.isReady = isReady;
-            this.username = username;
+            this.playerState = gamePlayer.playerState;
+            this.role = gamePlayer.role;
+            this.isReady = gamePlayer.isReady;
+            this.username = gamePlayer.username;
         }
 
         public override void Serialize(NetworkWriter writer)
         {
+            writer.Write((int)playerState);
             writer.Write(role);
             writer.Write(isReady);
             writer.Write(username);
@@ -144,49 +147,50 @@ namespace Julo.Game
 
         public override void Deserialize(NetworkReader reader)
         {
+            playerState = (GamePlayerState)reader.ReadInt32();
             role = reader.ReadInt32();
             isReady = reader.ReadBoolean();
             username = reader.ReadString();
         }
 
-    } // class GamePlayerMessage
+    } // class GamePlayerSnapshot
 
-    public class GameStatusMessage : MessageBase
+    public class GameContextSnapshot : MessageBase
     {
-        public GameState state;
+        public GameState gameState;
         public int numRoles;
         public string sceneName;
 
-        public GameStatusMessage()
+        public GameContextSnapshot()
         {
         }
 
-        public GameStatusMessage(GameState state, int numRoles, string sceneName)
+        public GameContextSnapshot(GameState gameState, int numRoles, string sceneName)
         {
-            this.state = state;
+            this.gameState = gameState;
             this.numRoles = numRoles;
             this.sceneName = sceneName;
         }
 
         public override void Serialize(NetworkWriter writer)
         {
-            writer.Write((int)state);
+            writer.Write((int)gameState);
             writer.Write(numRoles);
             writer.Write(sceneName);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
-            var stateInt = reader.ReadInt32();
-            state = (GameState)stateInt;
+            gameState = (GameState)reader.ReadInt32();
             numRoles = reader.ReadInt32();
             sceneName = reader.ReadString();
         }
 
-    } // class GameStatusMessage
+    } // class GameContextSnapshot
 
     public class PrepareToStartMessage : MessageBase
     {
+        // TODO is this data needed? it should be already synchronized
         public int numRoles;
         public string sceneName;
 

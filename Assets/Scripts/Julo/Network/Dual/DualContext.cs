@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
 
+using UnityEngine;
+using UnityEngine.Networking;
+
 using Julo.Logging;
 
 namespace Julo.Network
@@ -54,17 +57,22 @@ namespace Julo.Network
         // only server
         public void RemoveConnection(int id)
         {
+            if(!isServer)
+            {
+                Log.Error("Invalid in remote client");
+                return;
+            }
             if(!connections.ContainsKey(id))
             {
                 Log.Error("No connection with id={0}", id);
                 return;
             }
 
-            var connectionInfo = connections[id];
-
-            /* TODO remove players
-            foreach(var p in connectionInfo.players) { }
-            */
+            var conn = connections[id];
+            if(conn.players.Count > 0)
+            {
+                Log.Warn("There are still {0} players!!", conn.players.Count);
+            }
 
             connections.Remove(id);
         }
@@ -86,19 +94,36 @@ namespace Julo.Network
             return ret;
         }
 
+        public DualPlayer GetPlayer(DualPlayerSnapshot snapshot)
+        {
+            var connId = snapshot.connectionId;
+            var contId = snapshot.controllerId;
+
+            if(connId < 0)
+            {
+                if(connId != -1 || contId != -1)
+                {
+                    Log.Warn("Invalid values");
+                }
+                return null;
+            }
+
+            return GetPlayer(connId, contId);
+        }
+
         public DualPlayer GetPlayer(int connectionId, short controllerId)
         {
             if(!connections.ContainsKey(connectionId))
             {
                 Log.Error("No connection {0}", connectionId);
-                return default;
+                return null;
             }
             var connection = connections[connectionId];
 
             if(!connection.players.ContainsKey(controllerId))
             {
                 Log.Error("No player {1} in connection {0}", connectionId, controllerId);
-                return default;
+                return null;
             }
 
             var ret = connection.players[controllerId];
@@ -133,6 +158,40 @@ namespace Julo.Network
             }
 
             GetConnection(connectionId).AddPlayer(player);
+        }
+
+        public bool RemovePlayer(int connectionId, short controllerId)
+        {
+            if(!connections.ContainsKey(connectionId))
+            {
+                Log.Error("No connection {0}", connectionId);
+                return false;
+            }
+            var connection = connections[connectionId];
+
+            if(!connection.players.ContainsKey(controllerId))
+            {
+                Log.Error("No player {1} in connection {0}", connectionId, controllerId);
+                return false;
+            }
+
+            var player = connection.players[controllerId];
+
+            connection.players.Remove(controllerId);
+
+            if(connection.players.Count == 0)
+            {
+                Log.Debug("Connection {0} has zero players now", connectionId);
+
+                if(!isServer)
+                {
+                    connections.Remove(connectionId);
+                }
+            }
+
+            GameObject.Destroy(player.gameObject);
+
+            return true;
         }
 
     } // class DualContext

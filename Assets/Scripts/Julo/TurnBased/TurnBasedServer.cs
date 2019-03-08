@@ -30,13 +30,13 @@ namespace Julo.TurnBased
         }
 
         // only online mode
-        public override void WriteRemoteClientData(List<MessageBase> messages)
+        public override void WriteRemoteClientData(ListOfMessages listOfMessages)
         {
-            base.WriteRemoteClientData(messages);
+            base.WriteRemoteClientData(listOfMessages);
 
             if(gameContext.gameState == GameState.Playing)
             {
-                messages.Add(new PlayerMessage(playingPlayer));
+                listOfMessages.Add(new DualPlayerSnapshot(playingPlayer));
             }
         }
 
@@ -61,7 +61,7 @@ namespace Julo.TurnBased
             }
         }
 
-        protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack)
+        protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, ListOfMessages listOfMessages)
         {
             if(gameContext.numRoles != playersPerRole.Length)
             {
@@ -170,7 +170,7 @@ namespace Julo.TurnBased
 
                     playingPlayer.lastUse = DateTime.Now;
 
-                    SendToAll(MsgType.StartTurn, new PlayerMessage(playingPlayer));
+                    SendToAll(MsgType.StartTurn, new DualPlayerSnapshot(playingPlayer));
 
                     do
                     {

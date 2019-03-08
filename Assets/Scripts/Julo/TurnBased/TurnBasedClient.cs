@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 
 using Julo.Logging;
@@ -18,27 +19,16 @@ namespace Julo.TurnBased
             // noop
         }
 
-        protected override void OnLateJoin(MessageStackMessage messageStack)
+        protected override void OnLateJoin(ListOfMessages listOfMessages)
         {
             if(gameContext.gameState == GameState.Playing)
             {
-                var currentPlayerMessage = messageStack.ReadMessage<PlayerMessage>();
+                var playerMessage = listOfMessages.ReadMessage<DualPlayerSnapshot>();
 
-                var currentPlayerConnId = currentPlayerMessage.connectionId;
-                var currentPlayerContId = currentPlayerMessage.controllerId;
+                var playingPlayer = (TBPlayer)dualContext.GetPlayer(playerMessage);
 
-                if(currentPlayerConnId >= 0)
+                if(playingPlayer != null)
                 {
-                    // TODO cast or cache TBPlayers?
-                    
-                    playingPlayer = (TBPlayer)dualContext.GetPlayer(currentPlayerConnId, currentPlayerContId);
-
-                    if(playingPlayer == null)
-                    {
-                        Log.Error("Current player not found");
-                        return;
-                    }
-
                     playingPlayer.SetPlaying(true);
                 }
                 else
@@ -48,26 +38,21 @@ namespace Julo.TurnBased
             }
         }
         
-        protected override void OnPrepareToStart(MessageStackMessage messageStack)
-        {
-            // noop
-        }
-
         protected override void OnMessage(WrappedMessage message)
         {
             switch(message.messageType)
             {
                 case MsgType.StartTurn:
 
-                    var turnMsg = message.ReadInternalMessage<PlayerMessage>();
+                    var turnMsg = message.ReadInternalMessage<DualPlayerSnapshot>();
 
-                    var connId = turnMsg.connectionId;
-                    var controllerId = turnMsg.controllerId;
+                    //var connId = turnMsg.connectionId;
+                    //var controllerId = turnMsg.controllerId;
 
                     // TODO cache players?
 
                     // TODO cast or cache TBPlayer?
-                    var turnPlayer = (TBPlayer)dualContext.GetPlayer(connId, controllerId);
+                    var turnPlayer = (TBPlayer)dualContext.GetPlayer(turnMsg);
 
                     IsMyTurn(turnPlayer);
 

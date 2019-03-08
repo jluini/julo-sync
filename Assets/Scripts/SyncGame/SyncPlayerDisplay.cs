@@ -23,6 +23,7 @@ namespace SyncGame
         public InputField nameInput;
         public Text roleDisplay;
         public Button roleButton;
+        public Button removeButton;
 
         public Toggle readyToggle;
 
@@ -65,7 +66,7 @@ namespace SyncGame
         
         ////// IGamePlayerListener
 
-        public void InitGamePlayer(int role, bool isReady, string username)
+        public void InitGamePlayer(GamePlayerState state, int role, bool isReady, string username)
         {
             UpdateViews();
             UpdateInputs();
@@ -136,6 +137,7 @@ namespace SyncGame
         {
             roleButton.interactable = isHosted;
             nameInput.interactable = syncPlayer.IsLocal();
+            removeButton.interactable = syncPlayer.IsLocal();
         }
 
         //////////////////////////////////////////

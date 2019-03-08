@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-using UnityEngine;
+using UnityEngine.Networking;
 
 using Julo.Logging;
 using Julo.Network;
@@ -8,30 +8,53 @@ using Julo.Network;
 namespace Julo.Game
 {
 
+    public enum GamePlayerState {
+        // There is no game, or I'm a simple spectator
+        NoGame,
+
+        // I'm playing a game
+        Playing,
+
+        // I was playing but resigned (already connected though)
+        Resigned,
+
+        // I'm not here anymore
+        Disconnected
+    }
+
     public class GamePlayer : DualPlayer
     {
+        public GamePlayerState playerState;
+
         public int role = -1;
         public bool isReady = false;
         public string username = "-";
 
+
         List<IGamePlayerListener> listeners = new List<IGamePlayerListener>();
-        
-        public void Init(int role, bool isReady, string username)
+
+        public void Init(GamePlayerSnapshot snapshot)
         {
+            Init(snapshot.playerState, snapshot.role, snapshot.isReady, snapshot.username);
+        }
+
+        public void Init(GamePlayerState playerState, int role, bool isReady, string username)
+        {
+            this.playerState = playerState;
             this.role = role;
             this.isReady = isReady;
             this.username = username;
-            
+
             foreach(var l in listeners)
             {
-                l.InitGamePlayer(role, isReady, username);
+                l.InitGamePlayer(playerState, role, isReady, username);
             }
         }
 
         public void SetRole(int newRole)
         {
             this.role = newRole;
-            
+
             foreach(var l in listeners)
             {
                 l.OnRoleChanged(newRole);
@@ -41,7 +64,7 @@ namespace Julo.Game
         public void SetReady(bool newReady)
         {
             this.isReady = newReady;
-            
+
             foreach(var l in listeners)
             {
                 l.OnReadyChanged(newReady);
@@ -61,7 +84,7 @@ namespace Julo.Game
         {
             return role == DNM.SpecRole;
         }
-        
+
         public void GameStarted()
         {
             foreach(var l in listeners)
@@ -69,9 +92,9 @@ namespace Julo.Game
                 l.OnGameStarted();
             }
         }
-        
+
         //  ///////////////////
-        
+
         public void AddGameListener(IGamePlayerListener listener)
         {
             listeners.Add(listener);

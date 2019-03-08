@@ -78,18 +78,20 @@ namespace Julo.Network
         
         public void RemoveClient(int connectionId)
         {
-            if(connectionId == DNM.LocalConnectionId)
+            if(!dualContext.HasConnection(connectionId))
             {
-                Log.Warn("Removing local connection");
+                Log.Error("Could not remove connection");
+                return;
             }
-            
-            // TODO
-            /*
-            foreach(var player in dualContext.GetConnection(connectionId).players.Values)
+
+            var conn = dualContext.GetConnection(connectionId);
+
+            // TODO this is traversing players and removing them simultaneously, could cause problems
+            foreach(var controllerAndPlayer in conn.players)
             {
-                //OnPlayerRemoved(player);
+                SendToAll(MsgType.RemovePlayer, new DualPlayerSnapshot(controllerAndPlayer.Value));
+                dualContext.RemovePlayer(connectionId, controllerAndPlayer.Key);
             }
-            */
 
             dualContext.RemoveConnection(connectionId);
         }
@@ -97,38 +99,38 @@ namespace Julo.Network
         ///////////////////////
 
         // only online mode
-        public virtual void WriteRemoteClientData(List<MessageBase> messageStack)
+        public virtual void WriteRemoteClientData(ListOfMessages listOfMessages)
         {
             var allPlayers = new List<DualPlayer>(dualContext.AllPlayers());
 
-            messageStack.Add(new IntegerMessage(allPlayers.Count));
+            listOfMessages.Add(new IntegerMessage(allPlayers.Count));
 
             foreach(DualPlayer p in allPlayers)
             {
-                WritePlayer(p, messageStack);
+                WritePlayer(p, listOfMessages);
             }
         }
         
         ///////////////////////
         ///
         // only server
-        public List<MessageBase> AddPlayer(int connectionId, short controllerId) //DualPlayer player)
+        public ListOfMessages AddPlayer(int connectionId, short controllerId)
         {
             var player = GameObject.Instantiate<DualPlayer>(playerModel);
 
             bool isLocal = connectionId == dualContext.localConnectionNumber;
 
-            player.Init(mode, connectionId, controllerId, isLocal);
+            player.Init(mode, isLocal, connectionId, controllerId);
 
             dualContext.AddPlayer(player);
-            
+
             // setup initial data in server
-            var messageStack = new List<MessageBase>();
+            var listOfMessages = new ListOfMessages();
 
             OnPlayerAdded(player);
-            WritePlayer(player, messageStack);
+            WritePlayer(player, listOfMessages);
 
-            return messageStack;
+            return listOfMessages;
         }
 
         public virtual void OnPlayerAdded(DualPlayer player)
@@ -136,9 +138,9 @@ namespace Julo.Network
             // noop
         }
         
-        public virtual void WritePlayer(DualPlayer player, List<MessageBase> messageStack)
+        public virtual void WritePlayer(DualPlayer player, ListOfMessages listOfMessages)
         {
-            messageStack.Add(new PlayerMessage(player));
+            listOfMessages.Add(new DualPlayerSnapshot(player));
         }
 
         ///////////////////////
@@ -204,8 +206,31 @@ namespace Julo.Network
 
         protected virtual void OnMessage(WrappedMessage message, int from)
         {
-            var msg = System.String.Format("Unhandled message number={0}", message.messageType - MsgType.Highest);
-            throw new System.Exception(msg);
+            switch(message.messageType)
+            {
+                case MsgType.RemovePlayer:
+                    var playerMsg = message.ReadInternalMessage<DualPlayerSnapshot>();
+
+                    var connId = playerMsg.connectionId;
+                    var controllerId = playerMsg.controllerId;
+
+                    if(dualContext.RemovePlayer(connId, controllerId))
+                    {
+                        // TODO send to remote only
+                        SendToAll(MsgType.RemovePlayer, playerMsg);
+                    }
+                    else
+                    {
+                        Log.Error("Could not remove player {0}:{1}", connId, controllerId);
+                    }
+                    
+                    break;
+
+                default:
+                    var msg = System.String.Format("Unhandled message number={0}", message.messageType - MsgType.Highest);
+                    throw new System.Exception(msg);
+                    //break;
+            }
         }
 
     } // class DNMServer

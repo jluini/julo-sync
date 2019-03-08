@@ -32,11 +32,11 @@ namespace Julo.Game
         }
 
         // only online mode
-        public override void WriteRemoteClientData(List<MessageBase> messages)
+        public override void WriteRemoteClientData(ListOfMessages listOfMessages)
         {
-            base.WriteRemoteClientData(messages);
+            base.WriteRemoteClientData(listOfMessages);
 
-            messages.Add(new GameStatusMessage(gameContext.gameState, gameContext.numRoles, gameContext.sceneName));
+            listOfMessages.Add(gameContext.GetSnapshot());
         }
 
         ////////// Player //////////
@@ -51,19 +51,31 @@ namespace Julo.Game
 
             // start as spec if game already started
 
+            GamePlayerState playerState;
+
+            if(gameContext.gameState == GameState.NoGame)
+            {
+                playerState = GamePlayerState.NoGame;
+            }
+            else
+            {
+                Log.Error("Adding players in playing mode not supported");
+                playerState = GamePlayerState.NoGame;
+            }
+
             int role = gameContext.gameState == GameState.NoGame ? GetNextRole() : DNM.SpecRole;
             bool ready = mode == Mode.OfflineMode;
             string username = System.String.Format("Player {0}", player.ControllerId()); // TODO
 
-            gamePlayer.Init(role, ready, username);
+            gamePlayer.Init(playerState, role, ready, username);
         }
 
-        public override void WritePlayer(DualPlayer player, List<MessageBase> messageStack)
+        public override void WritePlayer(DualPlayer player, ListOfMessages listOfMessages)
         {
-            base.WritePlayer(player, messageStack);
+            base.WritePlayer(player, listOfMessages);
 
             var gamePlayer = (GamePlayer)player;
-            messageStack.Add(new GamePlayerMessage(gamePlayer.role, gamePlayer.isReady, gamePlayer.username));
+            listOfMessages.Add(new GamePlayerSnapshot(gamePlayer));
         }
 
         ////////// * //////////
@@ -135,12 +147,13 @@ namespace Julo.Game
 
             DualNetworkManager.instance.LoadSceneAsync(gameContext.sceneName, () =>
             {
-                var messageStack = new List<MessageBase>();
-                messageStack.Add(new PrepareToStartMessage(gameContext.numRoles, gameContext.sceneName));
+                var prepareMessage = new PrepareToStartMessage(gameContext.numRoles, gameContext.sceneName);
+                var listOfMessages = new ListOfMessages();
+                listOfMessages.Add(prepareMessage);
 
-                OnPrepareToStart(playersPerRole, messageStack);
+                OnPrepareToStart(playersPerRole, listOfMessages);
 
-                SendToAll(MsgType.PrepareToStart, new MessageStackMessage(messageStack));
+                SendToAll(MsgType.PrepareToStart, listOfMessages);
 
                 // waiting to all clients sending ReadyToStart message
             });
@@ -155,7 +168,7 @@ namespace Julo.Game
             SendToAll(MsgType.StartGame, new EmptyMessage());
         }
 
-        protected abstract void OnPrepareToStart(List<GamePlayer>[] playersPerRole, List<MessageBase> messageStack);
+        protected abstract void OnPrepareToStart(List<GamePlayer>[] playersPerRole, ListOfMessages listOfMessages);
         protected abstract void OnStartGame();
 
         ////////// Roles //////////

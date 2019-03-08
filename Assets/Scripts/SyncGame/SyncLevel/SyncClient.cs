@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
-using UnityEngine.Networking.NetworkSystem;
+using UnityEngine.Networking;
 
 using Julo.Logging;
 using Julo.Network;
@@ -76,26 +76,26 @@ namespace SyncGame
             this.gameStartedDelegate = gameStartedDelegate;
         }
 
-        protected override void OnLateJoin(MessageStackMessage messageStack)
+        protected override void OnLateJoin(ListOfMessages listOfMessages)
         {
-            base.OnLateJoin(messageStack);
+            base.OnLateJoin(listOfMessages);
 
             if(gameContext.gameState == GameState.Playing || gameContext.gameState == GameState.GameOver)
             {
-                var stateMessage = messageStack.ReadMessage<SyncGameState>();
-                remoteMatch.CreateFromInitialState(gameContext.numRoles, unitModel, stateMessage);
+                var snapshot = listOfMessages.ReadMessage<SyncMatchSnapshot>();
+                remoteMatch.CreateFromInitialState(gameContext.numRoles, unitModel, snapshot);
 
                 OnGameStarted();
             }
         }
 
-        protected override void OnPrepareToStart(MessageStackMessage messageStack)
+        protected override void OnPrepareToStart(ListOfMessages listOfMessages)
         {
-            base.OnPrepareToStart(messageStack);
+            // base.OnPrepareToStart(listOfMessages);
 
-            var stateMessage = messageStack.ReadMessage<SyncGameState>();
+            var snapshot = listOfMessages.ReadMessage<SyncMatchSnapshot>();
 
-            remoteMatch.CreateFromInitialState(gameContext.numRoles, unitModel, stateMessage);
+            remoteMatch.CreateFromInitialState(gameContext.numRoles, unitModel, snapshot);
         }
 
         protected override void OnGameStarted()
@@ -112,8 +112,8 @@ namespace SyncGame
                 case MsgType.ServerUpdate:
                     if(!isHosted)
                     {
-                        var newState = message.ReadInternalMessage<SyncGameState>();
-                        match.UpdateState(newState);
+                        var snapshot = message.ReadInternalMessage<SyncMatchSnapshot>();
+                        match.UpdateState(snapshot);
                     }
 
                     break;
@@ -174,7 +174,7 @@ namespace SyncGame
 
             if(Time.frameCount % frameStep == 0)
             {
-                SendToServer(MsgType.ClientUpdate, match.GetState());
+                SendToServer(MsgType.ClientUpdate, match.GetSnapshot());
             }
 
             if(targetUnit.dead)
@@ -212,7 +212,7 @@ namespace SyncGame
 
         protected override void OnEndTurn(TBPlayer player)
         {
-            SendToServer(MsgType.ClientUpdate, match.GetState());
+            SendToServer(MsgType.ClientUpdate, match.GetSnapshot());
         }
 
         IEnumerator EndTurnDelayed()

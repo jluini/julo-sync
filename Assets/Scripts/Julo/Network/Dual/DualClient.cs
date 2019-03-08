@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 
@@ -64,72 +62,61 @@ namespace Julo.Network
         }
 
         // only remote
-        public virtual void InitializeState(int connectionNumber, MessageStackMessage messageStack)
+        public virtual void InitializeState(int connectionNumber, ListOfMessages listOfMessages)
         {
             clientContext = new DualContext(false, connectionNumber);
-            
-            var numPlayersMessage = messageStack.ReadMessage<IntegerMessage>();
+
+            var numPlayersMessage = listOfMessages.ReadMessage<IntegerMessage>();
             var numPlayers = numPlayersMessage.value;
 
             for(int i = 0; i < numPlayers; i++)
             {
-                var playerScreenshot = messageStack.ReadMessage<PlayerMessage>();
-
-                var connId = playerScreenshot.connectionId;
-                var controllerId = playerScreenshot.controllerId;
-
-                bool isLocal = connId == connectionNumber;
-
-                if(isLocal)
-                {
-                    Log.Warn("Already a local client??");
-                }
-
-                AddPlayer(connId, controllerId, isLocal, messageStack);
+                AddPlayer(listOfMessages);
             }
         }
 
         // only remote client
-        public void OnNewPlayerMessage(MessageStackMessage messageStack)
+        public void OnNewPlayerMessage(ListOfMessages listOfMessages)
         {
             if(!isHosted)
             {
-                var playerScreenshot = messageStack.ReadMessage<PlayerMessage>();
-
-                var connId = playerScreenshot.connectionId;
-                var controllerId = playerScreenshot.controllerId;
-
-                var isLocal = connId == clientContext.localConnectionNumber;
-
-                AddPlayer(connId, controllerId, isLocal, messageStack);
+                AddPlayer(listOfMessages);
             }
         }
         
         // onyl remote
-        void AddPlayer(int connId, short controllerId, bool isLocal, MessageStackMessage messageStack)
+        void AddPlayer(ListOfMessages listOfMessages)
         {
-            var newPlayer = GameObject.Instantiate<DualPlayer>(playerModel);
-            newPlayer.Init(mode, connId, controllerId, isLocal);
-            clientContext.AddPlayer(newPlayer);
-            OnPlayerAdded(newPlayer, messageStack);
-        }
+            var playerSnapshot = listOfMessages.ReadMessage<DualPlayerSnapshot>();
 
+            var connId = playerSnapshot.connectionId;
+            var controllerId = playerSnapshot.controllerId;
+            var isLocal = connId == clientContext.localConnectionNumber;
+
+            var newPlayer = GameObject.Instantiate<DualPlayer>(playerModel);
+
+            newPlayer.Init(mode, isLocal, connId, controllerId);
+
+            clientContext.AddPlayer(newPlayer);
+            OnPlayerAdded(newPlayer, listOfMessages);
+        }
+        
         // only remote
-        protected virtual void OnPlayerAdded(DualPlayer player, MessageStackMessage messageStack)
+        protected virtual void OnPlayerAdded(DualPlayer player, ListOfMessages listOfMessages)
         {
             // noop
         }
-
+        
         // only remote
-        public void RemovePlayer(uint playerId)
+        public void RemovePlayerCommand(DualPlayer playerToRemove)
         {
-            if(isHosted)
+            if(!playerToRemove.IsLocal())
             {
-                Log.Error("I'm hosted");
+                Log.Error("Trying to remove a non-local player");
                 return;
             }
-            // TODO 
-            //clientConnections.RemovePlayer(playerId);
+
+            SendToServer(MsgType.RemovePlayer, new DualPlayerSnapshot(playerToRemove));
         }
 
         // sending messages to server
@@ -147,6 +134,11 @@ namespace Julo.Network
             }
         }
 
+        protected void SendToServer(short msgType, NetworkWriter writer)
+        {
+
+        }
+
         // message handling
 
         // send a message to this client
@@ -157,7 +149,31 @@ namespace Julo.Network
 
         protected virtual void OnMessage(WrappedMessage message)
         {
-            throw new System.Exception("Unhandled message");
+            switch(message.messageType)
+            {
+                case MsgType.RemovePlayer:
+                    if(isHosted)
+                    {
+                        return;
+                    }
+
+                    var playerMsg = message.ReadInternalMessage<DualPlayerSnapshot>();
+
+                    var connId = playerMsg.connectionId;
+                    var controllerId = playerMsg.controllerId;
+
+                    if(!dualContext.RemovePlayer(connId, controllerId))
+                    {
+                        Log.Error("Could not remove player {0}:{1}", connId, controllerId);
+                    }
+
+                    break;
+
+                default:
+                    var msg = string.Format("Unhandled message number={0}", message.messageType - MsgType.Highest);
+                    throw new System.Exception(msg);
+                    //break;
+            }
         }
 
     } // class DualClient

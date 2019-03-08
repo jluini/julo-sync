@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.Networking;
 
 using Julo.Logging;
+using Julo.Network;
 
 namespace SyncGame
 {
@@ -40,22 +42,22 @@ namespace SyncGame
             }
         }
 
-        public void CreateFromInitialState(int numRoles, Unit unitModel, SyncGameState initialState)
+        public void CreateFromInitialState(int numRoles, Unit unitModel, SyncMatchSnapshot snapshot)
         {
             Init(numRoles);
 
-            foreach(var ts in initialState.unitsState)
+            foreach(var ts in snapshot.unitsState)
             {
                 CreateUnit(unitModel, ts.role, ts.index, ts.position, ts.rotation);
             }
         }
-
-        public SyncGameState GetState()
+        
+        public SyncMatchSnapshot GetSnapshot()
         {
-            return new SyncGameState(GetAllUnits());
+            return new SyncMatchSnapshot(GetAllUnits());
         }
-
-        public void UpdateState(SyncGameState newState)
+        
+        public void UpdateState(SyncMatchSnapshot snapshot)
         {
             if(unitsPerRole == null)
             {
@@ -63,7 +65,7 @@ namespace SyncGame
                 return;
             }
 
-            foreach(var unitState in newState.unitsState)
+            foreach(var unitState in snapshot.unitsState)
             {
                 var unit = GetUnitFor(unitState);
                 unit.SetState(unitState);

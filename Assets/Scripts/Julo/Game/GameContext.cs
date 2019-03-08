@@ -1,4 +1,6 @@
-﻿namespace Julo.Game
+﻿using UnityEngine.Networking;
+
+namespace Julo.Game
 {
     public class GameContext
     {
@@ -9,19 +11,22 @@
         // in server
         public GameContext()
         {
-
             gameState = GameState.NoGame;
             numRoles = 2;
             sceneName = "beach";
-
         }
         
         // in remote client
-        public GameContext(GameState gameState, int numRoles, string sceneName)
+        public GameContext(GameContextSnapshot snapshot)
         {
-            this.gameState = gameState;
-            this.numRoles = numRoles;
-            this.sceneName = sceneName;
+            gameState = snapshot.gameState;
+            numRoles = snapshot.numRoles;
+            sceneName = snapshot.sceneName;
+        }
+
+        public GameContextSnapshot GetSnapshot()
+        {
+            return new GameContextSnapshot(gameState, numRoles, sceneName);
         }
 
     } // class GameContext
