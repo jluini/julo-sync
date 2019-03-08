@@ -20,7 +20,7 @@ namespace Julo.Game
         
         Dictionary<int, bool> clientsAreReadyToStart;
 
-        List<GamePlayer>[] playersPerRole;
+        protected Dictionary<int, List<GamePlayer>> playersByRole;
 
         int willStartCountDown = 1;
 
@@ -29,6 +29,8 @@ namespace Julo.Game
             instance = this;
 
             gameContext = new GameContext();
+
+            playersByRole = new Dictionary<int, List<GamePlayer>>();
         }
 
         // only online mode
@@ -46,28 +48,20 @@ namespace Julo.Game
         {
             base.OnPlayerAdded(player);
 
-            // TODO cast or cache GamePlayer?
             var gamePlayer = (GamePlayer)player;
 
-            // start as spec if game already started
-
-            GamePlayerState playerState;
-
-            if(gameContext.gameState == GameState.NoGame)
-            {
-                playerState = GamePlayerState.NoGame;
-            }
-            else
-            {
-                Log.Error("Adding players in playing mode not supported");
-                playerState = GamePlayerState.NoGame;
-            }
-
+            var playerState = GamePlayerState.NoGame;
             int role = gameContext.gameState == GameState.NoGame ? GetNextRole() : DNM.SpecRole;
             bool ready = mode == Mode.OfflineMode;
             string username = System.String.Format("Player {0}", player.ControllerId()); // TODO
 
             gamePlayer.Init(playerState, role, ready, username);
+
+            if(!playersByRole.ContainsKey(role))
+            {
+                playersByRole.Add(role, new List<GamePlayer>());
+            }
+            playersByRole[role].Add(gamePlayer);
         }
 
         public override void WritePlayer(DualPlayer player, ListOfMessages listOfMessages)
@@ -95,13 +89,11 @@ namespace Julo.Game
 
             if(!EnoughPlayersForEachRole())
             {
-                Log.Warn("Not enough players");
+                //Log.Warn("Not enough players");
                 return;
             }
 
             gameContext.gameState = GameState.WillStart;
-
-            CollectPlayersPerRole();
 
             DualNetworkManager.instance.StartCoroutine(WillStartCoroutine());
         }
@@ -145,13 +137,34 @@ namespace Julo.Game
 
             gameContext.gameState = GameState.Preparing;
 
+            clientsAreReadyToStart = new Dictionary<int, bool>();
+
+            // TODO track only playing connections?
+            foreach(var c in dualContext.AllConnections())
+            {
+                clientsAreReadyToStart.Add(c.connectionId, false);
+            }
+
+            for(int r = 1; r <= GetMaxPlayers(); r++)
+            {
+                foreach(var p in GetPlayersForRole(r))
+                {
+                    if(p.playerState != GamePlayerState.NoGame)
+                    {
+                        Log.Warn("Player {0}:{1} state is {2}", p.ConnectionId(), p.ControllerId(), p.playerState);
+                    }
+
+                    p.playerState = GamePlayerState.Playing;
+                }
+            }
+
             DualNetworkManager.instance.LoadSceneAsync(gameContext.sceneName, () =>
             {
                 var prepareMessage = new PrepareToStartMessage(gameContext.numRoles, gameContext.sceneName);
                 var listOfMessages = new ListOfMessages();
                 listOfMessages.Add(prepareMessage);
 
-                OnPrepareToStart(playersPerRole, listOfMessages);
+                OnPrepareToStart(listOfMessages);
 
                 SendToAll(MsgType.PrepareToStart, listOfMessages);
 
@@ -168,7 +181,7 @@ namespace Julo.Game
             SendToAll(MsgType.StartGame, new EmptyMessage());
         }
 
-        protected abstract void OnPrepareToStart(List<GamePlayer>[] playersPerRole, ListOfMessages listOfMessages);
+        protected abstract void OnPrepareToStart(ListOfMessages listOfMessages);
         protected abstract void OnStartGame();
 
         ////////// Roles //////////
@@ -202,7 +215,7 @@ namespace Julo.Game
         {
             if(gameContext.gameState != GameState.NoGame)
             {
-                Log.Error("Unexpected call of ChangeRole");
+                Log.Warn("Cannot change role now ({0})", gameContext.gameState);
                 return;
             }
 
@@ -251,6 +264,21 @@ namespace Julo.Game
             return mode == Mode.OfflineMode ? DNM.FirstPlayerRole : DNM.SpecRole;
         }
 
+        protected List<GamePlayer> GetPlayersForRole(int role)
+        {
+            if(role < 1 || role > GetMaxPlayers())
+            {
+                Log.Warn("Invalid role: {0}", role);
+            }
+
+            if(!playersByRole.ContainsKey(role))
+            {
+                Log.Warn("Role not found: {0}", role);
+                return new List<GamePlayer>();
+            }
+
+            return playersByRole[role];
+        }
 
         int NumberOfPlayersForRole(int role)
         {
@@ -259,62 +287,16 @@ namespace Julo.Game
                 Log.Error("Invalid role number: {0}", role);
                 return 0;
             }
-
-            int ret = 0;
-
-            foreach(var c in dualContext.AllConnections())
+            
+            if(!playersByRole.ContainsKey(role))
             {
-                var players = c.GetPlayers();
-                foreach(var player in players)
-                {
-                    // TODO cache GamePlayers !!!
-                    var gamePlayer = (GamePlayer)player;
-
-                    if(gamePlayer.role == role)
-                    {
-                        ret++;
-                    }
-                }
+                return 0;
             }
 
-            return ret;
+            return playersByRole[role].Count;
         }
 
         ////////// * //////////
-
-        void CollectPlayersPerRole()
-        {
-            playersPerRole = new List<GamePlayer>[gameContext.numRoles];
-
-            clientsAreReadyToStart = new Dictionary<int, bool>();
-
-            foreach(var c in dualContext.AllConnections())
-            {
-                clientsAreReadyToStart[c.connectionId] = false;
-
-                foreach(var player in c.GetPlayers())
-                {
-                    var gamePlayer = (GamePlayer)player;
-                    if(!gamePlayer.IsSpectator())
-                    {
-                        int role = gamePlayer.role;
-
-                        if(role < 1 || role > gameContext.numRoles)
-                        {
-                            Log.Error("Unexpected role {0}", role);
-                            return;
-                        }
-
-                        if(playersPerRole[role - 1] == null)
-                        {
-                            playersPerRole[role - 1] = new List<GamePlayer>();
-                        }
-
-                        playersPerRole[role - 1].Add(gamePlayer);
-                    }
-                }
-            }
-        }
         
         int GetMaxPlayers()
         {
@@ -325,35 +307,32 @@ namespace Julo.Game
 
         bool PlayersAreReady()
         {
-            // TODO cache GamePlayers !!!
-            foreach(var dualPlayer in dualContext.AllPlayers())
+            foreach(var playerList in playersByRole.Values)
             {
-                // TODO cast or cache?
-                var gamePlayer = (GamePlayer)dualPlayer;
-
-                if(!gamePlayer.IsSpectator() && !gamePlayer.isReady)
+                foreach(var gamePlayer in playerList)
                 {
-                    return false;
+                    if(!gamePlayer.IsSpectator() && !gamePlayer.isReady)
+                    {
+                        return false;
+                    }
                 }
             }
-
             return true;
         }
 
         bool EnoughPlayersForEachRole()
         {
-            bool enoughPlayers = true;
-
             for(int role = 1; role <= GetMaxPlayers(); role++)
             {
                 if(NumberOfPlayersForRole(role) < 1)
                 {
-                    enoughPlayers = false;
-                    Log.Debug("Role {0} not satisfied", role);
+                    Log.Warn("There is no player for role {0}", role);
+                    return false;
                 }
+
             }
 
-            return enoughPlayers;
+            return true;
         }
 
         bool AllClientsAreReadyToStart()

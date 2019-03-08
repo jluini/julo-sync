@@ -22,7 +22,8 @@ namespace Julo.TurnBased
         RoleData[] roleData;
         int lastRolePlayed = 0;
         TBPlayer playingPlayer = null;
-        List<TBPlayer>[] playersPerRole;
+
+        // List<TBPlayer>[] playersPerRole;
 
         public TurnBasedServer(Mode mode, DualPlayer playerModel) : base(mode, playerModel)
         {
@@ -61,24 +62,8 @@ namespace Julo.TurnBased
             }
         }
 
-        protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, ListOfMessages listOfMessages)
+        protected override void OnPrepareToStart(ListOfMessages listOfMessages)
         {
-            if(gameContext.numRoles != playersPerRole.Length)
-            {
-                Log.Error("Unmatching {0} != {1}", gameContext.numRoles, playersPerRole.Length);
-            }
-
-            this.playersPerRole = new List<TBPlayer>[gameContext.numRoles];
-
-            for(int r = 1; r <= gameContext.numRoles; r++)
-            {
-                this.playersPerRole[r - 1] = new List<TBPlayer>();
-                foreach(var p in playersPerRole[r - 1])
-                {
-                    this.playersPerRole[r - 1].Add(p.GetComponent<TBPlayer>());
-                }
-            }
-
             roleData = new RoleData[gameContext.numRoles];
             for(int r = 1; r <= gameContext.numRoles; r++)
             {
@@ -162,22 +147,34 @@ namespace Julo.TurnBased
                     OnStartTurn(nextRoleToPlay);
 
                     // it's turn for nextRoleToPlay
+                    
+                    // TODO we are casting here; cache instead?
+                    var players = GetPlayersForRole(nextRoleToPlay);
 
-                    var players = playersPerRole[nextRoleToPlay - 1];
-
-                    // TODO it's picking always the first player of the role
                     playingPlayer = GetNextPlayer(players);
 
                     playingPlayer.lastUse = DateTime.Now;
 
                     SendToAll(MsgType.StartTurn, new DualPlayerSnapshot(playingPlayer));
-
+                    
                     do
                     {
                         yield return new WaitForEndOfFrame();
                     } while(playingPlayer != null);
                 }
             } while(true);
+        }
+
+        protected new List<TBPlayer> GetPlayersForRole(int role)
+        {
+            var ret = new List<TBPlayer>();
+            
+            foreach(var gamePlayer in base.GetPlayersForRole(role))
+            {
+                ret.Add((TBPlayer)gamePlayer);
+            }
+
+            return ret;
         }
 
         TBPlayer GetNextPlayer(List<TBPlayer> players)

@@ -37,9 +37,9 @@ namespace SyncGame
 
         ////////// Player //////////
 
-        protected override void OnPrepareToStart(List<GamePlayer>[] playersPerRole, ListOfMessages listOfMessages)
+        protected override void OnPrepareToStart(ListOfMessages listOfMessages)
         {
-            base.OnPrepareToStart(playersPerRole, listOfMessages);
+            base.OnPrepareToStart(listOfMessages);
 
             match = new SyncMatch();
 

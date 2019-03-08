@@ -101,7 +101,7 @@ namespace SyncGame
         protected override void OnGameStarted()
         {
             base.OnGameStarted();
-
+            
             gameStartedDelegate();
         }
 
