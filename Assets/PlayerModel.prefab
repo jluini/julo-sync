@@ -78,7 +78,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Player 1
+  m_Text: 
 --- !u!1 &3191968927656479856
 GameObject:
   m_ObjectHideFlags: 0
@@ -553,14 +553,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localColor: {r: 0, g: 0, b: 0, a: 1}
-  remoteColor: {r: 0, g: 0, b: 0, a: 1}
-  localPlayingColor: {r: 0, g: 1, b: 0, a: 1}
-  remotePlayingColor: {r: 0, g: 1, b: 0, a: 1}
+  remoteColor: {r: 0.4, g: 0.4, b: 0.4, a: 1}
+  localPlayingColor: {r: 0, g: 0.727, b: 0, a: 1}
+  remotePlayingColor: {r: 0.54668033, g: 0.8584906, b: 0.54668033, a: 1}
   colorDisplay: {fileID: 3191968927656479806}
   nameInput: {fileID: 3191968927656479805}
   roleDisplay: {fileID: 3191968927656479785}
   roleButton: {fileID: 3191968927656479781}
   removeButton: {fileID: 5324115230354342269}
+  disconnectedDisplay: {fileID: 5324115228829922353}
   readyToggle: {fileID: 3191968927656479787}
 --- !u!114 &3110627597740247173
 MonoBehaviour:
@@ -574,6 +575,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 759055faf446a0e4890c61fb3dcb5a8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerState: 0
   role: -1
   isReady: 0
   username: '-'

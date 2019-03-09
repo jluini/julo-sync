@@ -179,7 +179,8 @@ namespace SyncGame
 
             if(targetUnit.dead)
             {
-                currentTurn = TurnType.None;
+                //TurnIsEnded();
+                
                 return false;
             }
 
@@ -197,8 +198,8 @@ namespace SyncGame
 
             if(fire3 > 0)
             {
-                targetUnit.SetPlaying(false);
-                currentTurn = TurnType.None;
+                //TurnIsEnded();
+
                 return false;
             }
 
@@ -210,10 +211,22 @@ namespace SyncGame
             return true;
         }
 
-        protected override void OnEndTurn(TBPlayer player)
+        protected override void WillFinishMyTurn(TBPlayer player)
         {
             SendToServer(MsgType.ClientUpdate, match.GetSnapshot());
         }
+        protected override void OnTurnEndedHere(TBPlayer player)
+        {
+            currentTurn = TurnType.None;
+
+            // TODO this should be smarter?
+            if(targetUnit != null)
+            {
+                targetUnit.SetPlaying(false);
+            }
+        }
+
+
 
         IEnumerator EndTurnDelayed()
         {

@@ -89,6 +89,25 @@ namespace Julo.Network
 
         ////////////////////////////////////////////////////////////
 
+        DualContext dualContext
+        {
+            get
+            {
+                if(dualServer != null)
+                {
+                    return dualServer.dualContext;
+                }
+                if(dualClient != null)
+                {
+                    return dualClient.dualContext;
+                }
+                Log.Error("No server and no client");
+                return null;
+            }
+        }
+
+        ////////////////////////////////////////////////////////////
+
         CreateServerDelegate serverDelegate;
         CreateHostedClientDelegate hostedClientDelegate;
         CreateRemoteClientDelegate remoteClientDelegate;
@@ -500,7 +519,7 @@ namespace Julo.Network
 
         bool LocalPlayerWithControllerId(short controllerId)
         {
-            var conn = dualServer.dualContext.GetConnection(DNM.LocalConnectionId);
+            var conn = dualContext.GetConnection(DNM.LocalConnectionId);
             if(conn == null)
             {
                 Log.Error("Local connection not found");

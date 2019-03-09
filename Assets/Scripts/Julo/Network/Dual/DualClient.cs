@@ -22,7 +22,7 @@ namespace Julo.Network
         // only remote
         DualContext clientContext;
 
-        protected DualContext dualContext
+        public DualContext dualContext
         {
             get
             {

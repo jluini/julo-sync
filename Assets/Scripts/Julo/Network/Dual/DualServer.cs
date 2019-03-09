@@ -120,9 +120,19 @@ namespace Julo.Network
 
         protected void RemovePlayer(DualPlayer player)
         {
-            SendToAll(MsgType.RemovePlayer, new DualPlayerSnapshot(player));
-            OnPlayerRemoved(player);
-            dualContext.RemovePlayer(player.ConnectionId(), player.ControllerId());
+            bool couldRemove = dualContext.RemovePlayer(player.ConnectionId(), player.ControllerId());
+
+            if(couldRemove)
+            {
+                Log.Debug("After deleting: {0} - {1}:{2}", player, player.ConnectionId(), player.ControllerId());
+
+                SendToAll(MsgType.RemovePlayer, new DualPlayerSnapshot(player));
+                OnPlayerRemoved(player);
+            }
+            else
+            {
+                Log.Error("Couldn't remove player");
+            }
         }
         
         ///////////////////////
@@ -241,16 +251,22 @@ namespace Julo.Network
                     var connId = playerMsg.connectionId;
                     var controllerId = playerMsg.controllerId;
 
-                    if(dualContext.RemovePlayer(connId, controllerId))
+                    if(from != connId)
                     {
-                        // TODO send to remote only
-                        SendToAll(MsgType.RemovePlayer, playerMsg);
+                        Log.Error("Connection {0} is trying to remove a player of connection {1}", from, connId);
+                        return;
                     }
-                    else
+
+                    var player = dualContext.GetPlayer(playerMsg);
+
+                    if(player == null)
                     {
-                        Log.Error("Could not remove player {0}:{1}", connId, controllerId);
+                        Log.Error("Player to remove not found({0}:{1}", connId, controllerId);
+                        return;
                     }
-                    
+
+                    DoRemovePlayer(player);
+
                     break;
 
                 default:
@@ -258,6 +274,11 @@ namespace Julo.Network
                     throw new System.Exception(msg);
                     //break;
             }
+        }
+
+        protected virtual void DoRemovePlayer(DualPlayer player)
+        {
+            RemovePlayer(player);
         }
 
     } // class DNMServer

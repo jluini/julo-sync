@@ -12,18 +12,19 @@ using Julo.Game;
 
 namespace Julo.TurnBased
 {
+    public enum TurnBasedState { NoGame, Playing, GameOver }
+
     public abstract class TurnBasedServer : GameServer
     {
         public new static TurnBasedServer instance;
-        
-        
-        // only server
+
+        TurnBasedState state = TurnBasedState.NoGame;
+
+
         float preturnWaitTime = 1f;
         RoleData[] roleData;
         int lastRolePlayed = 0;
         TBPlayer playingPlayer = null;
-
-        // List<TBPlayer>[] playersPerRole;
 
         public TurnBasedServer(Mode mode, DualPlayer playerModel) : base(mode, playerModel)
         {
@@ -51,9 +52,7 @@ namespace Julo.TurnBased
             switch(message.messageType)
             {
                 case MsgType.EndTurn:
-                    SendToAll(MsgType.EndTurn, new EmptyMessage()); // TODO Send to all but!
-                    playingPlayer = null;
-
+                    EndTurn();
                     break;
 
                 default:
@@ -73,6 +72,7 @@ namespace Julo.TurnBased
 
         protected override void OnStartGame()
         {
+            state = TurnBasedState.Playing;
             DualNetworkManager.instance.StartCoroutine(GameRoutine());
         }
 
@@ -113,6 +113,8 @@ namespace Julo.TurnBased
 
                     Log.Debug("It's a draw");
 
+                    state = TurnBasedState.GameOver;
+
                     // TODO
                     break;
                 }
@@ -122,11 +124,36 @@ namespace Julo.TurnBased
 
                     Log.Debug("It's a win for {0}", someAliveRole);
 
+                    state = TurnBasedState.GameOver;
+
                     // TODO
                     break;
                 }
                 else
                 {
+                    var matchFailed = false;
+
+                    for(int r = 1; r <= gameContext.numRoles; r++)
+                    {
+                        if(!roleData[r - 1].isAlive)
+                        {
+                            continue;
+                        }
+                        var n = NumberOfPlayingPlayersForRole(r);
+                        if(n < 1)
+                        {
+                            Log.Debug("There are {0} players for role {1}", n, r);
+                            matchFailed = true;
+                        }
+                    }
+                    
+                    if(matchFailed)
+                    {
+                        Log.Debug("Game aborted");
+                        state = TurnBasedState.GameOver;
+                        break;
+                    }
+
                     int nextRoleToPlay = lastRolePlayed;
                     while(true)
                     {
@@ -149,7 +176,7 @@ namespace Julo.TurnBased
                     // it's turn for nextRoleToPlay
                     
                     // TODO we are casting here; cache instead?
-                    var players = GetPlayersForRole(nextRoleToPlay);
+                    var players = GetPlayingPlayersForRole(nextRoleToPlay);
 
                     playingPlayer = GetNextPlayer(players);
 
@@ -165,11 +192,19 @@ namespace Julo.TurnBased
             } while(true);
         }
 
-        protected new List<TBPlayer> GetPlayersForRole(int role)
+        void EndTurn()
+        {
+            SendToAll(MsgType.EndTurn, new EmptyMessage()); // TODO Send to all but!
+            playingPlayer = null;
+        }
+
+        /// 
+
+        protected new List<TBPlayer> GetPlayingPlayersForRole(int role)
         {
             var ret = new List<TBPlayer>();
             
-            foreach(var gamePlayer in base.GetPlayersForRole(role))
+            foreach(var gamePlayer in base.GetPlayingPlayersForRole(role))
             {
                 ret.Add((TBPlayer)gamePlayer);
             }
@@ -199,6 +234,30 @@ namespace Julo.TurnBased
 
         protected abstract void OnStartTurn(int role);
         protected abstract bool RoleIsAlive(int numRole);
+
+        protected override void OnPlayerDisconnected(GamePlayer player)
+        {
+            base.OnPlayerDisconnected(player);
+
+            var tbPlayer = (TBPlayer)player;
+
+            if(state != TurnBasedState.Playing)
+            {
+                Log.Error("OnPlayerDisconnected but state = {0}", state);
+                return;
+            }
+
+            if(playingPlayer == tbPlayer)
+            {
+                Log.Debug("Se desconectó el que estaba jugando!");
+                EndTurn();
+            }
+        }
+
+        protected override void OnPlayerRemoved(DualPlayer player)
+        {
+            base.OnPlayerRemoved(player);
+        }
 
     } // class TurnBasedServer
 

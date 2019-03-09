@@ -152,7 +152,7 @@ namespace Julo.Game
                     if(!isHosted)
                     {
                         var changeRoleMsg = message.ReadInternalMessage<ChangeRoleMessage>();
-                        var connId = changeRoleMsg.controllerId;
+                        var connId = changeRoleMsg.connectionId;
                         var controllerId = changeRoleMsg.controllerId;
                         var newRole = changeRoleMsg.newRole;
 

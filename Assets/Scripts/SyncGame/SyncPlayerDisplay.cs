@@ -24,6 +24,7 @@ namespace SyncGame
         public Text roleDisplay;
         public Button roleButton;
         public Button removeButton;
+        public Text disconnectedDisplay;
 
         public Toggle readyToggle;
 
@@ -75,8 +76,28 @@ namespace SyncGame
         public void OnPlayerStateChanged(GamePlayerState newState)
         {
             Log.Debug("Player {0}:{1} now is {2}", syncPlayer.ConnectionId(), syncPlayer.ControllerId(), newState);
+
+            disconnectedDisplay.text = GetStateLabel(newState);
         }
 
+        string GetStateLabel(GamePlayerState state)
+        {
+            switch(state)
+            {
+                case GamePlayerState.Disconnected:
+                    return "D";
+                case GamePlayerState.Resigned:
+                    return "R";
+                case GamePlayerState.Playing:
+                    return "P";
+                case GamePlayerState.NoGame:
+                    return "-";
+            }
+
+            Log.Warn("Unknown case {0}", state);
+
+            return "-";
+        }
         public void OnRoleChanged(int newRole)
         {
             UpdateRoleView();

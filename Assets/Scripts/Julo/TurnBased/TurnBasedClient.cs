@@ -66,7 +66,15 @@ namespace Julo.TurnBased
                     }
 
                     playingPlayer.SetPlaying(false);
+
+                    if(isPlayingHere)
+                    {
+                        turnEndedByServer = true;
+                        OnTurnEndedHere(playingPlayer);
+                    }
+
                     playingPlayer = null;
+
 
                     break;
 
@@ -88,27 +96,46 @@ namespace Julo.TurnBased
             playingPlayer.SetPlaying(true);
 
             if(player.IsLocal())
+            {
+                isPlayingHere = true;
                 DualNetworkManager.instance.StartCoroutine(PlayTurn());
+            }
         }
+
+        bool isPlayingHere = false;
+        bool turnEndedByServer;
 
         // only in client that owns the current player
         IEnumerator PlayTurn()
         {
             OnStartTurn(playingPlayer);
 
+            turnEndedByServer = false;
+
             do
             {
                 yield return new WaitForEndOfFrame();
 
+                if(turnEndedByServer)
+                {
+                    isPlayingHere = false;
+                    yield break;
+                }
+
             } while(TurnIsOn());
 
-            OnEndTurn(playingPlayer);
+            WillFinishMyTurn(playingPlayer);
+            
+            isPlayingHere = false;
             SendToServer(MsgType.EndTurn, new EmptyMessage());
+
+            yield break;
         }
 
         protected abstract void OnStartTurn(TBPlayer player);
         protected abstract bool TurnIsOn();
-        protected abstract void OnEndTurn(TBPlayer player);
+        protected abstract void WillFinishMyTurn(TBPlayer player);
+        protected abstract void OnTurnEndedHere(TBPlayer player);
 
     } // class TurnBasedClient
 

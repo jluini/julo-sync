@@ -44,6 +44,7 @@ namespace Julo.Game
         {
             this.connectionId = connectionId;
             this.controllerId = controllerId;
+            this.newRole = newRole;
         }
 
         public override void Serialize(NetworkWriter writer)
