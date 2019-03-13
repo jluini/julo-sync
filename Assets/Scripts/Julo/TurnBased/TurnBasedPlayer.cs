@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using UnityEngine;
-
-using Julo.Logging;
-using Julo.Network;
 using Julo.Game;
 
 namespace Julo.TurnBased
 {
     
-    public class TBPlayer : GamePlayer
+    public class TurnBasedPlayer : GamePlayer
     {
         // only in server
         public DateTime lastUse;
@@ -29,8 +25,8 @@ namespace Julo.TurnBased
         {
             listeners.Add(listener);
         }
-        
-    } // class TBPlayer
+
+    } // class TurnBasedPlayer
 
 } // namespace Julo.TurnBased
 

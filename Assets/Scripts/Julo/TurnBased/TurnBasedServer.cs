@@ -24,7 +24,7 @@ namespace Julo.TurnBased
         float preturnWaitTime = 1f;
         RoleData[] roleData;
         int lastRolePlayed = 0;
-        TBPlayer playingPlayer = null;
+        TurnBasedPlayer playingPlayer = null;
 
         public TurnBasedServer(Mode mode, DualPlayer playerModel) : base(mode, playerModel)
         {
@@ -175,12 +175,9 @@ namespace Julo.TurnBased
 
                     // it's turn for nextRoleToPlay
                     
-                    // TODO we are casting here; cache instead?
                     var players = GetPlayingPlayersForRole(nextRoleToPlay);
 
                     playingPlayer = GetNextPlayer(players);
-
-                    playingPlayer.lastUse = DateTime.Now;
 
                     SendToAll(MsgType.StartTurn, new DualPlayerSnapshot(playingPlayer));
                     
@@ -200,19 +197,19 @@ namespace Julo.TurnBased
 
         /// 
 
-        protected new List<TBPlayer> GetPlayingPlayersForRole(int role)
+        protected new List<TurnBasedPlayer> GetPlayingPlayersForRole(int role)
         {
-            var ret = new List<TBPlayer>();
+            var ret = new List<TurnBasedPlayer>();
             
             foreach(var gamePlayer in base.GetPlayingPlayersForRole(role))
             {
-                ret.Add((TBPlayer)gamePlayer);
+                ret.Add((TurnBasedPlayer)gamePlayer);
             }
 
             return ret;
         }
 
-        TBPlayer GetNextPlayer(List<TBPlayer> players)
+        TurnBasedPlayer GetNextPlayer(List<TurnBasedPlayer> players)
         {
             if(players.Count > 0)
             {
@@ -225,6 +222,8 @@ namespace Julo.TurnBased
                         t = t2;
                     }
                 }
+
+                t.lastUse = DateTime.Now;
 
                 return t;
             }
@@ -239,7 +238,7 @@ namespace Julo.TurnBased
         {
             base.OnPlayerDisconnected(player);
 
-            var tbPlayer = (TBPlayer)player;
+            var tbPlayer = (TurnBasedPlayer)player;
 
             if(state != TurnBasedState.Playing)
             {

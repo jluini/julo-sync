@@ -43,7 +43,7 @@ namespace SyncGame
                     _syncPlayer = GetComponent<SyncPlayer>();
                     if(_syncPlayer == null)
                     {
-                        Log.Error("Component TBPlayer not found!");
+                        Log.Error("Component SyncPlayer not found!");
                     }
                 }
                 return _syncPlayer;

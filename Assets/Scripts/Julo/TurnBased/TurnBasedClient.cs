@@ -12,7 +12,7 @@ namespace Julo.TurnBased
 {
     public abstract class TurnBasedClient : GameClient
     {
-        TBPlayer playingPlayer = null;
+        TurnBasedPlayer playingPlayer = null;
 
         public TurnBasedClient(Mode mode, DualServer server, DualPlayer playerModel) : base(mode, server, playerModel)
         {
@@ -25,7 +25,7 @@ namespace Julo.TurnBased
             {
                 var playerMessage = listOfMessages.ReadMessage<DualPlayerSnapshot>();
 
-                var playingPlayer = (TBPlayer)dualContext.GetPlayer(playerMessage);
+                var playingPlayer = (TurnBasedPlayer)dualContext.GetPlayer(playerMessage);
 
                 if(playingPlayer != null)
                 {
@@ -51,8 +51,8 @@ namespace Julo.TurnBased
 
                     // TODO cache players?
 
-                    // TODO cast or cache TBPlayer?
-                    var turnPlayer = (TBPlayer)dualContext.GetPlayer(turnMsg);
+                    // TODO cast or cache TurnBasedPlayer?
+                    var turnPlayer = (TurnBasedPlayer)dualContext.GetPlayer(turnMsg);
 
                     IsMyTurn(turnPlayer);
 
@@ -84,12 +84,13 @@ namespace Julo.TurnBased
             }
         }
 
-        void IsMyTurn(TBPlayer player)
+        void IsMyTurn(TurnBasedPlayer player)
         {
             if(playingPlayer != null)
             {
                 Log.Error("A player is already playing here!");
-                return;
+                //return;
+                playingPlayer.SetPlaying(false);
             }
 
             playingPlayer = player;
@@ -132,10 +133,10 @@ namespace Julo.TurnBased
             yield break;
         }
 
-        protected abstract void OnStartTurn(TBPlayer player);
+        protected abstract void OnStartTurn(TurnBasedPlayer player);
         protected abstract bool TurnIsOn();
-        protected abstract void WillFinishMyTurn(TBPlayer player);
-        protected abstract void OnTurnEndedHere(TBPlayer player);
+        protected abstract void WillFinishMyTurn(TurnBasedPlayer player);
+        protected abstract void OnTurnEndedHere(TurnBasedPlayer player);
 
     } // class TurnBasedClient
 

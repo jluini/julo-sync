@@ -124,7 +124,7 @@ namespace SyncGame
             }
         }
 
-        protected override void OnStartTurn(TBPlayer player)
+        protected override void OnStartTurn(TurnBasedPlayer player)
         {
             if(currentTurn != TurnType.None)
             {
@@ -211,11 +211,11 @@ namespace SyncGame
             return true;
         }
 
-        protected override void WillFinishMyTurn(TBPlayer player)
+        protected override void WillFinishMyTurn(TurnBasedPlayer player)
         {
             SendToServer(MsgType.ClientUpdate, match.GetSnapshot());
         }
-        protected override void OnTurnEndedHere(TBPlayer player)
+        protected override void OnTurnEndedHere(TurnBasedPlayer player)
         {
             currentTurn = TurnType.None;
 

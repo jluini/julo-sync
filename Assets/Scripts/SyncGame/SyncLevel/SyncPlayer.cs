@@ -2,7 +2,7 @@
 
 namespace SyncGame
 {
-    public class SyncPlayer : TBPlayer
+    public class SyncPlayer : TurnBasedPlayer
     {
         public SyncPlayerDisplay display;
 
