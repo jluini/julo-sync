@@ -122,7 +122,16 @@ namespace SyncGame
                 return;
             }
 
-            SetColor(playerColors[role - 1]);
+            Color color;
+            if(dead)
+            {
+                color = deadColor;
+            }
+            else
+            {
+                color = playerColors[role - 1];
+            }
+            SetColor(color);
         }
 
     } // class Unit

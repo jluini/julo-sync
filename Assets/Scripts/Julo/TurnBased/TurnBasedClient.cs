@@ -12,11 +12,39 @@ namespace Julo.TurnBased
 {
     public abstract class TurnBasedClient : GameClient
     {
-        TurnBasedPlayer playingPlayer = null;
+        TurnBasedServer turnBasedServer;
+        TurnBasedContext clientContext;
+
+        public TurnBasedContext turnBasedContext
+        {
+            get
+            {
+                if(isHosted)
+                {
+                    return turnBasedServer.turnBasedContext;
+                }
+                else
+                {
+                    return clientContext;
+                }
+            }
+        }
 
         public TurnBasedClient(Mode mode, DualServer server, DualPlayer playerModel) : base(mode, server, playerModel)
         {
-            // noop
+            if(isHosted)
+            {
+                turnBasedServer = (TurnBasedServer)server;
+            }
+            else
+            {
+                clientContext = new TurnBasedContext();
+            }
+        }
+
+        protected override void OnLobbyJoin(ListOfMessages listOfMessages)
+        {
+            //
         }
 
         protected override void OnLateJoin(ListOfMessages listOfMessages)
@@ -25,11 +53,12 @@ namespace Julo.TurnBased
             {
                 var playerMessage = listOfMessages.ReadMessage<DualPlayerSnapshot>();
 
-                var playingPlayer = (TurnBasedPlayer)dualContext.GetPlayer(playerMessage);
+                var player = (TurnBasedPlayer)dualContext.GetPlayer(playerMessage);
 
-                if(playingPlayer != null)
+                if(player != null)
                 {
-                    playingPlayer.SetPlaying(true);
+                    turnBasedContext.currentPlayer = player;
+                    turnBasedContext.currentPlayer.SetPlaying(true);
                 }
                 else
                 {
@@ -45,36 +74,24 @@ namespace Julo.TurnBased
                 case MsgType.StartTurn:
 
                     var turnMsg = message.ReadInternalMessage<DualPlayerSnapshot>();
-
-                    //var connId = turnMsg.connectionId;
-                    //var controllerId = turnMsg.controllerId;
-
-                    // TODO cache players?
-
-                    // TODO cast or cache TurnBasedPlayer?
                     var turnPlayer = (TurnBasedPlayer)dualContext.GetPlayer(turnMsg);
 
-                    IsMyTurn(turnPlayer);
+                    StartTurn(turnPlayer);
 
                     break;
 
                 case MsgType.EndTurn:
-                    if(playingPlayer == null)
+
+                    if(!isHosted)
                     {
-                        Log.Warn("Already cleaned up");
-                        return;
+                        if(turnBasedContext.currentPlayer == null)
+                        {
+                            Log.Warn("Already cleaned up");
+                            return;
+                        }
+                        turnBasedContext.currentPlayer.SetPlaying(false);
+                        turnBasedContext.currentPlayer = null;
                     }
-
-                    playingPlayer.SetPlaying(false);
-
-                    if(isPlayingHere)
-                    {
-                        turnEndedByServer = true;
-                        OnTurnEndedHere(playingPlayer);
-                    }
-
-                    playingPlayer = null;
-
 
                     break;
 
@@ -84,32 +101,32 @@ namespace Julo.TurnBased
             }
         }
 
-        void IsMyTurn(TurnBasedPlayer player)
+        void StartTurn(TurnBasedPlayer player)
         {
-            if(playingPlayer != null)
+            if(!isHosted)
             {
-                Log.Error("A player is already playing here!");
-                //return;
-                playingPlayer.SetPlaying(false);
-            }
+                if(turnBasedContext.currentPlayer != null)
+                {
+                    Log.Error("A player is already playing here!");
+                    turnBasedContext.currentPlayer.SetPlaying(false);
+                }
 
-            playingPlayer = player;
-            playingPlayer.SetPlaying(true);
+                turnBasedContext.currentPlayer = player;
+                turnBasedContext.currentPlayer.SetPlaying(true);
+            }
 
             if(player.IsLocal())
             {
-                isPlayingHere = true;
                 DualNetworkManager.instance.StartCoroutine(PlayTurn());
             }
         }
 
-        bool isPlayingHere = false;
         bool turnEndedByServer;
 
         // only in client that owns the current player
         IEnumerator PlayTurn()
         {
-            OnStartTurn(playingPlayer);
+            OnStartLocalTurn(turnBasedContext.currentPlayer);
 
             turnEndedByServer = false;
 
@@ -119,24 +136,21 @@ namespace Julo.TurnBased
 
                 if(turnEndedByServer)
                 {
-                    isPlayingHere = false;
                     yield break;
                 }
 
             } while(TurnIsOn());
 
-            WillFinishMyTurn(playingPlayer);
+            OnEndLocalTurn(turnBasedContext.currentPlayer);
             
-            isPlayingHere = false;
             SendToServer(MsgType.EndTurn, new EmptyMessage());
 
             yield break;
         }
 
-        protected abstract void OnStartTurn(TurnBasedPlayer player);
+        protected abstract void OnStartLocalTurn(TurnBasedPlayer player);
         protected abstract bool TurnIsOn();
-        protected abstract void WillFinishMyTurn(TurnBasedPlayer player);
-        protected abstract void OnTurnEndedHere(TurnBasedPlayer player);
+        protected abstract void OnEndLocalTurn(TurnBasedPlayer player);
 
     } // class TurnBasedClient
 

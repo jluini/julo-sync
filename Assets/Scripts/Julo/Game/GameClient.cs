@@ -53,6 +53,7 @@ namespace Julo.Game
                 case GameState.NoGame:
                 case GameState.WillStart:
                     // I joined but no game yet
+                    OnLobbyJoin(listOfMessages);
                     break;
 
                 case GameState.Preparing:
@@ -121,6 +122,7 @@ namespace Julo.Game
         }
 
 
+        protected abstract void OnLobbyJoin(ListOfMessages listOfMessages);
         protected abstract void OnLateJoin(ListOfMessages listOfMessages);
 
         protected override void OnMessage(WrappedMessage message)

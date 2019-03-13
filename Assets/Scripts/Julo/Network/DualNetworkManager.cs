@@ -497,6 +497,8 @@ namespace Julo.Network
 
         public void AddPlayerCommand()
         {
+            CheckState(new DNMState[] { DNMState.Host, DNMState.Client });
+
             AddPlayerCommand(NextControllerId());
         }
 

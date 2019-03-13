@@ -18,17 +18,18 @@ namespace Julo.TurnBased
     {
         public new static TurnBasedServer instance;
 
-        TurnBasedState state = TurnBasedState.NoGame;
+        public TurnBasedContext turnBasedContext;
 
+        TurnBasedState state = TurnBasedState.NoGame;
 
         float preturnWaitTime = 1f;
         RoleData[] roleData;
         int lastRolePlayed = 0;
-        TurnBasedPlayer playingPlayer = null;
 
         public TurnBasedServer(Mode mode, DualPlayer playerModel) : base(mode, playerModel)
         {
             instance = this;
+            turnBasedContext = new TurnBasedContext();
         }
 
         // only online mode
@@ -36,27 +37,13 @@ namespace Julo.TurnBased
         {
             base.WriteRemoteClientData(listOfMessages);
 
-            if(gameContext.gameState == GameState.Playing)
+            switch(gameContext.gameState)
             {
-                listOfMessages.Add(new DualPlayerSnapshot(playingPlayer));
-            }
-        }
+                case GameState.Preparing:
+                case GameState.Playing:
+                case GameState.GameOver:
 
-        ////////// Player //////////
-
-
-        ////////// Messaging //////////
-
-        protected override void OnMessage(WrappedMessage message, int from)
-        {
-            switch(message.messageType)
-            {
-                case MsgType.EndTurn:
-                    EndTurn();
-                    break;
-
-                default:
-                    base.OnMessage(message, from);
+                    listOfMessages.Add(turnBasedContext.GetState());
                     break;
             }
         }
@@ -177,14 +164,15 @@ namespace Julo.TurnBased
                     
                     var players = GetPlayingPlayersForRole(nextRoleToPlay);
 
-                    playingPlayer = GetNextPlayer(players);
+                    turnBasedContext.currentPlayer = GetNextPlayer(players);
+                    turnBasedContext.currentPlayer.SetPlaying(true);
 
-                    SendToAll(MsgType.StartTurn, new DualPlayerSnapshot(playingPlayer));
+                    SendToAll(MsgType.StartTurn, new DualPlayerSnapshot(turnBasedContext.currentPlayer));
                     
                     do
                     {
                         yield return new WaitForEndOfFrame();
-                    } while(playingPlayer != null);
+                    } while(turnBasedContext.currentPlayer != null);
                 }
             } while(true);
         }
@@ -192,10 +180,18 @@ namespace Julo.TurnBased
         void EndTurn()
         {
             SendToAll(MsgType.EndTurn, new EmptyMessage()); // TODO Send to all but!
-            playingPlayer = null;
+
+            if(turnBasedContext.currentPlayer == null)
+            {
+                Log.Error("Nobody is playing");
+                return;
+            }
+
+            turnBasedContext.currentPlayer.SetPlaying(false);
+            turnBasedContext.currentPlayer = null;
         }
 
-        /// 
+        ///  Players
 
         protected new List<TurnBasedPlayer> GetPlayingPlayersForRole(int role)
         {
@@ -231,9 +227,6 @@ namespace Julo.TurnBased
             return null;
         }
 
-        protected abstract void OnStartTurn(int role);
-        protected abstract bool RoleIsAlive(int numRole);
-
         protected override void OnPlayerDisconnected(GamePlayer player)
         {
             base.OnPlayerDisconnected(player);
@@ -246,7 +239,7 @@ namespace Julo.TurnBased
                 return;
             }
 
-            if(playingPlayer == tbPlayer)
+            if(turnBasedContext.currentPlayer == tbPlayer)
             {
                 Log.Debug("Se desconectó el que estaba jugando!");
                 EndTurn();
@@ -257,6 +250,27 @@ namespace Julo.TurnBased
         {
             base.OnPlayerRemoved(player);
         }
+
+        ////////// Messaging //////////
+
+        protected override void OnMessage(WrappedMessage message, int from)
+        {
+            switch(message.messageType)
+            {
+                case MsgType.EndTurn:
+                    EndTurn();
+                    break;
+
+                default:
+                    base.OnMessage(message, from);
+                    break;
+            }
+        }
+
+        /// 
+
+        protected abstract void OnStartTurn(int role);
+        protected abstract bool RoleIsAlive(int numRole);
 
     } // class TurnBasedServer
 

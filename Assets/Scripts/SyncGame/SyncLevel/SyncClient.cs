@@ -124,7 +124,7 @@ namespace SyncGame
             }
         }
 
-        protected override void OnStartTurn(TurnBasedPlayer player)
+        protected override void OnStartLocalTurn(TurnBasedPlayer player)
         {
             if(currentTurn != TurnType.None)
             {
@@ -168,7 +168,7 @@ namespace SyncGame
             }
             else if(currentTurn != TurnType.Keyboard)
             {
-                Log.Warn("Unexpected TurnType {0} (A)", currentTurn);
+                Log.Warn("Unexpected TurnType {0} (B)", currentTurn);
                 return false;
             }
 
@@ -211,22 +211,27 @@ namespace SyncGame
             return true;
         }
 
-        protected override void WillFinishMyTurn(TurnBasedPlayer player)
+        protected override void OnEndLocalTurn(TurnBasedPlayer player)
         {
-            SendToServer(MsgType.ClientUpdate, match.GetSnapshot());
-        }
-        protected override void OnTurnEndedHere(TurnBasedPlayer player)
-        {
+            if(currentTurn != TurnType.Keyboard)
+            {
+                Log.Warn("Unexpected TurnType {0} (C)", currentTurn);
+            }
+
             currentTurn = TurnType.None;
 
-            // TODO this should be smarter?
             if(targetUnit != null)
             {
                 targetUnit.SetPlaying(false);
+                targetUnit = null;
             }
+            else
+            {
+                Log.Warn("No target unit");
+            }
+
+            SendToServer(MsgType.ClientUpdate, match.GetSnapshot());
         }
-
-
 
         IEnumerator EndTurnDelayed()
         {

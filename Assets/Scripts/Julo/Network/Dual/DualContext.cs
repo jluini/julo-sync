@@ -9,6 +9,8 @@ namespace Julo.Network
 {
     public class DualContext
     {
+        public static DualContext instance;
+
         Dictionary<int, ConnectionInfo> connections;
 
         public int localConnectionNumber;
@@ -17,6 +19,8 @@ namespace Julo.Network
 
         public DualContext(bool isServer, int localConnectionNumber)
         {
+            instance = this;
+
             this.isServer = isServer;
             this.localConnectionNumber = localConnectionNumber;
 
